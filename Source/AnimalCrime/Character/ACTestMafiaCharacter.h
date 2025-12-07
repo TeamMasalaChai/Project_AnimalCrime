@@ -13,6 +13,11 @@ UCLASS()
 class ANIMALCRIME_API AACTestMafiaCharacter : public AACCharacter
 {
 	GENERATED_BODY()
-	
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bomb")
+	uint8 bIsInteractBomb : 1;
+
+protected:
+	void Interact(const FInputActionValue& Value) override;
 };
