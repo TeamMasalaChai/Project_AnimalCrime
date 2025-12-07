@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -20,10 +20,10 @@ protected:
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
-	void Interact(const FInputActionValue& Value);
+	virtual void Interact(const FInputActionValue& Value);
 
 protected:
-	//!< ¸Þ½¬ ÄÄÆ÷³ÍÆ®
+	//!< ë©”ì‰¬ ì»´í¬ë„ŒíŠ¸
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	TObjectPtr<class USkeletalMeshComponent> HeadMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
@@ -36,14 +36,14 @@ protected:
 	TObjectPtr<class USkeletalMeshComponent> ShoesMesh;
 
 protected:
-	//!< Ä«¸Þ¶ó
+	//!< ì¹´ë©”ë¼
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USpringArmComponent> CameraBoom;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCameraComponent> FollowCamera;
 
 protected:
-	//!< Å° ÀÔ·Â
+	//!< í‚¤ ìž…ë ¥
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
@@ -57,7 +57,7 @@ protected:
 
 
 protected:
-	//!< ¾Ö´Ï¸ÞÀÌ¼Ç
+	//!< ì• ë‹ˆë©”ì´ì…˜
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UAnimInstance> AnimInstance;
 };

@@ -1,4 +1,4 @@
-
+ï»¿
 #include "ACCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -19,7 +19,7 @@ AACCharacter::AACCharacter()
 	GetCapsuleComponent()->InitCapsuleSize(35.f, 90.0f);
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
 
-	//Ä³¸¯ÅÍ ¹«ºê¸ÕÆ®
+	//ìºë¦­í„° ë¬´ë¸Œë¨¼íŠ¸
 	auto Move = GetCharacterMovement();
 	Move->MaxWalkSpeed = 600.f;
 	Move->JumpZVelocity = 600.f;
@@ -27,7 +27,7 @@ AACCharacter::AACCharacter()
 	Move->bOrientRotationToMovement = true;
 	Move->RotationRate = FRotator(0.f, 500.f, 0.f);
 
-	//½ºÄÌ·¹Å» ¸Ş½Ã
+	//ìŠ¤ì¼ˆë ˆíƒˆ ë©”ì‹œ
 	USkeletalMeshComponent* MeshComp = GetMesh();
 	MeshComp->SetSkeletalMesh(LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Creative_Characters_FREE/Skeleton_Meshes/SK_Body_010.SK_Body_010")));
 	MeshComp->SetRelativeLocation(FVector(0.f, 0.f, -90.f));
@@ -94,18 +94,18 @@ AACCharacter::AACCharacter()
 	ShoesMesh->SetupAttachment(RootComponent);
 	ShoesMesh->SetLeaderPoseComponent(MeshComp);
 
-	//Ä«¸Ş¶ó
+	//ì¹´ë©”ë¼
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.f;
 	CameraBoom->bUsePawnControlRotation = true;
-	CameraBoom->TargetOffset = FVector(0.f, 60.f, 20.f); //¼Ö´õºä, YÃàÀ¸·Î ¿À¸¥ÂÊÀ¸·Î 50
+	CameraBoom->TargetOffset = FVector(0.f, 60.f, 20.f); //ì†”ë”ë·°, Yì¶•ìœ¼ë¡œ ì˜¤ë¥¸ìª½ìœ¼ë¡œ 50
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	//ÀÔ·Â
+	//ì…ë ¥
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> InputMappingContextRef(TEXT("/Game/Project/Input/IMC_Shoulder.IMC_Shoulder"));
 	if (InputMappingContextRef.Succeeded())
 	{
