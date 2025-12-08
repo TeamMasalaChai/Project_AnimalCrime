@@ -9,6 +9,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Item/ACEscapeMissionBomb.h"
 
 AACCharacter::AACCharacter()
 {
@@ -135,6 +136,14 @@ AACCharacter::AACCharacter()
 	{
 		InteractAction = InteractActionRef.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> ItemDropActionRef(TEXT("/Game/Project/Input/Actions/IA_ItemDrop.IA_ItemDrop"));
+	if (ItemDropActionRef.Succeeded())
+	{
+		ItemDropAction = ItemDropActionRef.Object;
+	}
+
+	GetCharacterMovement()->NetworkSmoothingMode = ENetworkSmoothingMode::Disabled;
 }
 
 
@@ -171,6 +180,16 @@ void AACCharacter::Interact(const FInputActionValue& Value)
 	UE_LOG(LogTemp, Log, TEXT("Interact!!"));
 }
 
+void AACCharacter::ItemDrop(const FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Log, TEXT("ItemDrop!!"));
+}
+
+void AACCharacter::ServerItemDrop_Implementation()
+{
+	UE_LOG(LogTemp, Log, TEXT("Server ItemDrop!!"));
+}
+
 
 void AACCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -196,5 +215,6 @@ void AACCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AACCharacter::Move);
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AACCharacter::Look);
 	EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AACCharacter::Interact);
+	EnhancedInputComponent->BindAction(ItemDropAction, ETriggerEvent::Triggered, this, &AACCharacter::ItemDrop);
 }
 

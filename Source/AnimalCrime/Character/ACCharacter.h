@@ -21,6 +21,10 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	virtual void Interact(const FInputActionValue& Value);
+	virtual void ItemDrop(const FInputActionValue& Value);
+
+	UFUNCTION(Server, Reliable)
+	virtual void ServerItemDrop();
 
 protected:
 	//!< 메쉬 컴포넌트
@@ -54,7 +58,8 @@ protected:
 	TObjectPtr<class UInputAction> JumpAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> InteractAction;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> ItemDropAction;
 
 protected:
 	//!< 애니메이션
