@@ -2,15 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "ACArea.h"
 #include "ACBombInstallArea.generated.h"
 
 UCLASS()
-class ANIMALCRIME_API ACBombInstallArea : public AActor
+class ANIMALCRIME_API ACBombInstallArea : public AACArea
 {
 	GENERATED_BODY()
-
-public:
-	ACBombInstallArea();
 
 protected:
 	virtual void BeginPlay() override;
@@ -18,10 +16,4 @@ protected:
 	UFUNCTION()
 	void OnBombTriggerOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<class UBoxComponent> TriggerBox;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<class UDecalComponent> VisualBox;
 };

@@ -12,7 +12,15 @@ class ANIMALCRIME_API AACTestMafiaCharacter : public AACCharacter
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+public:
+/**
+	@brief 클라이언트에서 폭탄 설치 가능 영역 표시 여부를 갱신함.
+	@param bVisible - true면 설치구역을 보여주고, false면 숨김
+**/
+	UFUNCTION(Client, Reliable)
+	void ClientSetBombAreaVisible(bool bVisible);
 protected:
+
 	void Interact(const FInputActionValue& Value) override;
 
 	void ItemDrop(const FInputActionValue& Value) override;
@@ -31,4 +39,7 @@ public:
 	TObjectPtr<class AACEscapeMissionBomb> InteractBomb;
 	UPROPERTY(ReplicatedUsing = OnRep_HandBomb)
 	TObjectPtr<class AACEscapeMissionBomb> HandBomb;
+	UPROPERTY()
+	TObjectPtr<class AACTestBlackMarketDealer> InteractDealer;
+
 };

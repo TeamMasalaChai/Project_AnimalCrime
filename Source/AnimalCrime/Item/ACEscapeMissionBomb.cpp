@@ -83,28 +83,25 @@ void AACEscapeMissionBomb::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 
 void AACEscapeMissionBomb::OnInteractTriggerOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Log, TEXT("InteractBox Begin"));
 	AACTestMafiaCharacter* TestMafiaChar = Cast<AACTestMafiaCharacter>(OtherActor);
 	if (TestMafiaChar == nullptr)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Not TestMafiaCharacter"));
 		return;
 	}
 
+	AC_LOG(LogSY, Log, TEXT("InteractBox Begin"));
 	TestMafiaChar->InteractBomb = this;
 }
 
 void AACEscapeMissionBomb::OnInteractTriggerOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(LogTemp, Log, TEXT("InteractBox End"));
-
 	AACTestMafiaCharacter* TestMafiaChar = Cast<AACTestMafiaCharacter>(OtherActor);
 	if (TestMafiaChar == nullptr)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Not TestMafiaCharacter"));
 		return;
 	}
 
+	AC_LOG(LogSY, Log, TEXT("InteractBox End"));
 	TestMafiaChar->InteractBomb = nullptr;
 }
 
