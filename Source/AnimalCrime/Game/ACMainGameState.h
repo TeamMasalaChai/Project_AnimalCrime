@@ -13,4 +13,12 @@ UCLASS()
 class ANIMALCRIME_API AACMainGameState : public AGameState
 {
 	GENERATED_BODY()
+	
+public:
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+public:
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	int32 TeamScore = 0;
+	
 };
