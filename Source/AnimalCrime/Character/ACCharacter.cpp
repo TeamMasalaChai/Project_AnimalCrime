@@ -274,7 +274,7 @@ void AACCharacter::PerformAttackTrace()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *Hit.GetActor()->GetName());
 
-		Hit.GetActor()->Destroy();
+		//Hit.GetActor()->Destroy();
 		UGameplayStatics::ApplyDamage(Hit.GetActor(),30.0f, GetController(),this, nullptr);
 	}
 	
