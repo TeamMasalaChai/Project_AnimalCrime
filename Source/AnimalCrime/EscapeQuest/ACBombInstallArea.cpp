@@ -75,9 +75,9 @@ void AACBombInstallArea::OnBombDestroyComplete(AACEscapeMissionBomb* Bomb)
 	}
 
 	AACMainGameState* GS = GetWorld()->GetGameState<AACMainGameState>();
-	if (GS)
+	if (GS == nullptr)
 	{
-		GS->EscapeState = EEscapeState::Escape;
-		AC_LOG(LogSY, Log, TEXT("EscapeState is Escape!"));
+		return;
 	}
+	GS->ServerChangeEscapeState(EEscapeState::Escape);
 }

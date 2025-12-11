@@ -23,17 +23,13 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientSetBombAreaVisible(bool bVisible);
 
+	UFUNCTION(Client, Reliable)
+	void ClientSetEscapeAreaVisible(bool bVisible);
+
 	virtual EACCharacterType GetCharacterType() override;
 protected:
 
-	//void Interact(const FInputActionValue& Value) override;
-
 	void ItemDrop(const FInputActionValue& Value) override;
-
-	//UFUNCTION(Server, Reliable)
-	//void ServerInteract();
-
-	//virtual void ServerInteract_Implementation(AActor* Target) override;
 
 	virtual void ServerItemDrop_Implementation() override;
 
@@ -42,11 +38,7 @@ protected:
 
 public:
 	//!<아이템
-	UPROPERTY()
-	TObjectPtr<class AACEscapeMissionBomb> InteractBomb;
 	UPROPERTY(ReplicatedUsing = OnRep_HandBomb)
 	TObjectPtr<class AACEscapeMissionBomb> HandBomb;
-	UPROPERTY()
-	TObjectPtr<class AACTestBlackMarketDealer> InteractDealer;
 
 };

@@ -5,6 +5,8 @@
 #include "Character/ACTestMafiaCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "Component/ACInteractableComponent.h"
+#include "Game/ACMainGameState.h"
+
 #include "AnimalCrime.h"
 
 AACEscapeMissionBomb::AACEscapeMissionBomb()
@@ -52,18 +54,6 @@ AACEscapeMissionBomb::AACEscapeMissionBomb()
 void AACEscapeMissionBomb::BeginPlay()
 {
 	Super::BeginPlay();
-	//InteractBoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AACEscapeMissionBomb::OnInteractTriggerOverlapBegin);
-	//InteractBoxComponent->OnComponentEndOverlap.AddDynamic(this, &AACEscapeMissionBomb::OnInteractTriggerOverlapEnd);
-
-	//// 루트 컴포넌트의 로컬 바운드 가져오기
-	//FBoxSphereBounds RootBounds = BombMeshComp->Bounds;
-
-	//// BoxExtent 설정 (약간 여유 포함)
-	//FVector Margin(150.f, 150.f, 150.f); // 필요에 따라 조정
-	//InteractBoxComponent->SetBoxExtent(RootBounds.BoxExtent + Margin);
-
-	//// 박스 위치 루트에 맞추기
-	//InteractBoxComponent->SetRelativeLocation(FVector::ZeroVector);
 
 	// 루트 컴포넌트의 로컬 바운드 가져오기
 	FBoxSphereBounds RootBounds = RootComponent->CalcBounds(RootComponent->GetComponentTransform());
@@ -81,30 +71,6 @@ void AACEscapeMissionBomb::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AACEscapeMissionBomb, AttachedCharacter);
 }
-
-//void AACEscapeMissionBomb::OnInteractTriggerOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-//{
-//	AACTestMafiaCharacter* TestMafiaChar = Cast<AACTestMafiaCharacter>(OtherActor);
-//	if (TestMafiaChar == nullptr)
-//	{
-//		return;
-//	}
-//
-//	AC_LOG(LogSY, Log, TEXT("InteractBox Begin"));
-//	TestMafiaChar->InteractBomb = this;
-//}
-//
-//void AACEscapeMissionBomb::OnInteractTriggerOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-//{
-//	AACTestMafiaCharacter* TestMafiaChar = Cast<AACTestMafiaCharacter>(OtherActor);
-//	if (TestMafiaChar == nullptr)
-//	{
-//		return;
-//	}
-//
-//	AC_LOG(LogSY, Log, TEXT("InteractBox End"));
-//	TestMafiaChar->InteractBomb = nullptr;
-//}
 
 void AACEscapeMissionBomb::OnRep_AttachedCharacter()
 {
@@ -161,14 +127,14 @@ void AACEscapeMissionBomb::DetachFromCharacter()
 	@param  Interactor - 겹친 대상
 	@retval            - 상호작용 가능 여부
 **/
-bool AACEscapeMissionBomb::CanInteract(AACCharacter* ACPlayer)
+bool AACEscapeMissionBomb::CanInteract(AACCharacter* Interactor)
 {
-	if (ACPlayer == nullptr)
+	if (Interactor == nullptr)
 	{
 		AC_LOG(LogSW, Log, TEXT("Sorry aaaaa"));
 		return false;
 	}
-	if (ACPlayer->GetCharacterType() != EACCharacterType::Mafia)
+	if (Interactor->GetCharacterType() != EACCharacterType::Mafia)
 	{
 		AC_LOG(LogSW, Log, TEXT("Sorry Only For MAFIA!!!!!"));
 		return false;
@@ -186,16 +152,30 @@ void AACEscapeMissionBomb::OnInteract(AACCharacter* Interactor)
 	{
 		return;
 	}
-	//if (ACPlayer->GetCharacterType() != EACCharacterType::Mafia)
-	//{
-	//	return;
-	//}
 
 	AC_LOG(LogSW, Log, TEXT("Mafia Held BOMB!!"));
 
-	//ACPlayerMafia->bIsInteractBomb = true;
-	//ACPlayerMafia->InteractBomb = this;
+	// 1. 캐릭터가 이미 폭탄을 들고 있으면 불가
+	if (ACPlayerMafia->HandBomb != nullptr)
+	{
+		AC_LOG(LogSY, Warning, TEXT("Character Already Has a Bomb"));
+		return;
+	}
 
+	// 2. 폭탄을 캐릭터에게 부착
+	AttachedCharacter = ACPlayerMafia;
+	ACPlayerMafia->HandBomb = this;
+
+	AttachToCharacter();
+
+	// 3. 설치 가능 구역 보이기
+	AACMainGameState* GS = ACPlayerMafia->GetWorld()->GetGameState<AACMainGameState>();
+	if (GS && GS->EscapeState == EEscapeState::DeliverBomb)
+	{
+		ACPlayerMafia->ClientSetBombAreaVisible(true);
+	}
+
+	AC_LOG(LogSY, Log, TEXT("Bomb Interact Success"));
 
 	AttachToCharacter();
 }

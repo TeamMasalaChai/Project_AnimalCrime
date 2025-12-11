@@ -5,6 +5,10 @@
 
 #include "Game/ACMainGameState.h"
 #include "AnimalCrime.h"
+AACEscapeArea::AACEscapeArea()
+{
+	SetActorEnableCollision(false);
+}
 void AACEscapeArea::BeginPlay()
 {
 	Super::BeginPlay();
@@ -24,6 +28,11 @@ void AACEscapeArea::BeginPlay()
 
 void AACEscapeArea::OnEscapeOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (HasAuthority() == false) //서버만 처리
+	{
+		return;
+	}
 
+	AC_LOG(LogSY, Log, TEXT("Begin EscapeAreas"))
 }
 

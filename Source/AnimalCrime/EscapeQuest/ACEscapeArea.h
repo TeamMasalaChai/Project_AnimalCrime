@@ -11,6 +11,8 @@ class ANIMALCRIME_API AACEscapeArea : public AACArea
 	GENERATED_BODY()
 	
 protected:
+	AACEscapeArea();
+
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
