@@ -34,10 +34,15 @@ bool AACTestBlackMarketDealer::CanInteract(AACCharacter* Interactor)
 
 void AACTestBlackMarketDealer::OnInteract(AACCharacter* Interactor)
 {
-	AC_LOG(LogSY, Log, TEXT("Dealer OnInteracted"));
+	ShowInteractDebug(Interactor);
 
 	if (BlackMarketComponent)
 	{
 		BlackMarketComponent->OpenBlackMarket(Interactor);
 	}
+}
+
+FString AACTestBlackMarketDealer::GetInteractableName() const
+{
+	return TEXT("BlackMarketDealer");
 }
