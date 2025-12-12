@@ -110,6 +110,9 @@ void AACShopArea::OnInteract(AACCharacter* ACPlayer)
             }
         }
     }
+    // 서버에서 클라이언트에게 위젯 토글 명령 전송
+    UE_LOG(LogHG, Log, TEXT("Server: Sending toggle command to %s"), *Interactor->GetName());
+    Interactor->ClientToggleShopWidget(ShopWidgetClass);
 }
 
 FString AACShopArea::GetInteractableName() const
