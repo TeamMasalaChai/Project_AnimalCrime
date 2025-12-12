@@ -22,12 +22,11 @@ EACCharacterType AACTestBlackMarketDealer::GetCharacterType()
 
 bool AACTestBlackMarketDealer::CanInteract(AACCharacter* ACPlayer)
 {
-	if (Interactor == nullptr)
+	if (ACPlayer == nullptr)
 	{
-		AC_LOG(LogSW, Log, TEXT("Sorry aaaaa"));
 		return false;
 	}
-	if (Interactor->GetCharacterType() != EACCharacterType::Mafia)
+	if (ACPlayer->GetCharacterType() != EACCharacterType::Mafia)
 	{
 		AC_LOG(LogSW, Log, TEXT("Sorry Only For MAFIA!!!!!"));
 		return false;
