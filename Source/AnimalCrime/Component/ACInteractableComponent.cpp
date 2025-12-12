@@ -49,7 +49,7 @@ void UACInteractableComponent::OnInteractOverlapBegin(
 	UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	AACCharacter* ACPlayer = Cast<AACCharacter>(OtherActor);
-	if (ACPlayer != nullptr)
+	if (ACPlayer == nullptr)
 	{
 		return;
 	}
