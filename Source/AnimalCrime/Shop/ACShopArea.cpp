@@ -17,6 +17,8 @@ AACShopArea::AACShopArea()
 
 	InteractBoxComponent = CreateDefaultSubobject<UACInteractableComponent>(TEXT("InteractBoxComponent"));
 	InteractBoxComponent->SetupAttachment(RootComponent);
+
+    InteractBoxComponent->SetMargin(FVector(200.0f, 200.0f, 200.0f));
 }
 
 // Called when the game starts or when spawned

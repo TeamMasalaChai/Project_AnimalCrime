@@ -7,7 +7,7 @@
 #include "ACMainPlayerController.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class ANIMALCRIME_API AACMainPlayerController : public APlayerController
@@ -19,4 +19,14 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+public:
+	UFUNCTION(Client, Reliable)
+	void ShowEscapeUI();
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UUserWidget> EscapeScreenClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<class UUserWidget> EscapeScreen;
 };
