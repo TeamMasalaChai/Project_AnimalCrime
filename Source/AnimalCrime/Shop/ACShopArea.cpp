@@ -17,6 +17,8 @@ AACShopArea::AACShopArea()
 
 	InteractBoxComponent = CreateDefaultSubobject<UACInteractableComponent>(TEXT("InteractBoxComponent"));
 	InteractBoxComponent->SetupAttachment(RootComponent);
+
+    InteractBoxComponent->SetMargin(FVector(200.0f, 200.0f, 200.0f));
 }
 
 // Called when the game starts or when spawned
@@ -37,6 +39,8 @@ bool AACShopArea::CanInteract(AACCharacter* Interactor)
 
 void AACShopArea::OnInteract(AACCharacter* Interactor)
 {
+    ShowInteractDebug(Interactor);
+
     if (Interactor == nullptr)
     {
         UE_LOG(LogHG, Warning, TEXT("OnInteract: Interactor is null"));
@@ -54,3 +58,7 @@ void AACShopArea::OnInteract(AACCharacter* Interactor)
     Interactor->ClientToggleShopWidget(ShopWidgetClass);
 }
 
+FString AACShopArea::GetInteractableName() const
+{
+	return TEXT("Shop");
+}

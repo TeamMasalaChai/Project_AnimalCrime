@@ -2,8 +2,10 @@
 #include "EscapeQuest/ACEscapeArea.h"
 #include "Components/BoxComponent.h"
 #include "Components/DecalComponent.h"
-
+#include "Character/ACTestMafiaCharacter.h"
 #include "Game/ACMainGameState.h"
+#include "Game/ACMainPlayerController.h"
+
 #include "AnimalCrime.h"
 AACEscapeArea::AACEscapeArea()
 {
@@ -28,11 +30,26 @@ void AACEscapeArea::BeginPlay()
 
 void AACEscapeArea::OnEscapeOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (HasAuthority() == false) //서버만 처리
+	AACTestMafiaCharacter* Mafia = Cast<AACTestMafiaCharacter>(OtherActor);
+	if (Mafia == nullptr)
 	{
 		return;
 	}
 
 	AC_LOG(LogSY, Log, TEXT("Begin EscapeAreas"))
+
+	if (HasAuthority() == false) //서버만 처리
+	{
+		return;
+	}
+
+	AACMainPlayerController* PC = Cast<AACMainPlayerController>(Mafia->GetController());
+	if (PC == nullptr)
+	{
+		return;
+	}
+
+	PC->ShowEscapeUI();
+	AC_LOG(LogSY, Log, TEXT("Show UI"));
 }
 

@@ -9,7 +9,8 @@
 AACTestBlackMarketDealer::AACTestBlackMarketDealer()
 {
 	HeadMesh->SetSkeletalMesh(LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Creative_Characters_FREE/Skeleton_Meshes/SK_Hairstyle_male_010.SK_Hairstyle_male_010")));
-
+	TopMesh->SetSkeletalMesh(nullptr);
+	BottomMesh->SetSkeletalMesh(LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Creative_Characters_FREE/Skeleton_Meshes/SK_Costume_6_001.SK_Costume_6_001")));
 	BlackMarketComponent = CreateDefaultSubobject<UACBlackMarketComponent>(TEXT("BlackMarketComponent"));
 
 }
@@ -33,10 +34,15 @@ bool AACTestBlackMarketDealer::CanInteract(AACCharacter* Interactor)
 
 void AACTestBlackMarketDealer::OnInteract(AACCharacter* Interactor)
 {
-	AC_LOG(LogSY, Log, TEXT("Dealer OnInteracted"));
+	ShowInteractDebug(Interactor);
 
 	if (BlackMarketComponent)
 	{
 		BlackMarketComponent->OpenBlackMarket(Interactor);
 	}
+}
+
+FString AACTestBlackMarketDealer::GetInteractableName() const
+{
+	return TEXT("BlackMarketDealer");
 }
