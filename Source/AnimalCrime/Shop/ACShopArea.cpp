@@ -39,6 +39,8 @@ bool AACShopArea::CanInteract(AACCharacter* Interactor)
 
 void AACShopArea::OnInteract(AACCharacter* Interactor)
 {
+    ShowInteractDebug(Interactor);
+
     if (Interactor == nullptr)
     {
         UE_LOG(LogHG, Warning, TEXT("OnInteract: Interactor is null"));
@@ -110,3 +112,7 @@ void AACShopArea::OnInteract(AACCharacter* Interactor)
     }
 }
 
+FString AACShopArea::GetInteractableName() const
+{
+	return TEXT("Shop");
+}
