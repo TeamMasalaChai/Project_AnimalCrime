@@ -1,4 +1,4 @@
-
+ï»¿
 #include "ACAdvancedFriendsGameInstance.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
@@ -116,6 +116,6 @@
 //
 //    SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(DestroyDelegate);
 //
-//    // ¼¼¼ÇÀÌ ¾øÀ» ¼öµµ ÀÖÀ¸´Ï ±×³É È£Ãâ
+//    // ì„¸ì…˜ì´ ì—†ì„ ìˆ˜ë„ ìžˆìœ¼ë‹ˆ ê·¸ëƒ¥ í˜¸ì¶œ
 //    SessionInterface->DestroySession(NAME_GameSession);
 //}

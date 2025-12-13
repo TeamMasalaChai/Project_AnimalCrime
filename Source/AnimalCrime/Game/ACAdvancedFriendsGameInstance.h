@@ -1,4 +1,4 @@
-
+ï»¿
 #pragma once
 
 #include "CoreMinimal.h"
@@ -18,27 +18,27 @@ class ANIMALCRIME_API UACAdvancedFriendsGameInstance : public UAdvancedFriendsGa
 	GENERATED_BODY()
 	
 public:
-    /** ½ÇÁ¦ ¼¼¼Ç »ı¼ºÀº BP¿¡¼­ ±¸Çö */
+    /** ì‹¤ì œ ì„¸ì…˜ ìƒì„±ì€ BPì—ì„œ êµ¬í˜„ */
     UFUNCTION(BlueprintImplementableEvent, Category = "Session")
     void CreateSession();
 //protected:
 //    virtual void Init() override;
 //
 //    /**
-//        @brief ¼¼¼ÇÀ» »ı¼ºÇÏ´Â ÇÔ¼ö
+//        @brief ì„¸ì…˜ì„ ìƒì„±í•˜ëŠ” í•¨ìˆ˜
 //    **/
 //    UFUNCTION()
 //    void CreateSession();
 //
 //private:
     /**
-        @brief ¼¼¼Ç »ı¼º ¼º°ø Äİ¹é ÇÔ¼ö
+        @brief ì„¸ì…˜ ìƒì„± ì„±ê³µ ì½œë°± í•¨ìˆ˜
     **/
     //UFUNCTION()
     //void OnCreateSessionSuccess();
 
     ///**
-    //    @brief ¼¼¼Ç »ı¼º ½ÇÆĞ Äİ¹é ÇÔ¼ö
+    //    @brief ì„¸ì…˜ ìƒì„± ì‹¤íŒ¨ ì½œë°± í•¨ìˆ˜
     //**/
     //UFUNCTION()
     //void OnCreateSessionFailure();
@@ -46,8 +46,8 @@ public:
     //void OnSessionInviteReceived(const FUniqueNetId& UserId, const FUniqueNetId& FromId, const FString& AppId, const FOnlineSessionSearchResult& InviteResult);
 
     /**
-        @brief ÇöÀç Âü°¡ÁßÀÎ ¼¼¼ÇÀ» Á¾·áÇÏ°í »õ·Î¿î ¼¼¼ÇÀ¸·Î Âü°¡ÇÏ´Â ÇÔ¼ö
-        @param SessionToJoin - »õ·Î Âü°¡ÇÒ ´ë»ó ¼¼¼ÇÀÇ °Ë»ö °á°ú
+        @brief í˜„ì¬ ì°¸ê°€ì¤‘ì¸ ì„¸ì…˜ì„ ì¢…ë£Œí•˜ê³  ìƒˆë¡œìš´ ì„¸ì…˜ìœ¼ë¡œ ì°¸ê°€í•˜ëŠ” í•¨ìˆ˜
+        @param SessionToJoin - ìƒˆë¡œ ì°¸ê°€í•  ëŒ€ìƒ ì„¸ì…˜ì˜ ê²€ìƒ‰ ê²°ê³¼
     **/
     //void DestroyCurrentSessionAndJoin(const FBlueprintSessionResult& SessionToJoin);
 };

@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
+﻿
 #include "Game/ACTitlePlayerController.h"
 #include "UI/GameStart/ACGameStartScreen.h"
 
@@ -23,4 +21,10 @@ void AACTitlePlayerController::BeginPlay()
 		return;
 	}
 	GameStartScreen->AddToViewport();
+
+	//마우스 커서 보이게 하기
+	bShowMouseCursor = true;
+	FInputModeUIOnly InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
 }
