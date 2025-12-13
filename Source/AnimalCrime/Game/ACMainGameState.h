@@ -18,7 +18,39 @@ public:
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 public:
+	UFUNCTION(Server, Reliable)
+	void ServerChangeEscapeState(EEscapeState NewEscapeState);
+
+public:
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	int32 TeamScore = 0;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void RegisterDestination(AActor* Actor);
+
+	UFUNCTION(BlueprintCallable)
+	AActor* GetDestinationActor() const;
+public:
+ //!< 탈출 임무
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)	
+	EEscapeState EscapeState = EEscapeState::DeliverBomb;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<TObjectPtr<class AACBombInstallArea>> BombAreas;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<TObjectPtr<class AACEscapeArea>> EscapeAreas;
 	
+	
+
+public:
+//!< 서버 전용. Replicated 안 함.
+	UPROPERTY()
+	TArray<TObjectPtr<class AACTestMafiaCharacter>> MafiaPlayers;
+	
+private:
+	/** 목적지 정보 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess=true))
+	TArray<TObjectPtr<class AActor>> DestinationObjects;
 };
