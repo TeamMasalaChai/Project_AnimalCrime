@@ -2,7 +2,7 @@
 #include "ACSteamFriend.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
-//#include "AdvancedSteamFriendsLibrary.h"
+#include "AdvancedSteamFriendsLibrary.h"
 
 void UACSteamFriend::UpdateFriend(const FBPFriendInfo& NewFriendDataInfo)
 {
