@@ -5,117 +5,40 @@
 #include "Kismet/GameplayStatics.h"
 #include "AdvancedSessionsLibrary.h"
 #include "CreateSessionCallbackProxyAdvanced.h"
+#include "Engine/NetDriver.h"
+#include "Engine/Engine.h"
 
 #include "AnimalCrime.h"
 
-//void UACAdvancedFriendsGameInstance::Init()
-//{
-//    Super::Init();
-//}
-//
-//void UACAdvancedFriendsGameInstance::CreateSession()
-//{
-//    APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-//    if (PC == nullptr)
-//    {
-//        return;
-//    }
-//    UCreateSessionCallbackProxyAdvanced* Proxy =
-//        UCreateSessionCallbackProxyAdvanced::CreateAdvancedSession(
-//            this,
-//            TArray<FSessionPropertyKeyPair>(),
-//            PC,
-//            100,        // PublicConnections
-//            0,          // PrivateConnections
-//            false,      // bUseLAN
-//            true,       // bAllowInvites
-//            false,      // bIsDedicatedServer
-//            true,       // bUseLobbiesIfAvailable
-//            true,       // bAllowJoinViaPresence
-//            false,      // bAllowJoinViaPresenceFriendsOnly
-//            false,      // bAntiCheatProtected
-//            false,      // bUsesStats
-//            true,       // bShouldAdvertise
-//            false,      // bUseLobbiesVoiceChatIfAvailable
-//            true        // bStartAfterCreate
-//        );
-//
-//    if (Proxy == nullptr)
-//    {
-//        return;
-//    }
-//
-//    Proxy->OnSuccess.AddDynamic(this, &UACAdvancedFriendsGameInstance::OnCreateSessionSuccess);
-//    Proxy->OnFailure.AddDynamic(this, &UACAdvancedFriendsGameInstance::OnCreateSessionFailure);
-//
-//
-//}
-//
-//void UACAdvancedFriendsGameInstance::OnCreateSessionSuccess()
-//{
-//    UE_LOG(LogTemp, Log, TEXT("Session created successfully"));
-//
-//    const FString Options = TEXT("listen");
-//
-//    UGameplayStatics::OpenLevelBySoftObjectPtr(
-//        this,
-//        TSoftObjectPtr<UWorld>(
-//            FSoftObjectPath(TEXT("/Game/Project/Maps/LobbyLevel.LobbyLevel"))
-//        ),
-//        true,
-//        Options
-//    );
-//}
-//
-//void UACAdvancedFriendsGameInstance::OnCreateSessionFailure()
-//{
-//    UE_LOG(LogTemp, Error, TEXT("Failed to create session"));
-//}
+void UACAdvancedFriendsGameInstance::Init()
+{
+	Super::Init();
 
-//void UACAdvancedFriendsGameInstance::OnSessionInviteAccepted_Implementation(int32 LocalPlayerNum, FBPUniqueNetId PersonInvited, const FBlueprintSessionResult& SessionToJoin)
-//{
-//    UE_LOG(LogSY, Log, TEXT("Session invite accepted"));
-//
-//    DestroyCurrentSessionAndJoin(SessionToJoin);
-//}
+	//네트워크 끊김 처리
+	GetEngine()->OnNetworkFailure().AddUObject(this, &UACAdvancedFriendsGameInstance::HandleNetworkFailure);
+	GetEngine()->OnTravelFailure().AddUObject(this, &UACAdvancedFriendsGameInstance::HandleTravelFailure);
+}
 
-//void UACAdvancedFriendsGameInstance::DestroyCurrentSessionAndJoin(const FBlueprintSessionResult& SessionToJoin)
-//{
-//    IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-//    if (!Subsystem) return;
-//
-//    IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
-//    if (!SessionInterface.IsValid()) return;
-//
-//    FOnDestroySessionCompleteDelegate DestroyDelegate;
-//    DestroyDelegate = FOnDestroySessionCompleteDelegate::CreateLambda(
-//        [this, SessionToJoin](FName SessionName, bool bWasSuccessful)
-//        {
-//            UE_LOG(LogTemp, Log, TEXT("DestroySession finished: %d"), bWasSuccessful);
-//
-//            IOnlineSubsystem* SubsystemInner = IOnlineSubsystem::Get();
-//            if (!SubsystemInner) return;
-//
-//            IOnlineSessionPtr SessionInterfaceInner =
-//                SubsystemInner->GetSessionInterface();
-//
-//            if (!SessionInterfaceInner.IsValid()) return;
-//
-//            APlayerController* PC =
-//                UGameplayStatics::GetPlayerController(this, 0);
-//
-//            if (!PC) return;
-//
-//            SessionInterfaceInner->JoinSession(
-//                *PC->GetLocalPlayer()->GetPreferredUniqueNetId(),
-//                NAME_GameSession,
-//                SessionToJoin.OnlineResult
-//            );
-//        }
-//    );
-//
-//    SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(DestroyDelegate);
-//
-//    // 세션이 없을 수도 있으니 그냥 호출
-//    SessionInterface->DestroySession(NAME_GameSession);
-//}
+void UACAdvancedFriendsGameInstance::HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
+{
+    UE_LOG(LogSY, Warning, TEXT("Network Failure: %s"), *ErrorString);
+
+    // 세션 정리
+    IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(World);
+    if (SessionInterface.IsValid() == true)
+    {
+        SessionInterface->DestroySession(NAME_GameSession);
+    }
+}
+
+void UACAdvancedFriendsGameInstance::HandleTravelFailure(UWorld* World, ETravelFailure::Type FailureType, const FString& ErrorString)
+{
+    UE_LOG(LogSY, Warning, TEXT("Travel Failure: %s"), *ErrorString);
+
+    // 세션 정리
+    IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(World);
+    if (SessionInterface.IsValid() == true)
+    {
+        SessionInterface->DestroySession(NAME_GameSession);
+    }
+}

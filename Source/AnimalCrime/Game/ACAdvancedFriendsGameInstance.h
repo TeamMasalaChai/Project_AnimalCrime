@@ -5,50 +5,38 @@
 #include "AdvancedFriendsGameInstance.h"
 #include "ACAdvancedFriendsGameInstance.generated.h"
 
-/**
-
-    @class   UACAdvancedFriendsGameInstance
-    @brief   
-    @details ~
-
-**/
 UCLASS()
 class ANIMALCRIME_API UACAdvancedFriendsGameInstance : public UAdvancedFriendsGameInstance
 {
 	GENERATED_BODY()
 	
 public:
+    virtual void Init() override;
+
+public:
     /** 실제 세션 생성은 BP에서 구현 */
     UFUNCTION(BlueprintImplementableEvent, Category = "Session")
     void CreateSession();
-//protected:
-//    virtual void Init() override;
-//
-//    /**
-//        @brief 세션을 생성하는 함수
-//    **/
-//    UFUNCTION()
-//    void CreateSession();
-//
-//private:
-    /**
-        @brief 세션 생성 성공 콜백 함수
-    **/
-    //UFUNCTION()
-    //void OnCreateSessionSuccess();
 
-    ///**
-    //    @brief 세션 생성 실패 콜백 함수
-    //**/
-    //UFUNCTION()
-    //void OnCreateSessionFailure();
-
-    //void OnSessionInviteReceived(const FUniqueNetId& UserId, const FUniqueNetId& FromId, const FString& AppId, const FOnlineSessionSearchResult& InviteResult);
+protected:
 
     /**
-        @brief 현재 참가중인 세션을 종료하고 새로운 세션으로 참가하는 함수
-        @param SessionToJoin - 새로 참가할 대상 세션의 검색 결과
+        @brief 네트워크 실패 시 처리 로직
+        @param World       - 어느 월드에서 발생했는지
+        @param NetDriver   - 어떤 네트워크 드라이버인지
+        @param FailureType - 실패 타입 (연결 끊김, 타임아웃 등)
+        @param ErrorString - 에러 메시지
     **/
-    //void DestroyCurrentSessionAndJoin(const FBlueprintSessionResult& SessionToJoin);
+    UFUNCTION()
+    void HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+
+    /**
+        @brief 맵 이동 실패 시 처리 로직
+        @param World       - 어느 월드에서 발생했는지
+        @param FailureType - 실패 타입
+        @param ErrorString - 에러 메시지
+    **/
+    UFUNCTION()
+    void HandleTravelFailure(UWorld* World, ETravelFailure::Type FailureType, const FString& ErrorString);
 };
 
