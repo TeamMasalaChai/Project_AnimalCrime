@@ -3,6 +3,7 @@
 
 #include "ACGameRuleManager.h"
 
+#include "ACAdvancedFriendsGameInstance.h"
 #include "ACMainGameInstance.h"
 #include "ACMainGameMode.h"
 #include "ACMainGameState.h"
@@ -126,7 +127,8 @@ void UACGameRuleManager::HandleVictory()
 void UACGameRuleManager::LoadNextMap()
 {
 	// @Todo: World 체크해야할 수도...
-	UACMainGameInstance* GameInstance = GetOwner()->GetWorld()->GetGameInstance<UACMainGameInstance>();
+	
+	UACAdvancedFriendsGameInstance* GameInstance = GetOwner()->GetWorld()->GetGameInstance<UACAdvancedFriendsGameInstance>();
 	if (GameInstance == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("%s 승리!"), TEXT("?????"));
