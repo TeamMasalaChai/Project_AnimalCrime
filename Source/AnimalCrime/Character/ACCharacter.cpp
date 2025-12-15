@@ -25,6 +25,7 @@
 
 #include "Component/ACShopComponent.h"
 #include "UI/ACShopWidget.h"
+#include "Game/ACMainPlayerController.h"
 
 
 AACCharacter::AACCharacter()
@@ -411,6 +412,61 @@ void AACCharacter::ChangeAttackFalse()
 	bAttackFlag = false;
 }
 
+void AACCharacter::SetShopCamera()
+{
+	if (bShopCameraActive == true)
+	{
+		// 이미 상점 카메라 모드
+		return; 
+	}
+
+	APlayerController* PC = GetController<APlayerController>();
+	if (PC == nullptr || CameraBoom == nullptr)
+	{
+		return;
+	}
+
+	// 현재 카메라 상태 저장
+	SavedControlRotation = PC->GetControlRotation();
+	SavedCameraArmLength = CameraBoom->TargetArmLength;
+	SavedCameraOffset = CameraBoom->TargetOffset;
+
+	// 캐릭터의 정면을 보도록 설정
+	FRotator CharacterRotation = GetActorRotation();
+	FRotator NewControlRotation = FRotator(0.f, CharacterRotation.Yaw + 170.f, 0.f);  // 캐릭터 정면
+	PC->SetControlRotation(NewControlRotation);
+
+	// 카메라 거리 조정 (캐릭터 전체가 보이도록)
+	CameraBoom->TargetArmLength = 450.0f;  // 필요에 따라 조정
+
+	// 오른쪽 화면에 캐릭터가 보이도록 오프셋 조정
+	// X: 전후, Y: 좌우, Z: 상하
+	CameraBoom->TargetOffset = FVector(0.f, -180.f, 60.f);  // Y값을 음수로 하면 왼쪽, 양수면 오른쪽
+
+	bShopCameraActive = true;
+}
+
+void AACCharacter::RestoreOriginalCamera()
+{
+	if (!bShopCameraActive)
+	{
+		return;  // 상점 카메라 모드가 아님
+	}
+
+	APlayerController* PC = GetController<APlayerController>();
+	if (PC == nullptr || CameraBoom == nullptr)
+	{
+		return;
+	}
+
+	// 저장된 카메라 상태 복원
+	PC->SetControlRotation(SavedControlRotation);
+	CameraBoom->TargetArmLength = SavedCameraArmLength;
+	CameraBoom->TargetOffset = SavedCameraOffset;
+
+	bShopCameraActive = false;
+}
+
 void AACCharacter::PerformAttackTrace()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -553,7 +609,7 @@ void AACCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 
 	InputSystem->AddMappingContext(DefaultMappingContext, 0);
-
+	
 	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
@@ -595,10 +651,12 @@ void AACCharacter::ClientToggleShopWidget_Implementation(TSubclassOf<class UACSh
 		CurrentShopWidget->RemoveFromParent();
 		CurrentShopWidget = nullptr;
 
+		// 카메라 복원
+		RestoreOriginalCamera();
 		PC->SetShowMouseCursor(false);
-		PC->SetInputMode(FInputModeGameOnly());
-		PC->SetIgnoreMoveInput(false);
-		PC->SetIgnoreLookInput(false);
+
+		ChangeInputMode(EInputMode::Sholder);
+		SettingMode = ESettingMode::None;
 	}
 	else
 	{
@@ -612,17 +670,14 @@ void AACCharacter::ClientToggleShopWidget_Implementation(TSubclassOf<class UACSh
 			ShopWidget->AddToViewport();
 			CurrentShopWidget = ShopWidget;
 
+			// 상점용 카메라로 전환
+			SetShopCamera();
 			PC->SetShowMouseCursor(true);
 
-			FInputModeGameAndUI InputMode;
-			InputMode.SetWidgetToFocus(ShopWidget->TakeWidget());
-			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-			PC->SetInputMode(InputMode);
-
-			PC->SetIgnoreMoveInput(true);
-			PC->SetIgnoreLookInput(true);
-
 			ShopWidget->LoadAndCreateSlots(TEXT("/Game/Project/Item/"));
+
+			ChangeInputMode(EInputMode::Settings);
+			SettingMode = ESettingMode::Interact;
 		}
 	}
 }

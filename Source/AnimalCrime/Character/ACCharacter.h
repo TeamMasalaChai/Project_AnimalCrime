@@ -57,14 +57,26 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ChangeAttackFalse();
 
-	// 상점 위젯 토글 (서버 → 클라이언트 명령)
+	// ===== 상점 관련 =====
+public:
+ /**
+     @brief  상점 위젯 토글 (서버 → 클라이언트 명령)
+     @param WidgetClass - 상점 위젯
+ **/
 	UFUNCTION(Client, Reliable)
 	void ClientToggleShopWidget(TSubclassOf<class UACShopWidget> WidgetClass);
 
-private:
-	// 현재 열려있는 상점 위젯
-	UPROPERTY()
-	TObjectPtr<class UACShopWidget> CurrentShopWidget;
+protected:
+ /**
+     @brief 상점용 카메라로 전환
+ **/
+	void SetShopCamera();
+
+ /**
+     @brief 원래 카메라로 복원
+ **/
+	void RestoreOriginalCamera();
+	
 
 public:
 	TObjectPtr<class USkeletalMeshComponent> GetHeadMesh() const { return HeadMesh; }
@@ -161,6 +173,7 @@ private:
 	TArray<AActor*> NearInteractables;
 
 
+	// ===== 상점 관련 =====
 protected:
 	// 상점 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Shop")
@@ -168,4 +181,15 @@ protected:
 
 protected:
 	ESettingMode SettingMode = ESettingMode::None;
+
+private:
+	// 현재 열려있는 상점 위젯
+	UPROPERTY()
+	TObjectPtr<class UACShopWidget> CurrentShopWidget;
+
+	// 상점 열기 전 카메라 상태 저장
+	FRotator SavedControlRotation;
+	float SavedCameraArmLength;
+	FVector SavedCameraOffset;
+	uint8 bShopCameraActive : 1 = false;
 };
