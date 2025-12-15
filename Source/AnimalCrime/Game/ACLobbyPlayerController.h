@@ -18,7 +18,7 @@ public:
      @param bVisible - true면 켜기, false면 끄기
  **/
 	void SteamFriendListToggle(bool bVisible);
-
+	void UpdatePlayerReadyText(int32 AllplayerNum);
 protected:
 	virtual void BeginPlay() override;
 

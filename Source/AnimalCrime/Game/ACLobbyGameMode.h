@@ -10,4 +10,8 @@ class ANIMALCRIME_API AACLobbyGameMode : public AGameMode
 	GENERATED_BODY()
 public:
 	AACLobbyGameMode();
+	
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+	virtual void Logout(AController* Exiting) override;
 };

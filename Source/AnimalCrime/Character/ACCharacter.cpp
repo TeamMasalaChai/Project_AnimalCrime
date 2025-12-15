@@ -21,8 +21,6 @@
 
 #include "AnimalCrime.h"
 
-#include "Game/ACLobbyPlayerController.h"
-
 #include "Component/ACShopComponent.h"
 #include "UI/ACShopWidget.h"
 
@@ -187,12 +185,6 @@ AACCharacter::AACCharacter()
 		MeleeAction = MeleeActionRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction> SteamFriendListActionRef(TEXT("/Game/Project/Input/Actions/IA_SteamFriendList.IA_SteamFriendList"));
-	if (SteamFriendListActionRef.Succeeded())
-	{
-		SteamFriendListAction = SteamFriendListActionRef.Object;
-	}
-
 	//설정창 키 입력
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> SettingsMappingContextRef(TEXT("/Game/Project/Input/IMC_Settings.IMC_Settings"));
 	if (SettingsMappingContextRef.Succeeded())
@@ -315,48 +307,18 @@ void AACCharacter::Attack()
 	}
 }
 
-void AACCharacter::SetSteamFriendsList(const FInputActionValue& Value)
-{
-	AACLobbyPlayerController* PC = Cast<AACLobbyPlayerController>(GetController());
-	if (PC == nullptr)
-	{
-		return;
-	}
-
-	//설정창이 꺼져있으면 스팀친구창 오픈, 스팀 친구창이 켜져있으면 끄기, 다른 설정창이면 아무것도 안함.
-	if (SettingMode == ESettingMode::None)
-	{
-		PC->SteamFriendListToggle(true);
-		ChangeInputMode(EInputMode::Settings);
-		SettingMode = ESettingMode::SteamFriendList;
-	}
-	else if (SettingMode == ESettingMode::SteamFriendList)
-	{
-		PC->SteamFriendListToggle(false);
-		ChangeInputMode(EInputMode::Sholder);
-		SettingMode = ESettingMode::None;
-	}
-
-}
-
 void AACCharacter::SettingsClose(const FInputActionValue& Value)
 {
+	//자식에서 추가로 구현
 	switch (SettingMode)
 	{
 	case ESettingMode::None:
 		break;
 	case ESettingMode::Default:
 		break;
-	case ESettingMode::SteamFriendList:
-		SetSteamFriendsList(Value);
-		break;
-
 	default:
 		break;
 	}
-	
-	//ChangeInputMode(EInputMode::Sholder);
-	//SettingMode = ESettingMode::None;
 }
 
 void AACCharacter::ServerInteract_Implementation()
@@ -562,7 +524,7 @@ void AACCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AACCharacter::Interact);
 	EnhancedInputComponent->BindAction(ItemDropAction, ETriggerEvent::Triggered, this, &AACCharacter::ItemDrop);
 	EnhancedInputComponent->BindAction(MeleeAction, ETriggerEvent::Triggered, this, &AACCharacter::Attack);
-	EnhancedInputComponent->BindAction(SteamFriendListAction, ETriggerEvent::Triggered, this, &AACCharacter::SetSteamFriendsList);
+	//EnhancedInputComponent->BindAction(SteamFriendListAction, ETriggerEvent::Triggered, this, &AACCharacter::SetSteamFriendsList);
 	EnhancedInputComponent->BindAction(SettingsCloseAction, ETriggerEvent::Triggered, this, &AACCharacter::SettingsClose);
 }
 

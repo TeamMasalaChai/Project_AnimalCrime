@@ -39,7 +39,6 @@ protected:
 	
 	virtual void Attack();
 
-	virtual void SetSteamFriendsList(const FInputActionValue& Value);
 	virtual void SettingsClose(const FInputActionValue& Value);
 
 	UFUNCTION(Server, Reliable)
@@ -114,10 +113,6 @@ protected:
 	/** Input Action: 기본 공격 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Member|Attack|Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> MeleeAction;
-
-	//!< 스팀 친구창 띄우기 <- 키 입력 컨트롤러로 이전 시 LobbyController로 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> SteamFriendListAction;
 
 	//!< 설정창 키 입력
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))

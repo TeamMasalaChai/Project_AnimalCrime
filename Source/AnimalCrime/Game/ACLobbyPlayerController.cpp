@@ -55,6 +55,11 @@ void AACLobbyPlayerController::SteamFriendListToggle(bool bVisible)
 
 }
 
+void AACLobbyPlayerController::UpdatePlayerReadyText(int32 AllplayerNum)
+{
+    LobbyScreen->UpdatePlayerReadyText(0, AllplayerNum);
+}
+
 void AACLobbyPlayerController::BeginPlay()
 {
     Super::BeginPlay();
