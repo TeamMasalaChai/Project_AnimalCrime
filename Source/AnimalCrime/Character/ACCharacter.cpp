@@ -26,7 +26,10 @@
 #include "Component/ACShopComponent.h"
 #include "UI/ACShopWidget.h"
 #include "Game/ACMainPlayerController.h"
-
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 
 AACCharacter::AACCharacter()
 {
@@ -216,6 +219,7 @@ AACCharacter::AACCharacter()
 	ShopComponent = CreateDefaultSubobject<UACShopComponent>(TEXT("ShopComponent"));
 	
 	GetCharacterMovement()->NetworkSmoothingMode = ENetworkSmoothingMode::Disabled;
+
 }
 
 
@@ -426,22 +430,29 @@ void AACCharacter::SetShopCamera()
 		return;
 	}
 
-	// 현재 카메라 상태 저장
+	// ===== 현재 카메라 상태 저장 =====
 	SavedControlRotation = PC->GetControlRotation();
-	SavedCameraArmLength = CameraBoom->TargetArmLength;
-	SavedCameraOffset = CameraBoom->TargetOffset;
+	SavedTargetArmLength = CameraBoom->TargetArmLength;
+	SavedTargetOffset = CameraBoom->TargetOffset;
+	bSavedUsePawnControlRotation = CameraBoom->bUsePawnControlRotation;
 
-	// 캐릭터의 정면을 보도록 설정
-	FRotator CharacterRotation = GetActorRotation();
-	FRotator NewControlRotation = FRotator(0.f, CharacterRotation.Yaw + 170.f, 0.f);  // 캐릭터 정면
-	PC->SetControlRotation(NewControlRotation);
+	// ===== 월드 기준 고정 각도로 카메라 설정 =====
 
-	// 카메라 거리 조정 (캐릭터 전체가 보이도록)
-	CameraBoom->TargetArmLength = 450.0f;  // 필요에 따라 조정
+	   // 1. CameraBoom이 컨트롤러 회전을 따라가지 않도록 설정
+	CameraBoom->bUsePawnControlRotation = false;
 
-	// 오른쪽 화면에 캐릭터가 보이도록 오프셋 조정
-	// X: 전후, Y: 좌우, Z: 상하
-	CameraBoom->TargetOffset = FVector(0.f, -180.f, 60.f);  // Y값을 음수로 하면 왼쪽, 양수면 오른쪽
+	// 2. 캐릭터 정면(월드 기준 북쪽)에서 약간 위에서 보도록 설정
+	// 월드 고정 각도 (Yaw 0도 = 북쪽 기준)
+	FRotator WorldFixedRotation = FRotator(-15.f, 0.f, 0.f);
+	PC->SetControlRotation(WorldFixedRotation);
+
+	// 3. CameraBoom의 로컬 회전을 설정 (캐릭터를 정면에서 봄)
+	CameraBoom->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
+	CameraBoom->SetRelativeLocation(FVector(100.0f, 100.0f, 0.f));
+
+	// 4. 카메라 거리 및 오프셋 조정
+	CameraBoom->TargetArmLength = 300.f;  // 캐릭터 전체가 보이는 거리
+	CameraBoom->TargetOffset = FVector(0.f, 0.f, 50.f);  // 약간 위쪽에서
 
 	bShopCameraActive = true;
 }
@@ -459,10 +470,17 @@ void AACCharacter::RestoreOriginalCamera()
 		return;
 	}
 
-	// 저장된 카메라 상태 복원
+	// ===== 원래 카메라 상태 복원 =====
+
+		 // 1. 컨트롤러 회전 복원
 	PC->SetControlRotation(SavedControlRotation);
-	CameraBoom->TargetArmLength = SavedCameraArmLength;
-	CameraBoom->TargetOffset = SavedCameraOffset;
+
+	// 2. CameraBoom 설정 복원
+	CameraBoom->bUsePawnControlRotation = bSavedUsePawnControlRotation;
+	CameraBoom->SetRelativeRotation(FRotator::ZeroRotator);  // 기본값으로
+	CameraBoom->SetRelativeLocation(FVector::ZeroVector);  // 기본값으로
+	CameraBoom->TargetArmLength = SavedTargetArmLength;
+	CameraBoom->TargetOffset = SavedTargetOffset;
 
 	bShopCameraActive = false;
 }

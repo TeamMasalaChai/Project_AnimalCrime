@@ -66,6 +66,7 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientToggleShopWidget(TSubclassOf<class UACShopWidget> WidgetClass);
 
+
 protected:
  /**
      @brief 상점용 카메라로 전환
@@ -188,8 +189,10 @@ private:
 	TObjectPtr<class UACShopWidget> CurrentShopWidget;
 
 	// 상점 열기 전 카메라 상태 저장
-	FRotator SavedControlRotation;
-	float SavedCameraArmLength;
-	FVector SavedCameraOffset;
+	FRotator SavedControlRotation;  
+	float SavedTargetArmLength;     
+	FVector SavedTargetOffset;     
+	bool bSavedUsePawnControlRotation;
+	
 	uint8 bShopCameraActive : 1 = false;
 };
