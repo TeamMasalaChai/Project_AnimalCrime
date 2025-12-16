@@ -14,38 +14,49 @@ class ANIMALCRIME_API AACCharacter : public ACharacter, public IACInteractInterf
 
 public:
 	AACCharacter();
+
+	/**
+		@brief 플레이어 컨트롤러 키 바인딩
+		@param PlayerInputComponent -
+	**/
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
- /**
-     @brief  캐릭터 정보를 반환하는 함수. 캐릭터 베이스는 시민.
-     @retval  - 캐릭터 정보 Enum
- **/
+
+	/**
+		@brief  캐릭터 정보를 반환하는 함수. 캐릭터 베이스는 None.
+		@retval  - 캐릭터 정보 Enum
+	**/
 	virtual EACCharacterType GetCharacterType();
 
 protected:
 	virtual void BeginPlay() override;
 
 public:
- /**
-     @brief 현재 입력매핑 컨텍스트를 전부 지우고 새로운 입력매핑 컨텍스트로 바꾸는 함수
-     @param NewMode - 입력모드 Enum
- **/
+	/**
+		@brief 현재 입력매핑 컨텍스트를 전부 지우고 새로운 입력매핑 컨텍스트로 바꾸는 함수
+		@param NewMode - 입력모드 Enum
+	**/
 	void ChangeInputMode(EInputMode NewMode);
 
+	//!< 키 입력 구현
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
-	virtual void Interact(const FInputActionValue& Value); 
-	virtual void ItemDrop(const FInputActionValue& Value);
-	
-	virtual void Attack();
 
-	virtual void SettingsClose(const FInputActionValue& Value);
-
+/**
+	@brief 상호작용 키(E) 키 입력시, 구현 코드
+	@param Value -
+**/
+	virtual void Interact(const FInputActionValue& Value);
 	UFUNCTION(Server, Reliable)
 	void ServerInteract();
 
+	virtual void ItemDrop(const FInputActionValue& Value);
 	UFUNCTION(Server, Reliable)
 	virtual void ServerItemDrop();
+
+	virtual void Attack();
+
+	virtual void SettingsClose(const FInputActionValue& Value);
 
 public:
 
@@ -63,8 +74,8 @@ public:
 	TObjectPtr<class USkeletalMeshComponent> GetTopMesh() const { return TopMesh; }
 	TObjectPtr<class USkeletalMeshComponent> GetBottomMesh() const { return BottomMesh; }
 	TObjectPtr<class USkeletalMeshComponent> GetShoesMesh() const { return ShoesMesh; }
-	
-	
+
+
 protected:
 	//!< 메쉬 컴포넌트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
@@ -101,7 +112,7 @@ protected:
 	TObjectPtr<class UInputAction> InteractAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> ItemDropAction;
-	
+
 	/** Input Action: 기본 공격 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Member|Attack|Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> MeleeAction;
@@ -119,33 +130,55 @@ protected:
 	/** 플레그: 공격 시도 중 여부 */
 	UPROPERTY()
 	uint8 bAttackFlag : 1 = false;
-	
+
 	UFUNCTION(Server, Reliable)
 	void ServerAttack();
 	void PerformAttackTrace();
-	
+
 public:
 	void AttackHitCheck();
-	
+
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastPlayAttackMontage();
 
 
-	
+	//!< 상호작용 함수
 public:
+	/**
+		@brief NearInteractables 배열에 상호작용 가능한(상호작용 컴포넌트를 지닌) 액터 저장. 상호작용 컴포넌트와 오버랩 시작시 불림.
+		@param Interactor - 배열에 추가할 상호작용 가능한 액터
+	**/
 	void AddInteractable(AActor* Interactor);
+	/**
+		@brief NearInteractables 배열에 저장되어있는 액터 제거. 상호작용 컴포넌트와 오버랩 끝날시 불림.
+		@param Interactor - 배열에서 제거할 상호작용 가능한 액터
+	**/
 	void RemoveInteractable(AActor* Interactor);
+
+	//!< 상호작용 인터페이스 구현
 protected:
-	virtual bool CanInteract(AACCharacter* ACPlayer) override;		// 누가 상호작용 가능한지(캐릭터 타입 체크) |
-	virtual void OnInteract(AACCharacter* ACPlayer) override;		// 실제 상호작용 로직(서버에서 실행) |
+	virtual bool CanInteract(AACCharacter* ACPlayer) override;
+	virtual void OnInteract(AACCharacter* ACPlayer) override;
 	virtual FString GetInteractableName() const override;
 
+private:
+	/**
+		@brief  NearInteractables Array의 Actor들을 플레이어와 거리가 가까운 순서로 Sort. Sort 여부를 반환.
+		@retval  - NearInteractables가 Sort되었으면 true, 아니면 false 반환
+	**/
+	bool SortNearInteractables();
+
+
+	//!< 상호작용 멤버변수
+public:
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
 	TObjectPtr<class UACInteractableComponent> InteractBoxComponent;
-private:
-	bool SortNearInteractables();
+
 private:
 	TArray<AActor*> NearInteractables;
+
+
 
 	// ===== 상점 관련 =====
   protected:
