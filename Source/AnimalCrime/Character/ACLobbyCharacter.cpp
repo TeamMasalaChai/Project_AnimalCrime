@@ -84,6 +84,7 @@ void AACLobbyCharacter::GameReady(const FInputActionValue& Value)
 	// 호스트인지 확인
 	if (PC->IsLocalController() && HasAuthority())
 	{
-
+		//맵 이동
+		PC->ServerStartGame();
 	}
 }

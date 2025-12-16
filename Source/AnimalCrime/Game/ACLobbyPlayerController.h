@@ -19,6 +19,13 @@ public:
  **/
 	void SteamFriendListToggle(bool bVisible);
 	void UpdatePlayerReadyText(int32 AllplayerNum);
+
+public:
+ /**
+     @brief 게임모드에 맵이동 호출하는 함수
+ **/
+	UFUNCTION(Server, Reliable)
+	void ServerStartGame();
 protected:
 	virtual void BeginPlay() override;
 
