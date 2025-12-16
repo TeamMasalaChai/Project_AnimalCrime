@@ -37,6 +37,13 @@ float AACMainGameState::GetTeamScore() const
 #pragma endregion
 
 #pragma region AI 행동을 위한 함수
+void AACMainGameState::OnRep_TeamScore()
+{
+	UE_LOG(LogTemp, Error, TEXT("OnRep_Score 호출 :%f"), TeamScore);
+	
+	OnScoreChanged.Broadcast(TeamScore);
+}
+
 void AACMainGameState::RegisterDestination(AActor* Actor)
 {
 	for (auto InObject:DestinationObjects)

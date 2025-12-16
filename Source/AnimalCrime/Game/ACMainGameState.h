@@ -7,6 +7,8 @@
 #include "GameFramework/GameState.h"
 #include "ACMainGameState.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnScoreChanged, float, NewScore);
+
 /**
  * 
  */
@@ -46,6 +48,21 @@ public:
 
 #pragma region AI 행동을 위한 함수
 public:
+	FOnScoreChanged OnScoreChanged;
+	
+	UPROPERTY(ReplicatedUsing=OnRep_TeamScore)
+	float TeamScore = 5000;
+	
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	float MaxScore = 7000;
+	
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	float MinScore = 0;
+
+	UFUNCTION()
+	void OnRep_TeamScore();
+	
+public:
  /**
      @brief 목적지를 등록하는 함수
      @param Actor - 목적지 Actor
@@ -72,8 +89,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<TObjectPtr<class AACEscapeArea>> EscapeAreas;
 	
-	
-
 public:
 //!< 서버 전용. Replicated 안 함.
 	UPROPERTY()
