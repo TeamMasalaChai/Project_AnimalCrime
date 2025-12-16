@@ -8,6 +8,13 @@
 
 #include "Character/ACTestMafiaCharacter.h"
 
+#pragma region 생성자
+AACMainGameState::AACMainGameState()
+{
+}
+#pragma endregion
+
+#pragma region 엔진 제공 함수
 void AACMainGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -15,7 +22,21 @@ void AACMainGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(AACMainGameState, TeamScore);
 	DOREPLIFETIME(AACMainGameState, EscapeState);
 }
+#pragma endregion
 
+#pragma region GameRuleManager와 동기화 및 테스트 함수
+void AACMainGameState::UpdateTeamScore(float InScore)
+{
+	TeamScore = InScore;
+}
+
+float AACMainGameState::GetTeamScore() const
+{
+	return TeamScore;
+}
+#pragma endregion
+
+#pragma region AI 행동을 위한 함수
 void AACMainGameState::RegisterDestination(AActor* Actor)
 {
 	for (auto InObject:DestinationObjects)
@@ -44,6 +65,7 @@ AActor* AACMainGameState::GetDestinationActor() const
 	int32 RandIndex = FMath::RandRange(0, DestinationObjects.Num() - 1);
 	return DestinationObjects[RandIndex];
 }
+#pragma endregion
 
 void AACMainGameState::ServerChangeEscapeState_Implementation(EEscapeState NewEscapeState)
 {
