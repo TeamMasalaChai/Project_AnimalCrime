@@ -6,6 +6,7 @@
 #include "UI/Shop/ACShopWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "AnimalCrime.h"
+#include "Game/ACMainPlayerController.h"
 
 // Sets default values
 AACShopArea::AACShopArea()
@@ -53,9 +54,17 @@ void AACShopArea::OnInteract(AACCharacter* ACPlayer)
         return;
     }
 
+    // PlayerController를 통해 상점 토글
+    AACMainPlayerController* PC = ACPlayer->GetController<AACMainPlayerController>();
+    if (PC == nullptr)
+    {
+        UE_LOG(LogHG, Warning, TEXT("OnInteract: PlayerController is not AACMainPlayerController"));
+        return;
+    }
+
     // 서버에서 클라이언트에게 위젯 토글 명령 전송
     UE_LOG(LogHG, Log, TEXT("Server: Sending toggle command to %s"), *ACPlayer->GetName());
-    ACPlayer->ClientToggleShopWidget(ShopWidgetClass);
+    PC->ClientToggleShopWidget(ShopWidgetClass);
 }
 
 FString AACShopArea::GetInteractableName() const

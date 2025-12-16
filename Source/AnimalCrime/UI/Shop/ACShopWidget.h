@@ -6,6 +6,7 @@
 #include "UI/ACCustomWidget.h"
 #include "ACShopWidget.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShopCloseRequested);
 
 UENUM()
 enum class EShopCategory
@@ -75,6 +76,11 @@ private:
 	UFUNCTION()
 	void OnShoesButtonClicked();
 
+ /**
+     @brief 상점 나가기 버튼
+ **/
+	UFUNCTION()
+	void OnCloseButtonClicked();
 
  /**
      @brief 카테고리 보여주기
@@ -103,6 +109,9 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UButton> ShoesButton;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UButton> CloseButton;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UBorder> ContentBorder;
@@ -153,4 +162,14 @@ protected:
 	// 현재 선택된 카테고리
 	UPROPERTY()
 	EShopCategory CurrentCategory;
+
+public:
+	// ===== 델리게이트 =====
+
+    /**
+    	@brief 상점 닫기 요청 델리게이트
+    	@details CloseButton이 클릭되면 브로드캐스트됨
+    **/
+	UPROPERTY(BlueprintAssignable, Category = "Shop|Events")
+	FOnShopCloseRequested OnCloseRequested;
 };

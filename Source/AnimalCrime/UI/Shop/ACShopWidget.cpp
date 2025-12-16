@@ -42,8 +42,8 @@ void UACShopWidget::NativeConstruct()
     if (ShoesButton != nullptr)
         ShoesButton->OnClicked.AddDynamic(this, &UACShopWidget::OnShoesButtonClicked);
 
-    // 보더 배열에 등록
-    //Borders = { WeaponBorder, ClothingBorder};
+    if (CloseButton != nullptr)
+        CloseButton->OnClicked.AddDynamic(this, &UACShopWidget::OnCloseButtonClicked);
 
    // 초기 상태: Weapon 카테고리 보여주기
     ShowCategory(EShopCategory::Weapon);
@@ -245,6 +245,12 @@ void UACShopWidget::OnBottomButtonClicked()
 void UACShopWidget::OnShoesButtonClicked()
 {
     ShowCategory(EShopCategory::Shoes);
+}
+
+void UACShopWidget::OnCloseButtonClicked()
+{
+    // 델리게이트 브로드캐스트 - 누가 바인딩했든 모두에게 알림
+    OnCloseRequested.Broadcast();
 }
 
 void UACShopWidget::ShowCategory(EShopCategory Category)
