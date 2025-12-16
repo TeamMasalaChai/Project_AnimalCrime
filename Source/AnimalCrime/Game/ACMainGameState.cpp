@@ -35,11 +35,14 @@ AActor* AACMainGameState::GetDestinationActor() const
 {
 	if (DestinationObjects.Num() == 0)
 	{
+		UE_LOG(LogTemp, Error, TEXT("DestinationObjects가 존재하지 않습니다."));
 		return nullptr;
 	}
 	
 	// @InComplete
-	return DestinationObjects[0];
+	// @Todo 현재 랜덤 값이지만, 나중에는 최대 인원수를 둬야할 것 같음.
+	int32 RandIndex = FMath::RandRange(0, DestinationObjects.Num() - 1);
+	return DestinationObjects[RandIndex];
 }
 
 void AACMainGameState::ServerChangeEscapeState_Implementation(EEscapeState NewEscapeState)
