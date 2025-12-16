@@ -53,7 +53,7 @@ AACCharacter::AACCharacter()
 	MeshComp->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 	MeshComp->SetReceivesDecals(false);
 
-	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimRef(TEXT("/Script/Engine.AnimBlueprint'/Game/Project/Character/ABP_ACPlayerHena.ABP_ACPlayerHena_C'"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimRef(TEXT("/Script/Engine.AnimBlueprint'/Game/Project/Character/ABP_ACPlayer.ABP_ACPlayer_C'"));
 	if (AnimRef.Succeeded())
 	{
 		MeshComp->SetAnimInstanceClass(AnimRef.Class);
@@ -196,10 +196,6 @@ void AACCharacter::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(LookAxisVector.Y);
 }
 
-/**
-    @brief 상호작용 키(E) 키 입력시, 구현 코드
-    @param Value - 
-**/
 void AACCharacter::Interact(const FInputActionValue& Value)
 {
 	//AC_LOG(LogSW, Log, TEXT("Interact Pressed"));
@@ -377,10 +373,6 @@ void AACCharacter::RemoveInteractable(AActor* Interactor)
 	NearInteractables.Remove(Interactor);
 }
 
-/**
-    @brief  NearInteractables Array의 Actor들을 플레이어와 거리가 가까운 순서로 Sort. Sort 여부를 반환.
-    @retval  - NearInteractables가 Sort되었으면 true, 아니면 false 반환
-**/
 bool AACCharacter::SortNearInteractables()
 {
 	if (NearInteractables.Num() == 0)

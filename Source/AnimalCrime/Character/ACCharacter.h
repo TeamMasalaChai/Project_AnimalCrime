@@ -24,10 +24,10 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
- /**
-     @brief 현재 입력매핑 컨텍스트를 전부 지우고 새로운 입력매핑 컨텍스트로 바꾸는 함수
-     @param NewMode - 입력모드 Enum
- **/
+	/**
+		@brief 현재 입력매핑 컨텍스트를 전부 지우고 새로운 입력매핑 컨텍스트로 바꾸는 함수
+		@param NewMode - 입력모드 Enum
+	**/
 	void ChangeInputMode(EInputMode NewMode);
 
 	// ===== 입력 핸들러 (PlayerController가 호출) =====
@@ -62,8 +62,8 @@ public:
 	TObjectPtr<class USkeletalMeshComponent> GetTopMesh() const { return TopMesh; }
 	TObjectPtr<class USkeletalMeshComponent> GetBottomMesh() const { return BottomMesh; }
 	TObjectPtr<class USkeletalMeshComponent> GetShoesMesh() const { return ShoesMesh; }
-	
-	
+
+
 protected:
 	//!< 메쉬 컴포넌트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
@@ -94,33 +94,55 @@ protected:
 	/** 플레그: 공격 시도 중 여부 */
 	UPROPERTY()
 	uint8 bAttackFlag : 1 = false;
-	
+
 	UFUNCTION(Server, Reliable)
 	void ServerAttack();
 	void PerformAttackTrace();
-	
+
 public:
 	void AttackHitCheck();
-	
+
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastPlayAttackMontage();
 
 
-	
+	//!< 상호작용 함수
 public:
+	/**
+		@brief NearInteractables 배열에 상호작용 가능한(상호작용 컴포넌트를 지닌) 액터 저장. 상호작용 컴포넌트와 오버랩 시작시 불림.
+		@param Interactor - 배열에 추가할 상호작용 가능한 액터
+	**/
 	void AddInteractable(AActor* Interactor);
+	/**
+		@brief NearInteractables 배열에 저장되어있는 액터 제거. 상호작용 컴포넌트와 오버랩 끝날시 불림.
+		@param Interactor - 배열에서 제거할 상호작용 가능한 액터
+	**/
 	void RemoveInteractable(AActor* Interactor);
+
+	//!< 상호작용 인터페이스 구현
 protected:
-	virtual bool CanInteract(AACCharacter* ACPlayer) override;		// 누가 상호작용 가능한지(캐릭터 타입 체크) |
-	virtual void OnInteract(AACCharacter* ACPlayer) override;		// 실제 상호작용 로직(서버에서 실행) |
+	virtual bool CanInteract(AACCharacter* ACPlayer) override;
+	virtual void OnInteract(AACCharacter* ACPlayer) override;
 	virtual FString GetInteractableName() const override;
 
+private:
+	/**
+		@brief  NearInteractables Array의 Actor들을 플레이어와 거리가 가까운 순서로 Sort. Sort 여부를 반환.
+		@retval  - NearInteractables가 Sort되었으면 true, 아니면 false 반환
+	**/
+	bool SortNearInteractables();
+
+
+	//!< 상호작용 멤버변수
+public:
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
 	TObjectPtr<class UACInteractableComponent> InteractBoxComponent;
-private:
-	bool SortNearInteractables();
+
 private:
 	TArray<AActor*> NearInteractables;
+
+
 
 	// ===== 상점 관련 =====
   protected:
