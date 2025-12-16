@@ -77,30 +77,30 @@ void UACAdvancedFriendsGameInstance::UpdateMap(const EMapType InMapType)
     {
     case EMapType::Lobby:
         {
-            UE_LOG(LogTemp, Error, TEXT("엥 말도 안돼"));
-            if (GEngine->IsEditor() && World->WorldType == EWorldType::PIE)
-            {
-                UGameplayStatics::OpenLevel(World, FName("LobbyMap"));
-            }
-            else
-            {
-                //GetWorld()->ServerTravel(LobbyMapName);
-                World->ServerTravel("/Game/Project/Map/LobbyMap");
-            }
+            // UE_LOG(LogTemp, Error, TEXT("엥 말도 안돼"));
+            // if (GEngine->IsEditor() && World->WorldType == EWorldType::PIE)
+            // {
+            //     UGameplayStatics::OpenLevel(World, FName("LobbyMap"));
+            // }
+            // else
+            // {
+            //     //GetWorld()->ServerTravel(LobbyMapName);
+            //     World->ServerTravel("/Game/Project/Map/LobbyMap");
+            // }
             break;
         }
         
         
     case EMapType::Game:
         {
-            if (World->IsNetMode(NM_Standalone))
-            {
-                UGameplayStatics::OpenLevel(World, FName("henaMap"));
-            }
-            else
-            {
+            // if (World->IsNetMode(NM_Standalone))
+            // {
+            //     UGameplayStatics::OpenLevel(World, FName("henaMap"));
+            // }
+            // else
+            // {
                 World->ServerTravel("/Game/Project/Map/henaMap");
-            }
+            //}
             // if (GEngine->IsEditor() && World->WorldType == EWorldType::PIE)
             // {
             //     UE_LOG(LogTemp, Error, TEXT("EMapType::Game == EWorldType::PIE"));
