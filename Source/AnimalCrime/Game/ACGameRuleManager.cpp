@@ -45,7 +45,7 @@ void UACGameRuleManager::OnObjectDestroyed(float InScore)
 	}
 	
 	GameScoreGauge -= InScore;
-	MainGameState->TeamScore = GameScoreGauge;
+	MainGameState->UpdateTeamScore(GameScoreGauge);
 	if (GameScoreGauge <= MafiaWinThreshold)
 	{
 		UE_LOG(LogTemp, Log, TEXT("어머나 마피아 승"));

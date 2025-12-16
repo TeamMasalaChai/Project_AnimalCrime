@@ -58,16 +58,29 @@ UCLASS()
 class ANIMALCRIME_API UACGameRuleManager : public UObject
 {
 	GENERATED_BODY()
-#pragma region 특수 맴버 함수
+	
+#pragma region 생성자
 public:
 	UACGameRuleManager();
 #pragma endregion
-	
+
 public:
+ /**
+     @brief GameMode에서 객체 생성 시 사용하는 함수.
+     @param InGameMode - 
+ **/
 	void Init(AACMainGameMode* InGameMode);
-	
+
+ /**
+     @brief  
+     @retval  - 
+ **/
 	AACMainGameMode* GetOwner() const;
-	
+
+ /**
+     @brief  
+     @retval  - 
+ **/
 	float GetScoreGauge() const;
 	
 public:

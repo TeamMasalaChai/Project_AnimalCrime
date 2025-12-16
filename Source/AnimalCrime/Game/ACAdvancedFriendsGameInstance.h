@@ -76,5 +76,11 @@ private:
     UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
     FString GameMapName;
 #pragma endregion
+    
+    
+#pragma region Network Test 맴버 변수
+private:
+    FTimerHandle TimerHandle;
+#pragma endregion
 };
 

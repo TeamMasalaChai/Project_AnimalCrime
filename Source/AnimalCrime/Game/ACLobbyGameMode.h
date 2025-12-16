@@ -10,4 +10,5 @@ class ANIMALCRIME_API AACLobbyGameMode : public AGameMode
 	GENERATED_BODY()
 public:
 	AACLobbyGameMode();
+	virtual  void BeginPlay() override;
 };

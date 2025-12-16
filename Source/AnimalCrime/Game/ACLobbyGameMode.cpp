@@ -1,5 +1,7 @@
 ﻿
 #include "ACLobbyGameMode.h"
+
+#include "ACAdvancedFriendsGameInstance.h"
 #include "ACLobbyPlayerController.h"
 #include "Character/ACTestMafiaCharacter.h"
 
@@ -17,4 +19,22 @@ AACLobbyGameMode::AACLobbyGameMode()
     }
 
 	//DefaultPawnClass = AACTestMafiaCharacter::StaticClass();
+}
+
+void AACLobbyGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
+		{
+		UACAdvancedFriendsGameInstance* Instance = GetGameInstance<UACAdvancedFriendsGameInstance>();
+		if (Instance == nullptr)
+		{
+			return ;
+		}
+		UE_LOG(LogTemp, Log, TEXT("실행이 된걸까?"));
+		Instance->LoadGameMap();
+		
+		}),10, false);
 }

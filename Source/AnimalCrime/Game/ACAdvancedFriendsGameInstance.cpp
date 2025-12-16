@@ -21,11 +21,16 @@ void UACAdvancedFriendsGameInstance::Init()
     
     
     // 맵 관련 초기화
-    CurrentMapType = EMapType::Game;
+    CurrentMapType = EMapType::None;
 	
     LobbyMapName = TEXT("LobbyMap");
     GameMapName = TEXT("HenaMap");
 	
+    GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([]()
+    {
+        UE_LOG(LogHY, Warning, TEXT("여긴 어딜까?"));
+    }),10, false);
+    
     UE_LOG(LogTemp, Warning, TEXT("UACMainGameInstance::Init"));
 }
 
@@ -67,14 +72,48 @@ void UACAdvancedFriendsGameInstance::UpdateMap(const EMapType InMapType)
         UE_LOG(LogTemp, Error, TEXT("CurrentMapType == InMapType"));
         return ;
     }
-
+    UWorld* World = GetWorld();
     switch (InMapType)
     {
     case EMapType::Lobby:
-        GetWorld()->ServerTravel(LobbyMapName);
-        break;
+        {
+            UE_LOG(LogTemp, Error, TEXT("엥 말도 안돼"));
+            if (GEngine->IsEditor() && World->WorldType == EWorldType::PIE)
+            {
+                UGameplayStatics::OpenLevel(World, FName("LobbyMap"));
+            }
+            else
+            {
+                //GetWorld()->ServerTravel(LobbyMapName);
+                World->ServerTravel("/Game/Project/Map/LobbyMap");
+            }
+            break;
+        }
+        
+        
     case EMapType::Game:
-        GetWorld()->ServerTravel(GameMapName);
+        {
+            if (World->IsNetMode(NM_Standalone))
+            {
+                UGameplayStatics::OpenLevel(World, FName("henaMap"));
+            }
+            else
+            {
+                World->ServerTravel("/Game/Project/Map/henaMap");
+            }
+            // if (GEngine->IsEditor() && World->WorldType == EWorldType::PIE)
+            // {
+            //     UE_LOG(LogTemp, Error, TEXT("EMapType::Game == EWorldType::PIE"));
+            //     UGameplayStatics::OpenLevel(World, FName("henaMap"));
+            // }
+            // else
+            // {
+            //     //GetWorld()->ServerTravel(LobbyMapName);
+            //     UE_LOG(LogTemp, Error, TEXT("EMapType::Game != EWorldType::PIE"));
+            //     World->ServerTravel("/Game/Project/Map/henaMap");
+            // }
+        }
+        
         break;
     default:
         break;
