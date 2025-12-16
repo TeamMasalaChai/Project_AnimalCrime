@@ -11,4 +11,7 @@ class ANIMALCRIME_API AACLobbyGameMode : public AGameMode
 public:
 	AACLobbyGameMode();
 	virtual  void BeginPlay() override;
+
+	FTimerHandle TravelTimerHandle;
+	void StartGameTravel();
 };
