@@ -31,7 +31,7 @@ void AACLobbyGameMode::BeginPlay()
             TravelTimerHandle,
             this,
             &AACLobbyGameMode::StartGameTravel,
-            2.0f,
+            15.0f,
             false
         );
     }
