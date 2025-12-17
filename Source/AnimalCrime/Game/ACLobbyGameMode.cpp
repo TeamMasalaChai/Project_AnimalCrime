@@ -4,6 +4,7 @@
 #include "ACLobbyGameState.h"
 #include "Character/ACLobbyCharacter.h"
 #include "Character/ACMafiaCharacter.h"
+#include "ACAdvancedFriendsGameInstance.h"
 #include "AnimalCrime.h"
 
 AACLobbyGameMode::AACLobbyGameMode()
@@ -31,7 +32,15 @@ void AACLobbyGameMode::StartGamePlay()
 		return;
 	}
 
-	World->ServerTravel("/Game/Project/Map/DemoMap?listen", false);
+	//World->ServerTravel("/Game/Project/Map/DemoMap?listen", false);
+
+	UACAdvancedFriendsGameInstance* GI = GetGameInstance<UACAdvancedFriendsGameInstance>();
+	if (GI == nullptr)
+	{
+		return;
+	}
+	GI->LoadGameMap();
+
 
 	AC_LOG(LogSY, Log, TEXT("맵이동"));	
 }
