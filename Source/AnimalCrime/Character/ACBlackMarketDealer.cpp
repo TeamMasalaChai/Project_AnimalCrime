@@ -1,12 +1,12 @@
 ﻿
-#include "ACTestBlackMarketDealer.h"
-#include "ACTestMafiaCharacter.h"
+#include "ACBlackMarketDealer.h"
+#include "ACMafiaCharacter.h"
 #include "Components/BoxComponent.h"
 #include "EscapeQuest/ACBlackMarketComponent.h"
 #include "Component/ACInteractableComponent.h"
 #include "AnimalCrime.h"
 
-AACTestBlackMarketDealer::AACTestBlackMarketDealer()
+AACBlackMarketDealer::AACBlackMarketDealer()
 {
 	HeadMesh->SetSkeletalMesh(LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Creative_Characters_FREE/Skeleton_Meshes/SK_Hairstyle_male_010.SK_Hairstyle_male_010")));
 	TopMesh->SetSkeletalMesh(nullptr);
@@ -15,12 +15,12 @@ AACTestBlackMarketDealer::AACTestBlackMarketDealer()
 
 }
 
-EACCharacterType AACTestBlackMarketDealer::GetCharacterType()
+EACCharacterType AACBlackMarketDealer::GetCharacterType()
 {
 	return EACCharacterType::BlackMarketDealer;
 }
 
-bool AACTestBlackMarketDealer::CanInteract(AACCharacter* ACPlayer)
+bool AACBlackMarketDealer::CanInteract(AACCharacter* ACPlayer)
 {
 	if (ACPlayer == nullptr)
 	{
@@ -36,7 +36,7 @@ bool AACTestBlackMarketDealer::CanInteract(AACCharacter* ACPlayer)
 	return true;
 }
 
-void AACTestBlackMarketDealer::OnInteract(AACCharacter* ACPlayer)
+void AACBlackMarketDealer::OnInteract(AACCharacter* ACPlayer)
 {
 	ShowInteractDebug(ACPlayer);
 
@@ -46,7 +46,7 @@ void AACTestBlackMarketDealer::OnInteract(AACCharacter* ACPlayer)
 	}
 }
 
-FString AACTestBlackMarketDealer::GetInteractableName() const
+FString AACBlackMarketDealer::GetInteractableName() const
 {
 	return TEXT("BlackMarketDealer");
 }

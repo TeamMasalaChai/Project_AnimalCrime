@@ -3,15 +3,15 @@
 
 #include "CoreMinimal.h"
 #include "Character/ACCharacter.h"
-#include "ACTestBlackMarketDealer.generated.h"
+#include "ACBlackMarketDealer.generated.h"
 
 UCLASS()
-class ANIMALCRIME_API AACTestBlackMarketDealer : public AACCharacter
+class ANIMALCRIME_API AACBlackMarketDealer : public AACCharacter
 {
 	GENERATED_BODY()
 
 public:
-	AACTestBlackMarketDealer();
+	AACBlackMarketDealer();
 
 	virtual EACCharacterType GetCharacterType() override;
 

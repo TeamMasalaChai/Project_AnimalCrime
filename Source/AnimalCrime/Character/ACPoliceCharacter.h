@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Character/ACCharacter.h"
-#include "ACTestPoliceCharacter.generated.h"
+#include "ACPoliceCharacter.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
-class ANIMALCRIME_API AACTestPoliceCharacter : public AACCharacter
+class ANIMALCRIME_API AACPoliceCharacter : public AACCharacter
 {
 	GENERATED_BODY()
-	
+
 public:
-	AACTestPoliceCharacter();
+	AACPoliceCharacter();
 
 	virtual EACCharacterType GetCharacterType() override;
 

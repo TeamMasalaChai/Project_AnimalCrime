@@ -2,10 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Character/ACCharacter.h"
-#include "ACTestMafiaCharacter.generated.h"
+#include "ACMafiaCharacter.generated.h"
 
 UCLASS()
-class ANIMALCRIME_API AACTestMafiaCharacter : public AACCharacter
+class ANIMALCRIME_API AACMafiaCharacter : public AACCharacter
 {
 	GENERATED_BODY()
 

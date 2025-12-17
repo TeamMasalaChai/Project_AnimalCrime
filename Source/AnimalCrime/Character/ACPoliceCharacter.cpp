@@ -1,10 +1,11 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Character/ACTestPoliceCharacter.h"
+#include "Character/ACPoliceCharacter.h"
 #include "AnimalCrime.h"
+#include "Components/SkeletalMeshComponent.h"
 
-AACTestPoliceCharacter::AACTestPoliceCharacter()
+AACPoliceCharacter::AACPoliceCharacter()
 {
 	// Weapon Component
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon"));
@@ -18,23 +19,23 @@ AACTestPoliceCharacter::AACTestPoliceCharacter()
 	WeaponMesh->SetupAttachment(GetMesh(), TEXT("RightHandSocket"));
 }
 
-EACCharacterType AACTestPoliceCharacter::GetCharacterType()
+EACCharacterType AACPoliceCharacter::GetCharacterType()
 {
 	return EACCharacterType::Police;
 }
 
-bool AACTestPoliceCharacter::CanInteract(AACCharacter* ACPlayer)
+bool AACPoliceCharacter::CanInteract(AACCharacter* ACPlayer)
 {
 	// 경찰끼리도 소통 가능?
 	return true;
 }
 
-void AACTestPoliceCharacter::OnInteract(AACCharacter* ACPlayer)
+void AACPoliceCharacter::OnInteract(AACCharacter* ACPlayer)
 {
 	ShowInteractDebug(ACPlayer);
 }
 
-FString AACTestPoliceCharacter::GetInteractableName() const
+FString AACPoliceCharacter::GetInteractableName() const
 {
 	return TEXT("Police");
 }

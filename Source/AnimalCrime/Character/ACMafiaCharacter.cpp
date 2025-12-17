@@ -1,9 +1,9 @@
 ﻿
-#include "Character/ACTestMafiaCharacter.h"
+#include "Character/ACMafiaCharacter.h"
 #include "Item/ACEscapeMissionBomb.h"
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "ACTestBlackMarketDealer.h"
+#include "ACBlackMarketDealer.h"
 #include "EscapeQuest/ACBombInstallArea.h"
 #include "EscapeQuest/ACEscapeArea.h"
 #include "Kismet/GameplayStatics.h"
@@ -11,13 +11,13 @@
 #include "Game/ACMainGameState.h"
 #include "AnimalCrime.h"
 
-void AACTestMafiaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void AACMafiaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AACTestMafiaCharacter, HandBomb);
+	DOREPLIFETIME(AACMafiaCharacter, HandBomb);
 }
 
-void AACTestMafiaCharacter::BeginPlay()
+void AACMafiaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -35,33 +35,33 @@ void AACTestMafiaCharacter::BeginPlay()
 	AC_LOG(LogSY, Warning, TEXT("Mafia:: %d"), GS->MafiaPlayers.Num());
 }
 
-bool AACTestMafiaCharacter::CanInteract(AACCharacter* ACPlayer)
+bool AACMafiaCharacter::CanInteract(AACCharacter* ACPlayer)
 {
 	return true;
 }
 
-void AACTestMafiaCharacter::OnInteract(AACCharacter* ACPlayer)
+void AACMafiaCharacter::OnInteract(AACCharacter* ACPlayer)
 {
 	ShowInteractDebug(ACPlayer);
 }
 
-FString AACTestMafiaCharacter::GetInteractableName() const
+FString AACMafiaCharacter::GetInteractableName() const
 {
 	return TEXT("Mafia");
 }
 
-EACCharacterType AACTestMafiaCharacter::GetCharacterType()
+EACCharacterType AACMafiaCharacter::GetCharacterType()
 {
 	return EACCharacterType::Mafia;
 }
 
-void AACTestMafiaCharacter::ItemDrop(const FInputActionValue& Value)
+void AACMafiaCharacter::ItemDrop(const FInputActionValue& Value)
 {
 	AC_LOG(LogSY, Log, TEXT("ItemDrop Key!!"));
 	ServerItemDrop(); //서버에 알림.
 }
 
-void AACTestMafiaCharacter::ServerItemDrop_Implementation()
+void AACMafiaCharacter::ServerItemDrop_Implementation()
 {
 	if (HandBomb != nullptr)
 	{
@@ -92,7 +92,7 @@ void AACTestMafiaCharacter::ServerItemDrop_Implementation()
 	}
 }
 
-void AACTestMafiaCharacter::ClientSetBombAreaVisible_Implementation(bool bVisible)
+void AACMafiaCharacter::ClientSetBombAreaVisible_Implementation(bool bVisible)
 {
 	AACMainGameState* GS = GetWorld()->GetGameState<AACMainGameState>();
 	if (GS == nullptr)
@@ -113,7 +113,7 @@ void AACTestMafiaCharacter::ClientSetBombAreaVisible_Implementation(bool bVisibl
 	}
 }
 
-void AACTestMafiaCharacter::ClientSetEscapeAreaVisible_Implementation(bool bVisible)
+void AACMafiaCharacter::ClientSetEscapeAreaVisible_Implementation(bool bVisible)
 {
 	AACMainGameState* GS = GetWorld()->GetGameState<AACMainGameState>();
 	if (GS == nullptr)
@@ -134,7 +134,7 @@ void AACTestMafiaCharacter::ClientSetEscapeAreaVisible_Implementation(bool bVisi
 	}
 }
 
-void AACTestMafiaCharacter::OnRep_HandBomb()
+void AACMafiaCharacter::OnRep_HandBomb()
 {
 	if (HandBomb)
 	{
