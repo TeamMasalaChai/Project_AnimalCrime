@@ -18,6 +18,8 @@ AACMainGameMode::AACMainGameMode()
 	//DefaultPawnClass = AACCharacter::StaticClass();
 	DefaultPawnClass = AACTestMafiaCharacter::StaticClass();
 	GameStateClass = AACMainGameState::StaticClass();
+	
+	bUseSeamlessTravel = true;
 }
 
 void AACMainGameMode::BeginPlay()
@@ -48,11 +50,11 @@ void AACMainGameMode::AddTeamScore(int32 Score)
 	AACMainGameState* MainGameState = GetGameState<AACMainGameState>();
 	if (MainGameState)
 	{
-		MainGameState->TeamScore += Score;  // Replicate → 모든 클라 업데이트됨
+		MainGameState->UpdateTeamScore(MainGameState->GetTeamScore() + Score);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Log, TEXT(" AddTeamScore Nullptr"));
+		UE_LOG(LogTemp, Log, TEXT("AddTeamScore Nullptr"));
 	}
 }
 
@@ -62,11 +64,11 @@ int32 AACMainGameMode::GetTeamScore() const
 	AACMainGameState* MainGameState = GetGameState<AACMainGameState>();
 	if (MainGameState)
 	{
-		return MainGameState->TeamScore;
+		return MainGameState->GetTeamScore();
 	}
 	else
 	{
-		UE_LOG(LogTemp, Log, TEXT(" GetTeamScore Nullptr"));
+		UE_LOG(LogTemp, Log, TEXT("GetTeamScore Nullptr"));
 	}
 	return -1;
 }
