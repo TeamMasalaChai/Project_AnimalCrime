@@ -3,6 +3,8 @@
 #include "Game/ACLobbyPlayerController.h"
 #include "EnhancedInputComponent.h"
 
+#include "AnimalCrime.h"
+
 AACLobbyCharacter::AACLobbyCharacter()
 {
 }
@@ -57,7 +59,12 @@ void AACLobbyCharacter::GameReady(const FInputActionValue& Value)
 	// 호스트인지 확인
 	if (PC->IsLocalController() && HasAuthority())
 	{
+		AC_LOG(LogSY, Log, TEXT("호스트 맞음"));
 		//맵 이동
 		PC->ServerStartGame();
+	}
+	else
+	{
+		AC_LOG(LogSY, Log, TEXT("호스트 아님"));
 	}
 }

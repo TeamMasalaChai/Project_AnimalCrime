@@ -19,13 +19,21 @@ AACLobbyGameMode::AACLobbyGameMode()
 	{
 		DefaultPawnClass = DefaultPawnBP.Class;
 	}
+
 	bUseSeamlessTravel = true;
 	//DefaultPawnClass = AACLobbyCharacter::StaticClass();
 }
-
 void AACLobbyGameMode::StartGamePlay()
 {
-	GetWorld()->ServerTravel("/Game/Project/Map/DemoMap", true);
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	World->ServerTravel("/Game/Project/Map/DemoMap?listen", false);
+
+	AC_LOG(LogSY, Log, TEXT("맵이동"));	
 }
 
 
