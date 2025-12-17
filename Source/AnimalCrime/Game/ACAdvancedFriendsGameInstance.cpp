@@ -21,12 +21,16 @@ void UACAdvancedFriendsGameInstance::Init()
     
     
     // 맵 관련 초기화
-    CurrentMapType = EMapType::Game;
+    CurrentMapType = EMapType::None;
 	
     LobbyMapName = TEXT("LobbyMap");
     GameMapName = TEXT("henaMap");
 	
     UE_LOG(LogTemp, Warning, TEXT("UACMainGameInstance::Init"));
+    if (GEngine)
+    {
+        GEngine->Exec(GetWorld(), TEXT("net.AllowPIESeamlessTravel 1"));
+    }
 }
 
 void UACAdvancedFriendsGameInstance::Shutdown()
