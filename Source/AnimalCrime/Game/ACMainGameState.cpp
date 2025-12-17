@@ -8,6 +8,13 @@
 
 #include "Character/ACMafiaCharacter.h"
 
+#pragma region 생성자
+AACMainGameState::AACMainGameState()
+{
+}
+#pragma endregion
+
+#pragma region 엔진 제공 함수
 void AACMainGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -15,6 +22,25 @@ void AACMainGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(AACMainGameState, TeamScore);
 	DOREPLIFETIME(AACMainGameState, EscapeState);
 }
+
+#pragma region GameRuleManager와 동기화 및 테스트 함수
+void AACMainGameState::UpdateTeamScore(float InScore)
+{
+	TeamScore = InScore;
+}
+
+float AACMainGameState::GetTeamScore() const
+{
+	return TeamScore;
+}
+
+void AACMainGameState::OnRep_TeamScore()
+{
+	UE_LOG(LogTemp, Error, TEXT("OnRep_Score 호출 :%f"), TeamScore);
+	
+	OnScoreChanged.Broadcast(TeamScore);
+}
+#pragma endregion
 
 void AACMainGameState::RegisterDestination(AActor* Actor)
 {
@@ -35,12 +61,16 @@ AActor* AACMainGameState::GetDestinationActor() const
 {
 	if (DestinationObjects.Num() == 0)
 	{
+		UE_LOG(LogTemp, Error, TEXT("DestinationObjects가 존재하지 않습니다."));
 		return nullptr;
 	}
 	
 	// @InComplete
-	return DestinationObjects[0];
+	// @Todo 현재 랜덤 값이지만, 나중에는 최대 인원수를 둬야할 것 같음.
+	int32 RandIndex = FMath::RandRange(0, DestinationObjects.Num() - 1);
+	return DestinationObjects[RandIndex];
 }
+#pragma endregion
 
 void AACMainGameState::ServerChangeEscapeState_Implementation(EEscapeState NewEscapeState)
 {

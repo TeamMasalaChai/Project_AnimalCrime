@@ -4,6 +4,7 @@
 #include "ACLobbyGameState.h"
 #include "Character/ACLobbyCharacter.h"
 #include "Character/ACMafiaCharacter.h"
+#include "ACAdvancedFriendsGameInstance.h"
 #include "AnimalCrime.h"
 
 AACLobbyGameMode::AACLobbyGameMode()
@@ -19,32 +20,30 @@ AACLobbyGameMode::AACLobbyGameMode()
 	{
 		DefaultPawnClass = DefaultPawnBP.Class;
 	}
+
+	bUseSeamlessTravel = true;
 	//DefaultPawnClass = AACLobbyCharacter::StaticClass();
 }
-
-void AACLobbyGameMode::PostLogin(APlayerController* NewPlayer)
+void AACLobbyGameMode::StartGamePlay()
 {
-	Super::PostLogin(NewPlayer);
-	RestartPlayer(NewPlayer);
-	AACLobbyGameState* GS = GetGameState<AACLobbyGameState>();
-	if (GS == nullptr)
-	{
-		return;
-	}
-	AC_LOG(LogSY, Log, TEXT("PlayerLogIn"));
-	GS->UpdateReadyPlayer();
-}
-
-void AACLobbyGameMode::Logout(AController* Exiting)
-{
-	Super::Logout(Exiting);
-
-	AACLobbyGameState* GS = GetGameState<AACLobbyGameState>();
-	if (GS == nullptr)
+	UWorld* World = GetWorld();
+	if (!World)
 	{
 		return;
 	}
 
-	GS->UpdateReadyPlayer();
+	//World->ServerTravel("/Game/Project/Map/DemoMap?listen", false);
 
+	UACAdvancedFriendsGameInstance* GI = GetGameInstance<UACAdvancedFriendsGameInstance>();
+	if (GI == nullptr)
+	{
+		return;
+	}
+	GI->LoadGameMap();
+
+
+	AC_LOG(LogSY, Log, TEXT("맵이동"));	
 }
+
+
+
