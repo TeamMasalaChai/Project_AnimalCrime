@@ -30,7 +30,7 @@ AACLobbyPlayerController::AACLobbyPlayerController()
         SteamFriendListAction = SteamFriendListActionRef.Object;
     }
 
-    static ConstructorHelpers::FObjectFinder<UInputAction> ReadyActionRef(TEXT("/Game/Project/Input/Actions/IA_GameReady.IA_GameReady"));
+    static ConstructorHelpers::FObjectFinder<UInputAction> ReadyActionRef(TEXT("/Game/Project/Input/Actions/IA_Ready.IA_Ready"));
     if (ReadyActionRef.Succeeded())
     {
         ReadyAction = ReadyActionRef.Object;
