@@ -6,6 +6,7 @@
 #include "ACScoreWidget.h"
 #include "UI/HUD/ACQuickSlotWidget.h"
 #include "Game/ACMainGameState.h"
+#include "UI/Money/ACMoneyWidget.h"
 
 void UACHUDWidget::BindGameState()
 {
@@ -38,5 +39,14 @@ void UACHUDWidget::HandleScoreChanged(float NewScore)
 			WBP_Score->UpdateScore(NewScore, MainGameState->GetMaxScore());
 		}
 	}
+}
 
+void UACHUDWidget::HandleMoneyChanged(int32 NewMoney)
+{
+	if (WBP_Money == nullptr)
+	{
+		return;
+	}
+
+	WBP_Money->UpdateMoney(NewMoney);
 }

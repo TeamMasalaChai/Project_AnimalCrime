@@ -20,10 +20,16 @@ public:
 	UFUNCTION()
 	void HandleScoreChanged(float NewScore);
 	
+	UFUNCTION()
+	void HandleMoneyChanged(int32 NewMoney);
+	
 public:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UACScoreWidget> WBP_Score;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UACQuickSlotWidget> WBP_QuickSlot;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UACMoneyWidget> WBP_Money;
 };
