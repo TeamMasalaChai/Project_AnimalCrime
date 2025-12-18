@@ -26,8 +26,10 @@
 #include "Game/ACMainPlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Component/ACMoneyComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "Objects/MoneyData.h"
 
 AACCharacter::AACCharacter()
 {
@@ -156,6 +158,7 @@ AACCharacter::AACCharacter()
 	
 	GetCharacterMovement()->NetworkSmoothingMode = ENetworkSmoothingMode::Disabled;
 
+	MoneyComp = CreateDefaultSubobject<UACMoneyComponent>(TEXT("MoneyComponent"));
 }
 
 
@@ -163,6 +166,9 @@ void AACCharacter::BeginPlay()
 {
 
 	Super::BeginPlay();
+	
+	// @Todo 변경 필요. Mafia와 Police 구분이 안감.
+	MoneyComp->InitMoneyComponent(EMoneyType::MoneyMafiaType);
 }
 
 void AACCharacter::ChangeInputMode(EInputMode NewMode)
