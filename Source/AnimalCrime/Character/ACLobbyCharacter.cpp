@@ -7,7 +7,7 @@ AACLobbyCharacter::AACLobbyCharacter()
 {
 }
 
-void AACLobbyCharacter::SetSteamFriendsList(const FInputActionValue& Value)
+void AACLobbyCharacter::SetSteamFriendsList()
 {
 	AACLobbyPlayerController* PC = Cast<AACLobbyPlayerController>(GetController());
 	if (PC == nullptr)
@@ -30,7 +30,7 @@ void AACLobbyCharacter::SetSteamFriendsList(const FInputActionValue& Value)
 	}
 }
 
-void AACLobbyCharacter::SettingsClose(const FInputActionValue& Value)
+void AACLobbyCharacter::SettingsClose()
 {
 	switch (SettingMode)
 	{
@@ -39,14 +39,14 @@ void AACLobbyCharacter::SettingsClose(const FInputActionValue& Value)
 	case ESettingMode::Default:
 		break;
 	case ESettingMode::SteamFriendList:
-		SetSteamFriendsList(Value);
+		SetSteamFriendsList();
 		break;
 	default:
 		break;
 	}
 }
 
-void AACLobbyCharacter::GameReady(const FInputActionValue& Value)
+void AACLobbyCharacter::GameReady()
 {
 	AACLobbyPlayerController* PC = Cast<AACLobbyPlayerController>(GetController());
 	if (PC == nullptr)

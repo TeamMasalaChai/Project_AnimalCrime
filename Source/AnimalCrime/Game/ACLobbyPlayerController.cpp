@@ -134,7 +134,7 @@ void AACLobbyPlayerController::HandleSteamFriendList(const FInputActionValue& Va
     AACLobbyCharacter* LobbyChar = GetPawn<AACLobbyCharacter>();
     if (LobbyChar)
     {
-        LobbyChar->SetSteamFriendsList(Value);
+        LobbyChar->SetSteamFriendsList();
     }
 }
 
@@ -143,6 +143,6 @@ void AACLobbyPlayerController::HandleGameReady(const FInputActionValue& Value)
     AACLobbyCharacter* LobbyChar = GetPawn<AACLobbyCharacter>();
     if (LobbyChar)
     {
-        LobbyChar->GameReady(Value);
+        LobbyChar->GameReady();
     }
 }

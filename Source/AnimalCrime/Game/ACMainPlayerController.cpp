@@ -122,7 +122,9 @@ void AACMainPlayerController::SetupInputComponent()
 	}
 	if (InteractAction)
 	{
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleInteract);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleInteractStart);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AACMainPlayerController::HandleInteractHold);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AACMainPlayerController::HandleInteractRelease);
 	}
 	if (ItemDropAction)
 	{
@@ -175,12 +177,30 @@ void AACMainPlayerController::HandleStopJumping(const FInputActionValue& Value)
 	}
 }
 
-void AACMainPlayerController::HandleInteract(const FInputActionValue& Value)
+void AACMainPlayerController::HandleInteractStart(const FInputActionValue& Value)
 {
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
 	if (ControlledCharacter)
 	{
-		ControlledCharacter->Interact(Value);
+		ControlledCharacter->InteractStarted();
+	}
+}
+
+void AACMainPlayerController::HandleInteractHold(const FInputActionValue& Value)
+{
+	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
+	if (ControlledCharacter)
+	{
+		ControlledCharacter->InteractHolding(GetWorld()->GetDeltaSeconds());
+	}
+}
+
+void AACMainPlayerController::HandleInteractRelease(const FInputActionValue& Value)
+{
+	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
+	if (ControlledCharacter)
+	{
+		ControlledCharacter->InteractReleased();
 	}
 }
 
@@ -189,7 +209,7 @@ void AACMainPlayerController::HandleItemDrop(const FInputActionValue& Value)
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
 	if (ControlledCharacter)
 	{
-		ControlledCharacter->ItemDrop(Value);
+		ControlledCharacter->ItemDrop();
 	}
 }
 
@@ -207,7 +227,7 @@ void AACMainPlayerController::HandleSettingsClose(const FInputActionValue& Value
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
 	if (ControlledCharacter)
 	{
-		ControlledCharacter->SettingsClose(Value);
+		ControlledCharacter->SettingsClose();
 	}
 }
 
