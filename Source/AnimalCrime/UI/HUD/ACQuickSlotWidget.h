@@ -86,6 +86,12 @@ protected:
     TObjectPtr<class UBorder> SubSlot;
 
     UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UBorder> MainSlotHighlight;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UBorder> SubSlotHighlight;
+
+    UPROPERTY(meta = (BindWidget))
     TObjectPtr<class UImage> MainItemImg;
 
     UPROPERTY(meta = (BindWidget))
