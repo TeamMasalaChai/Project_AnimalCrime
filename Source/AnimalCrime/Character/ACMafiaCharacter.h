@@ -10,6 +10,8 @@ class ANIMALCRIME_API AACMafiaCharacter : public AACCharacter
 	GENERATED_BODY()
 
 public:
+	AACMafiaCharacter();
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
@@ -43,6 +45,7 @@ protected:
 	UFUNCTION()
 	void OnRep_HandBomb();
 
+	virtual void AttackHitCheck() override;
 public:
 	//!<아이템
 	UPROPERTY(ReplicatedUsing = OnRep_HandBomb)

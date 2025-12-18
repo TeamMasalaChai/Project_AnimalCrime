@@ -100,11 +100,14 @@ protected:
 	void PerformAttackTrace();
 
 public:
-	void AttackHitCheck();
+	virtual void AttackHitCheck();
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastPlayAttackMontage();
-
+	
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
+	TObjectPtr<class UACMoneyComponent> MoneyComp;
 
 	//!< 상호작용 함수
 public:
