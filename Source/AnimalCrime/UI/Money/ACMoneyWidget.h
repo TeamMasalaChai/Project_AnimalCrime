@@ -13,4 +13,12 @@ UCLASS()
 class ANIMALCRIME_API UACMoneyWidget : public UUserWidget
 {
 	GENERATED_BODY()
+	
+public:
+	UFUNCTION(BlueprintCallable)
+	void UpdateMoney(int32 InMoney);
+	
+protected:
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> MoneyText;
 };
