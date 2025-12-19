@@ -56,50 +56,41 @@ AActor* AACMainGameMode::ChoosePlayerStart_Implementation(AController* Player)
 
 UClass* AACMainGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
 {
-	if (!InController)
+	if (InController == nullptr)
 	{
 		return DefaultPawnClass;
 	}
 
 	AACPlayerState* PS = InController->GetPlayerState<AACPlayerState>();
 
-	if (!PS)
+	if (PS == nullptr)
 	{
 		return DefaultPawnClass;
 	}
 	UACAdvancedFriendsGameInstance* GI = GetGameInstance<UACAdvancedFriendsGameInstance>();
 
-	if (!GI)
+	if (GI == nullptr)
 	{
 		return DefaultPawnClass;
 	}
-	// 🔑 GameInstance에서 역할 복원
+
+	// GameInstance에서 역할 복원
 	const FUniqueNetIdRepl& NetId = PS->GetUniqueId();
 
 	AC_LOG(LogSY, Log, TEXT("%s : %s"), *PS->GetPlayerName(), *PS->GetUniqueId()->ToString());
 
-	if (!NetId.IsValid())
+	if (NetId.IsValid() == false)
 	{
 		return DefaultPawnClass;
 	}
 
-
 	if (GI->SavedPlayerRoles.Contains(NetId))
 	{
-
 		const EPlayerRole PlayerRole = GI->SavedPlayerRoles[NetId];
-		if (PlayerRole == EPlayerRole::Police)
-		{
-			AC_LOG(LogSY, Log, TEXT("Police"));
-		}
-		else
-		{
-			AC_LOG(LogSY, Log, TEXT("Mafia"));
-		}
 
 		return (PlayerRole == EPlayerRole::Police) ? PolicePawnClass : MafiaPawnClass;
 	}
-	// fallback
+
 	return DefaultPawnClass;
 }
 

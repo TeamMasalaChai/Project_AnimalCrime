@@ -72,7 +72,7 @@ void AACLobbyGameMode::StartGamePlay()
 		// 플레이어 역할 지정
 		PS->PlayerRole = AssignedRole;
 
-		// 맵 이동 대비 백업
+		// 플레이어 스테이트 백업
 		GI->SavedPlayerRoles.Add(PS->GetUniqueId(), AssignedRole);
 
 		AC_LOG(LogSY, Log, TEXT("%s : %s"), *PS->GetPlayerName(), *PS->GetUniqueId()->ToString());

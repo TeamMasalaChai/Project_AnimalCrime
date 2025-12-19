@@ -46,6 +46,13 @@ public:
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 
 protected:
+
+ /**
+     @brief 스폰될 기본 Pawn 클래스를 결정한다.
+			RestartPlayer() 호출 시 서버에서 실행되며, Seamless Travel 이후에도 호출된다.
+     @param  InController - Pawn을 소유하게 될 PlayerController.
+     @retval              - 스폰할 Pawn 클래스. 반환된 클래스가 nullptr 이면 Pawn은 생성되지 않는다.
+ **/
 	virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
 #pragma endregion
 	
