@@ -3,6 +3,7 @@
 
 #include "ACMoneyComponent.h"
 
+#include "Game/ACPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -47,7 +48,6 @@ void UACMoneyComponent::InitMoneyComponent(EMoneyType MoneyType)
 	}
 	
 	EMoneyType CurrentMoneyData = MoneyType;
-	UE_LOG(LogTemp, Error, TEXT("여긴 오니? %d"), CurrentMoneyData);
 	switch (CurrentMoneyData)
 	{
 	case EMoneyType::MoneyMafiaType:
@@ -125,6 +125,19 @@ void UACMoneyComponent::InitMafiaSetting()
 	MoneyData.MoneyType = EMoneyType::MoneyMafiaType;
 	
 	InitMoney(100);
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
+	if (OwnerPawn == nullptr) {
+		UE_LOG(LogTemp, Error, TEXT("OwnerPawn nullptr"));
+		return;
+	}
+
+	AACPlayerState* ACPlayerState = Cast<AACPlayerState>(OwnerPawn->GetPlayerState());
+	if (ACPlayerState == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ACPlayerState nullptr"));
+		return;
+	}
+	ACPlayerState->SetMoney(GetMoney());
 }
 
 void UACMoneyComponent::InitPoliceSetting()
@@ -132,6 +145,19 @@ void UACMoneyComponent::InitPoliceSetting()
 	MoneyData.MoneyType = EMoneyType::MoneyPoliceType;
 	
 	InitMoney(200);
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
+	if (OwnerPawn == nullptr) {
+		UE_LOG(LogTemp, Error, TEXT("OwnerPawn nullptr"));
+		return;
+	}
+
+	AACPlayerState* ACPlayerState = Cast<AACPlayerState>(OwnerPawn->GetPlayerState());
+	if (ACPlayerState == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ACPlayerState nullptr"));
+		return;
+	}
+	ACPlayerState->SetMoney(GetMoney());
 }
 
 void UACMoneyComponent::InitCitizenSetting()
