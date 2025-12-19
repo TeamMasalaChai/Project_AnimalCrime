@@ -48,7 +48,19 @@ bool AACMafiaCharacter::CanInteract(AACCharacter* ACPlayer)
 
 void AACMafiaCharacter::OnInteract(AACCharacter* ACPlayer)
 {
+	if (ACPlayer == nullptr)
+	{
+		return;
+	}
+
 	ShowInteractDebug(ACPlayer, GetName());
+
+	// 경찰과 상호작용(신분증)
+	if (EACCharacterType::Police == ACPlayer->GetCharacterType())
+	{
+		AC_LOG(LogSW, Log, TEXT("마피아 신분증!"));
+	}
+	
 }
 
 
@@ -201,4 +213,9 @@ void AACMafiaCharacter::AttackHitCheck()
 		UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *Hit.GetActor()->GetName());
 		UGameplayStatics::ApplyDamage(Hit.GetActor(),30.0f, GetController(),this, nullptr);
 	}
+}
+
+float AACMafiaCharacter::GetRequiredHoldTime() const
+{
+	return 5.0f;
 }

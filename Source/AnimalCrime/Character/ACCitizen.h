@@ -42,6 +42,7 @@ public:	// 좌표
 protected:
 	virtual bool CanInteract(class AACCharacter* ACPlayer) override;
 	virtual void OnInteract(class AACCharacter* ACPlayer) override;
+	virtual float GetRequiredHoldTime() const override;
 #pragma endregion
 
 public:

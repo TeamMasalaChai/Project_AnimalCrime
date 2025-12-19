@@ -44,6 +44,10 @@ protected:
 	void OnRep_HandBomb();
 
 	virtual void AttackHitCheck() override;
+
+protected:
+	virtual float GetRequiredHoldTime() const override;
+
 public:
 	//!<아이템
 	UPROPERTY(ReplicatedUsing = OnRep_HandBomb)

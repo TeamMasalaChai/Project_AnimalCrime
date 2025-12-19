@@ -276,7 +276,7 @@ void AACCharacter::InteractHolding(const float DeltaTime)
 
 	// 시간 누적
 	CurrentHoldTime += DeltaTime;
-	AC_LOG(LogSW, Log, TEXT("%s Holding at %f"), *CurrentHoldTarget->GetName(), CurrentHoldTime);
+	//AC_LOG(LogSW, Log, TEXT("%s Holding at %f"), *CurrentHoldTarget->GetName(), CurrentHoldTime);
 
 	// UI 업데이트
 	AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
