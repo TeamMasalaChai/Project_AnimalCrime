@@ -16,6 +16,8 @@
 #include "Game/ACPlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "AnimalCrime.h"
+
 
 // Sets default values
 AACCitizen::AACCitizen()
@@ -457,6 +459,22 @@ bool AACCitizen::CanInteract(AACCharacter* ACPlayer)
 
 void AACCitizen::OnInteract(AACCharacter* ACPlayer)
 {
+	if (ACPlayer == nullptr)
+	{
+		return;
+	}
+
 	ShowInteractDebug(ACPlayer, GetName());
+
+	// 경찰과 상호작용(신분증)
+	if (EACCharacterType::Police == ACPlayer->GetCharacterType())
+	{
+		AC_LOG(LogSW, Log, TEXT("시민 신분증!"));
+	}
+}
+
+float AACCitizen::GetRequiredHoldTime() const
+{
+	return 5.0f;
 }
 
