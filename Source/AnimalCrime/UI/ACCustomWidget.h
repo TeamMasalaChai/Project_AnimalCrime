@@ -20,6 +20,7 @@ class ANIMALCRIME_API UACCustomWidget : public UUserWidget
 	
 public:
 	FORCEINLINE void SetOwningPawn(APawn* NewOwner) { OwningPawn = NewOwner; }
+	FORCEINLINE APawn* GetOwningPawn() { return OwningPawn; }
 
 protected:
 	// 현재 위젯을 소유하고 있는 액터 저장용 변수

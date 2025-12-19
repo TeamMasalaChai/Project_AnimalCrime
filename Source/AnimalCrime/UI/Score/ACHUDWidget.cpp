@@ -9,6 +9,9 @@
 #include "Game/ACMainGameState.h"
 #include "Game/ACPlayerState.h"
 #include "UI/Money/ACMoneyWidget.h"
+#include "Objects/MoneyData.h"
+#include "Component/ACMoneyComponent.h"
+#include "Character/ACCharacter.h"
 
 void UACHUDWidget::BindGameState()
 {
@@ -26,7 +29,8 @@ void UACHUDWidget::BindGameState()
 // 문제였음.
 void UACHUDWidget::BindPlayerState()
 {
-	if (APlayerController* PC = GetOwningPlayer())
+
+	/*if (APlayerController* PC = GetOwningPlayer())
 	{
 		UE_LOG(LogHY, Error, TEXT("PC Success"));
 		if (AACPlayerState* PS = PC->GetPlayerState<AACPlayerState>())
@@ -40,7 +44,11 @@ void UACHUDWidget::BindPlayerState()
 
 			HandleMoneyChanged(PS->GetMoney());
 		}
-	}
+	}*/
+
+	// PlayerState는 더 이상 돈을 관리하지 않음
+	// MoneyComponent를 바인딩
+	BindMoneyComponent();
 }
 
 void UACHUDWidget::HandleScoreChanged(float NewScore)
@@ -73,4 +81,29 @@ void UACHUDWidget::HandleMoneyChanged(int32 NewMoney)
 	UE_LOG(LogTemp, Log, TEXT("[UACHUDWidget::HandleMoneyChanged]: %d"), NewMoney);
 	
 	WBP_Money->UpdateMoney(NewMoney);
+}
+
+void UACHUDWidget::BindMoneyComponent()
+{
+	if (APlayerController* PC = GetOwningPlayer())
+	{
+		if (APawn* Pawn = PC->GetPawn())
+		{
+			UACMoneyComponent* MoneyComp = Pawn->FindComponentByClass<UACMoneyComponent>();
+			if (MoneyComp)
+			{
+				// 델리게이트 바인딩
+				MoneyComp->OnMoneyChanged.AddDynamic(this, &UACHUDWidget::HandleMoneyChanged);
+
+				// 초기값 설정
+				HandleMoneyChanged(MoneyComp->GetMoney());
+
+				UE_LOG(LogHG, Log, TEXT("MoneyComponent 바인딩 성공, 초기 돈: %d"), MoneyComp->GetMoney());
+			}
+			else
+			{
+				UE_LOG(LogHG, Warning, TEXT("MoneyComponent를 찾을 수 없음"));
+			}
+		}
+	}
 }

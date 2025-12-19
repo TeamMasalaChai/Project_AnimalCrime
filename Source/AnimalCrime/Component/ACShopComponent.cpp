@@ -7,6 +7,8 @@
 #include "UI/HUD/ACQuickSlotWidget.h"
 #include "UI/Score/ACHUDWidget.h"
 #include "Game/ACMainPlayerController.h"
+#include "ACMoneyComponent.h"
+#include "Objects/MoneyData.h"
 
 UACShopComponent::UACShopComponent()
 {
@@ -39,7 +41,22 @@ bool UACShopComponent::PurchaseItem(UACItemData* ItemData)
     }
 
     // TODO: 돈 체크 및 차감 로직 추가
-    return true;
+
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (Character == nullptr)
+    {
+        return false;
+    }
+
+    UACMoneyComponent* MoneyComponent = Character->FindComponentByClass<UACMoneyComponent>();
+
+    if (MoneyComponent == nullptr)
+    {
+        UE_LOG(LogHG, Error, TEXT("MoneyComponent not found on Owner"));
+        return false;
+    }
+
+    return MoneyComponent->SpendMoney(ItemData->Price);
 }
 
 void UACShopComponent::EquipItem(UACItemData* ItemData)
@@ -206,6 +223,7 @@ void UACShopComponent::EquipWeapon(UACItemData* ItemData)
     // 새 무기 생성 및 부착
     UStaticMeshComponent* WeaponMeshComponent = NewObject<UStaticMeshComponent>(Character);
     WeaponMeshComponent->SetStaticMesh(ItemData->EquipmentMesh);
+    WeaponMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     WeaponMeshComponent->RegisterComponent();
     WeaponMeshComponent->AttachToComponent(
         Character->GetMesh(),

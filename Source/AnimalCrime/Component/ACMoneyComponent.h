@@ -7,7 +7,7 @@
 #include "Objects/MoneyData.h"
 #include "ACMoneyComponent.generated.h"
 
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMoneyChangedDelegate, int32, NewMoney);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class ANIMALCRIME_API UACMoneyComponent : public UActorComponent
@@ -37,6 +37,14 @@ public:
 	void EarnMoney(int32 InMoney);
 	bool SpendMoney(int32 InMoney);
 	int32 LoseMoney(int32 InMoney);
+
+	// 돈이 변경될 때마다 브로드캐스트
+	UPROPERTY(BlueprintAssignable, Category = "Money")
+	FOnMoneyChangedDelegate OnMoneyChanged;
+
+	// OnRep 함수 추가
+	UFUNCTION()
+	void OnRep_MoneyData();
 	
 private:
 	// 1. Mafia 세팅
@@ -52,6 +60,6 @@ private:
 	void GenerateRandomMoney(int32 InMaxMoney);
 	
 private:
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess=true))
+	UPROPERTY(ReplicatedUsing = OnRep_MoneyData, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	FMoneyData MoneyData;
 };

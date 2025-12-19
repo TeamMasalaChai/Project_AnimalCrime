@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "UI/ACCustomWidget.h"
 #include "ACMoneyWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ANIMALCRIME_API UACMoneyWidget : public UUserWidget
+class ANIMALCRIME_API UACMoneyWidget : public UACCustomWidget
 {
 	GENERATED_BODY()
 	

@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "UI/ACCustomWidget.h"
 #include "ACHUDWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ANIMALCRIME_API UACHUDWidget : public UUserWidget
+class ANIMALCRIME_API UACHUDWidget : public UACCustomWidget
 {
 	GENERATED_BODY()
 	
@@ -23,6 +24,9 @@ public:
 	
 	UFUNCTION()
 	void HandleMoneyChanged(int32 NewMoney);
+
+	// 새 함수 추가 - MoneyComponent 바인딩
+	void BindMoneyComponent();
 	
 public:
 	UPROPERTY(meta = (BindWidget))

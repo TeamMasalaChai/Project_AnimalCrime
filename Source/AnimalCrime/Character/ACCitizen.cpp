@@ -442,12 +442,6 @@ float AACCitizen::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 		}
 		Test->MoneyComp->EarnMoney(Result);
 		UE_LOG(LogTemp, Warning, TEXT("Earn Money: %d Cur Money: %d"), Result, Test->MoneyComp->GetMoney());
-		AACPlayerState* ACPlayerState = Cast<AACPlayerState>(Test->GetPlayerState());
-		if (ACPlayerState == nullptr)
-		{
-			return SuperDamage;
-		}
-		ACPlayerState->SetMoney(Test->MoneyComp->GetMoney());
 	}
 	else
 	{
