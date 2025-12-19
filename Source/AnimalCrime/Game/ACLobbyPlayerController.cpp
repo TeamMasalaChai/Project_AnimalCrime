@@ -263,89 +263,105 @@ void AACLobbyPlayerController::SetupInputComponent()
 	}
 }
 
-// ===== 입력 핸들러 구현 =====    
+// ===== 입력 핸들러 구현 =====
 void AACLobbyPlayerController::HandleMove(const FInputActionValue& Value)
 {
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter)
+	if (ControlledCharacter == nullptr)
 	{
-		ControlledCharacter->Move(Value);
+		return;
 	}
+
+	ControlledCharacter->Move(Value);
 }
 
 void AACLobbyPlayerController::HandleLook(const FInputActionValue& Value)
 {
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter)
+	if (ControlledCharacter == nullptr)
 	{
-		ControlledCharacter->Look(Value);
+		return;
 	}
+
+	ControlledCharacter->Look(Value);
 }
 
 void AACLobbyPlayerController::HandleJump(const FInputActionValue& Value)
 {
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter)
+	if (ControlledCharacter == nullptr)
 	{
-		ControlledCharacter->Jump();
+		return;
 	}
+
+	ControlledCharacter->Jump();
 }
 
 void AACLobbyPlayerController::HandleStopJumping(const FInputActionValue& Value)
 {
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter)
+	if (ControlledCharacter == nullptr)
 	{
-		ControlledCharacter->StopJumping();
+		return;
 	}
+
+	ControlledCharacter->StopJumping();
 }
 
 // todo: Interact 여기서도 사용해야함??
 void AACLobbyPlayerController::HandleInteract(const FInputActionValue& Value)
 {
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter)
+	if (ControlledCharacter == nullptr)
 	{
-		//ControlledCharacter->Interact();
+		return;
 	}
+
+	//ControlledCharacter->Interact();
 }
 
 void AACLobbyPlayerController::HandleItemDrop(const FInputActionValue& Value)
 {
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter)
+	if (ControlledCharacter == nullptr)
 	{
-		ControlledCharacter->ItemDrop();
+		return;
 	}
+
+	ControlledCharacter->ItemDrop();
 }
 
 void AACLobbyPlayerController::HandleAttack(const FInputActionValue& Value)
 {
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter)
+	if (ControlledCharacter == nullptr)
 	{
-		ControlledCharacter->Attack();
+		return;
 	}
+
+	ControlledCharacter->Attack();
 }
 
 void AACLobbyPlayerController::HandleSettingsClose(const FInputActionValue& Value)
 {
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter)
+	if (ControlledCharacter == nullptr)
 	{
-		ControlledCharacter->SettingsClose();
+		return;
 	}
+
+	ControlledCharacter->SettingsClose();
 }
-
-
 
 void AACLobbyPlayerController::HandleSteamFriendList(const struct FInputActionValue& Value)
 {
-    AACLobbyCharacter* LobbyChar = GetPawn<AACLobbyCharacter>();
-    if (LobbyChar)
-    {
-        LobbyChar->SetSteamFriendsList();
-    }
+	AACLobbyCharacter* LobbyChar = GetPawn<AACLobbyCharacter>();
+	if (LobbyChar == nullptr)
+	{
+		return;
+	}
+
+	LobbyChar->SetSteamFriendsList();
 }
 
 void AACLobbyPlayerController::HandleGameReady(const struct FInputActionValue& Value)
