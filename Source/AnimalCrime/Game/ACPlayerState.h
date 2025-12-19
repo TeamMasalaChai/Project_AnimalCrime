@@ -13,8 +13,8 @@ class ANIMALCRIME_API AACPlayerState : public APlayerState
 public: 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
-public:
-protected:
 
-	
+public:
+	UPROPERTY(Replicated)
+	EPlayerRole PlayerRole = EPlayerRole::Police;
 };

@@ -7,4 +7,5 @@ void AACPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(AACPlayerState, PlayerRole);
 }
