@@ -245,7 +245,7 @@ void AACCharacter::InteractStarted()
 				if (PC)
 				{
 					UE_LOG(LogSW, Log, TEXT("Show start"));
-					PC->ShowInteractProgress(Interactable->GetInteractableName());
+					PC->ShowInteractProgress(CurrentHoldTarget->GetName());
 				}
 			}
 			
@@ -359,6 +359,12 @@ void AACCharacter::ServerInteract_Implementation(AActor* Target)
 		return;
 	}
 
+	if (IsValid(Target) == false)
+	{
+		AC_LOG(LogSW, Log, TEXT("Interactable Deleted!!"));
+		return;
+	}
+
 	IACInteractInterface* Interactable = Cast<IACInteractInterface>(Target);
 	if (Interactable == nullptr)
 	{
@@ -461,14 +467,8 @@ bool AACCharacter::CanInteract(AACCharacter* ACPlayer)
 
 void AACCharacter::OnInteract(AACCharacter* ACPlayer)
 {
-	ShowInteractDebug(ACPlayer);
+	ShowInteractDebug(ACPlayer, GetName());
 }
-
-FString AACCharacter::GetInteractableName() const
-{
-	return TEXT("ACCharacter");
-}
-
 
 void AACCharacter::AddInteractable(AActor* Interactor)
 {
@@ -484,6 +484,16 @@ void AACCharacter::RemoveInteractable(AActor* Interactor)
 
 bool AACCharacter::SortNearInteractables()
 {
+	for (int32 i = NearInteractables.Num() - 1; i >= 0; --i)
+	{
+		if (IsValid(NearInteractables[i]) == true)
+		{
+			continue;
+		}
+
+		NearInteractables.RemoveAt(i);
+	}
+
 	if (NearInteractables.Num() == 0)
 	{
 		AC_LOG(LogSW, Log, TEXT("No Close Interactables!!"));
