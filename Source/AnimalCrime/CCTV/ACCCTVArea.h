@@ -40,6 +40,17 @@ protected:
 	**/
 	virtual void OnInteract(class AACCharacter* ACPlayer) override;
 
+	/**
+	  @brief 콜리전 범위를 벗어났을 때 CCTV UI 자동으로 닫기
+	  @param OverlappedComponent - InteractBoxComponent
+	  @param OtherActor - 콜리전을 벗어난 액터 (플레이어)
+	  @param OtherComp - 벗어난 액터의 컴포넌트
+	  @param OtherBodyIndex - 바디 인덱스
+  **/
+	UFUNCTION()
+	void OnInteractBoxOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
 	TObjectPtr<class UACInteractableComponent> InteractBoxComponent;

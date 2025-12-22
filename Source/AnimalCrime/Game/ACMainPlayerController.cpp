@@ -461,6 +461,28 @@ void AACMainPlayerController::CloseShop()
     ChangeInputMode(EInputMode::Sholder);
 }
 
+void AACMainPlayerController::CloseCCTV()
+{
+	if (CurrentCCTVWidget == nullptr || CurrentCCTVWidget->IsInViewport() == false)
+	{
+		return;
+	}
+
+	// ===== CCTV 닫기 =====
+	UE_LOG(LogHG, Log, TEXT("Client: Closing CCTV UI"));
+
+	CurrentCCTVWidget->RemoveFromParent();
+	CurrentCCTVWidget = nullptr;
+
+	SetShowMouseCursor(false);
+
+	FInputModeGameOnly InputMode;
+	InputMode.SetConsumeCaptureMouseDown(false);
+	SetInputMode(InputMode);
+
+	ChangeInputMode(EInputMode::Sholder);
+}
+
 void AACMainPlayerController::SetShopCamera()
 {
     if (bShopCameraActive == true)
@@ -580,19 +602,7 @@ void AACMainPlayerController::ClientToggleCCTVWidget_Implementation(TSubclassOf<
 	// 이미 위젯이 열려있으면 닫기
 	if (CurrentCCTVWidget != nullptr && CurrentCCTVWidget->IsInViewport())
 	{
-		// ===== CCTV 닫기 =====
-		UE_LOG(LogHG, Log, TEXT("Client: Closing CCTV UI"));
-
-		CurrentCCTVWidget->RemoveFromParent();
-		CurrentCCTVWidget = nullptr;
-
-		SetShowMouseCursor(false);
-
-		FInputModeGameOnly InputMode;
-		InputMode.SetConsumeCaptureMouseDown(false);
-		SetInputMode(InputMode);
-
-		ChangeInputMode(EInputMode::Sholder);
+		CloseCCTV();
 	}
 	else
 	{

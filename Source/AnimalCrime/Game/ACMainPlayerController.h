@@ -65,6 +65,12 @@ public:
     UFUNCTION()
     void CloseShop();
 
+	/**
+		   @brief  CCTV 닫기 (위젯의 CloseButton이나 다른 곳에서 호출)
+   **/
+	UFUNCTION()
+	void CloseCCTV();
+
 protected:
     /**
             @brief 상점용 카메라로 전환

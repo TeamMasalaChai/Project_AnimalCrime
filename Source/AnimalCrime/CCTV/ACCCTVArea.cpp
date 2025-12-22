@@ -28,6 +28,13 @@ AACCCTVArea::AACCCTVArea()
 void AACCCTVArea::BeginPlay()
 {
 	Super::BeginPlay();	
+
+    // 콜리전 종료 이벤트 바인딩
+    if (InteractBoxComponent)
+    {
+        InteractBoxComponent->OnComponentEndOverlap.AddDynamic(
+            this, &AACCCTVArea::OnInteractBoxOverlapEnd);
+    }
 }
 
 bool AACCCTVArea::CanInteract(AACCharacter* ACPlayer)
@@ -68,3 +75,20 @@ void AACCCTVArea::OnInteract(AACCharacter* ACPlayer)
     PC->ClientToggleCCTVWidget(CCTVWidgetClass);
 }
 
+void AACCCTVArea::OnInteractBoxOverlapEnd(UPrimitiveComponent* OverlappedComponent,
+    AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+    AACCharacter* ACPlayer = Cast<AACCharacter>(OtherActor);
+    if (ACPlayer == nullptr)
+    {
+        return;
+    }
+
+    // 플레이어 컨트롤러를 통해 CCTV UI 닫기
+    AACMainPlayerController* PC = ACPlayer->GetController<AACMainPlayerController>();
+    if (PC != nullptr)
+    {
+        PC->CloseCCTV();
+        UE_LOG(LogHG, Log, TEXT("Player left CCTV area - closing CCTV UI"));
+    }
+}

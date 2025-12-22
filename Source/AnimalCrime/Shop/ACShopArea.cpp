@@ -27,6 +27,12 @@ void AACShopArea::BeginPlay()
 {
 	Super::BeginPlay();
 	
+    // 콜리전 종료 이벤트 바인딩
+    if (InteractBoxComponent)
+    {
+        InteractBoxComponent->OnComponentEndOverlap.AddDynamic(
+            this, &AACShopArea::OnInteractBoxOverlapEnd);
+    }
 }
 
 bool AACShopArea::CanInteract(AACCharacter* ACPlayer)
@@ -65,5 +71,22 @@ void AACShopArea::OnInteract(AACCharacter* ACPlayer)
     // 서버에서 클라이언트에게 위젯 토글 명령 전송
     UE_LOG(LogHG, Log, TEXT("Server: Sending toggle command to %s"), *ACPlayer->GetName());
     PC->ClientToggleShopWidget(ShopWidgetClass);
+}
+
+void AACShopArea::OnInteractBoxOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+    AACCharacter* ACPlayer = Cast<AACCharacter>(OtherActor);
+    if (ACPlayer == nullptr)
+    {
+        return;
+    }
+
+    // 플레이어 컨트롤러를 통해 상점 UI 닫기
+    AACMainPlayerController* PC = ACPlayer->GetController<AACMainPlayerController>();
+    if (PC != nullptr)
+    {
+        PC->CloseShop();
+        UE_LOG(LogHG, Log, TEXT("Player left shop area - closing shop UI"));
+    }
 }
 
