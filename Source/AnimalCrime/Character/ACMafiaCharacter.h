@@ -12,10 +12,11 @@ class ANIMALCRIME_API AACMafiaCharacter : public AACCharacter
 public:
 	AACMafiaCharacter();
 	
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	//!< 상호작용 인터페이스
 protected:
@@ -58,5 +59,10 @@ public:
 	//!<아이템
 	UPROPERTY(ReplicatedUsing = OnRep_HandBomb)
 	TObjectPtr<class AACEscapeMissionBomb> HandBomb;
+
+
+protected:
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<class UACDestroyableStatComponent> Stat;
 
 };

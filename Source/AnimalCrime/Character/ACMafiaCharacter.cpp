@@ -12,16 +12,52 @@
 #include "AnimalCrime.h"
 #include "Component/ACMoneyComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Component/ACDestroyableStatComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
+#include "AnimalCrime/AnimalCrime.h"
 
 AACMafiaCharacter::AACMafiaCharacter()
 {
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MafiaCollision"));
+
+	Stat = CreateDefaultSubobject<UACDestroyableStatComponent>(TEXT("StatComponent"));
 }
 
 void AACMafiaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AACMafiaCharacter, HandBomb);
+}
+
+float AACMafiaCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float SuperResult = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	UE_LOG(LogHY, Error, TEXT("Damage:%f"), DamageAmount);
+	if (EventInstigator != nullptr)
+	{
+		UE_LOG(LogHY, Error, TEXT("Constrol:%s"), *EventInstigator->GetName());
+	}
+	if (DamageCauser != nullptr)
+	{
+		UE_LOG(LogHY, Error, TEXT("Name:%s"), *DamageCauser->GetName());
+	}
+
+	float CurrentHp = Stat->GetCurrentHp();
+	CurrentHp -= 1.0f;
+	Stat->SetCurrentHp(CurrentHp);
+	if (CurrentHp <= 0)
+	{
+		// 상태 변경
+		CharacterState = ECharacterState::Stun;
+		
+		// 못 움직이도록 변경
+		GetCharacterMovement()->MaxWalkSpeed = 10;
+		GetCharacterMovement()->JumpZVelocity = 10;
+	}
+
+	return 1.0f;
 }
 
 void AACMafiaCharacter::BeginPlay()
@@ -43,6 +79,11 @@ void AACMafiaCharacter::BeginPlay()
 	
 	// 마피아가 처음에 가지고 있는 돈 설정
 	MoneyComp->InitMoneyComponent(EMoneyType::MoneyMafiaType);
+
+	// 체력 설정.
+	Stat->SetMaxHp(5);
+	Stat->SetCurrentHp(5);
+	Stat->SetArmor(0);
 }
 
 bool AACMafiaCharacter::CanInteract(AACCharacter* ACPlayer)
