@@ -19,6 +19,9 @@ public:
 
 	virtual EACCharacterType GetCharacterType() override;
 
+
+	virtual void AttackHitCheck() override;
+
 public:
 	//!< 상호작용 인터페이스
 protected:
