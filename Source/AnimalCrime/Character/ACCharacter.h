@@ -52,7 +52,7 @@ public:
 
 	virtual void ItemDrop();
 	virtual void Attack();
-	virtual void SettingsClose(const FInputActionValue& Value);
+	//virtual void SettingsClose(const FInputActionValue& Value);
 	virtual void Jump() override;
 	virtual void SettingsClose();
 

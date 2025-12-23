@@ -387,7 +387,7 @@ void AACCharacter::Jump()
 	Super::Jump();
 }
 
-void AACCharacter::ServerInteract_Implementation()
+void AACCharacter::ServerInteract_Implementation(AActor* Target)
 {
 	if (Target == nullptr)
 	{

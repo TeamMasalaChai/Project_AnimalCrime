@@ -48,11 +48,6 @@ void UACMoneyComponent::InitMoneyComponent(EMoneyType MoneyType)
 		return;
 	}
 	
-	UE_LOG(LogTemp, Error, TEXT("여긴 오니? %d"), MoneyType);
-	switch (MoneyType)
-	{
-		return ;
-	}
 	
 	EMoneyType CurrentMoneyData = MoneyType;
 	UE_LOG(LogTemp, Error, TEXT("여긴 오니? %d"), CurrentMoneyData);
@@ -167,19 +162,6 @@ void UACMoneyComponent::InitMafiaSetting()
 	MoneyData.MoneyType = EMoneyType::MoneyMafiaType;
 	
 	InitMoney(100);
-	APawn* OwnerPawn = Cast<APawn>(GetOwner());
-	if (OwnerPawn == nullptr) {
-		UE_LOG(LogTemp, Error, TEXT("OwnerPawn nullptr"));
-		return;
-	}
-
-	AACPlayerState* ACPlayerState = Cast<AACPlayerState>(OwnerPawn->GetPlayerState());
-	if (ACPlayerState == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("ACPlayerState nullptr"));
-		return;
-	}
-	ACPlayerState->SetMoney(GetMoney());
 }
 
 void UACMoneyComponent::InitPoliceSetting()
@@ -187,19 +169,6 @@ void UACMoneyComponent::InitPoliceSetting()
 	MoneyData.MoneyType = EMoneyType::MoneyPoliceType;
 	
 	InitMoney(200);
-	APawn* OwnerPawn = Cast<APawn>(GetOwner());
-	if (OwnerPawn == nullptr) {
-		UE_LOG(LogTemp, Error, TEXT("OwnerPawn nullptr"));
-		return;
-	}
-
-	AACPlayerState* ACPlayerState = Cast<AACPlayerState>(OwnerPawn->GetPlayerState());
-	if (ACPlayerState == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("ACPlayerState nullptr"));
-		return;
-	}
-	ACPlayerState->SetMoney(GetMoney());
 }
 
 void UACMoneyComponent::InitCitizenSetting()
@@ -213,42 +182,26 @@ void UACMoneyComponent::InitMoney(int32 InMoney)
 {
 	MoneyData.Money = InMoney;
 
-	//// 서버에서 초기화 시 델리게이트 브로드캐스트
-	//if (GetOwner() && GetOwner()->HasAuthority())
-	//{
-	//	OnMoneyChanged.Broadcast(MoneyData.Money);
-	//}
-	//else
-	//{
-	//	// 클라이언트에서도 브로드캐스트 (초기화 시에만)
-	//	OnMoneyChanged.Broadcast(MoneyData.Money);
-	//}
 
-	 // 서버/클라이언트 모두 브로드캐스트
-	OnMoneyChanged.Broadcast(MoneyData.Money);
-
-	UE_LOG(LogHG, Log, TEXT("돈 초기화: %d (Authority: %s)"),
-		InMoney,
-		GetOwner() && GetOwner()->HasAuthority() ? TEXT("Server") : TEXT("Client"));
+	// 서버에서 초기화 시 델리게이트 브로드캐스트
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		OnMoneyChanged.Broadcast(MoneyData.Money);
+	}
 }
 
-	UE_LOG(LogTemp, Error, TEXT("내 돈은 얼마일까? %d"), MoneyData.Money);
-
-	//// 서버에서 초기화 시 델리게이트 브로드캐스트
-	//if (GetOwner() && GetOwner()->HasAuthority())
-	//{
-	//	OnMoneyChanged.Broadcast(MoneyData.Money);
-	//}
-
-	  // 서버와 클라이언트 모두 브로드캐스트
-	OnMoneyChanged.Broadcast(MoneyData.Money);
-
-	UE_LOG(LogHG, Log, TEXT("시민 돈 랜덤 생성: %d (Authority: %s)"),
-		MoneyData.Money,
-		GetOwner() && GetOwner()->HasAuthority() ? TEXT("Server") : TEXT("Client"));
+void UACMoneyComponent::GenerateRandomMoney(int32 InMaxMoney)
 {
 	MoneyData.Money = FMath::RandRange(0, InMaxMoney);
 	UE_LOG(LogTemp, Error, TEXT("내 돈은 얼마일까? %d"), MoneyData.Money);
+
+	// 서버에서 초기화 시 델리게이트 브로드캐스트
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		OnMoneyChanged.Broadcast(MoneyData.Money);
+	}
+
+	UE_LOG(LogHG, Log, TEXT("시민 돈 랜덤 생성: %d"), MoneyData.Money);
 }
 
 
