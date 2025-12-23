@@ -463,6 +463,11 @@ void AACCharacter::AttackHitCheck()
 
 bool AACCharacter::CanInteract(AACCharacter* ACPlayer)
 {
+	if (ACPlayer == nullptr)
+	{
+		return false;
+	}
+
 	// 시민과 시민은 상호작용 가능하다?
 	return true;
 }
