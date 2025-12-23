@@ -4,6 +4,7 @@
 #include "ACCitizen.h"
 
 #include "ACCharacter.h"
+#include "AnimalCrime.h"
 #include "BrainComponent.h"
 #include "NavigationSystem.h"
 #include "AI/ACCitizenAIController.h"
@@ -127,15 +128,30 @@ AACCitizen::AACCitizen()
 	MoneyComp = CreateDefaultSubobject<UACMoneyComponent>(TEXT("MoneyComponent"));
 	
 	
+}
 
+void AACCitizen::PostInitializeComponents()
+{
+	AC_LOG(LogHY, Warning, TEXT("Begin"));
+	Super::PostInitializeComponents();
+	AC_LOG(LogHY, Warning, TEXT("End"));
+}
+
+void AACCitizen::PostNetInit()
+{
+	AC_LOG(LogHY, Warning, TEXT("Begin"));
+	Super::PostNetInit();
+	AC_LOG(LogHY, Warning, TEXT("End"));
 }
 
 // Called when the game starts or when spawned
 void AACCitizen::BeginPlay()
 {
+	AC_LOG(LogHY, Warning, TEXT("Begin"));
 	Super::BeginPlay();
 	
 	MoneyComp->InitMoneyComponent(EMoneyType::MoneyCitizenType);
+	AC_LOG(LogHY, Warning, TEXT("End"));
 }
 
 // Called every frame
@@ -330,16 +346,7 @@ void AACCitizen::AttackHitCheck()
 	ObjectParams.AddObjectTypesToQuery(ECC_GameTraceChannel7);
 	ObjectParams.AddObjectTypesToQuery(ECC_GameTraceChannel8);
 	
-	bool bHit = GetWorld()->SweepSingleByObjectType(
-		Hit,
-		Start,
-		End,
-		FQuat::Identity,
-		ObjectParams,
-		FCollisionShape::MakeCapsule(CapsuleRadius, CapsuleHalfHeight),
-		Params
-	);
-	
+	bool bHit = GetWorld()->SweepSingleByObjectType(Hit, Start, End, FQuat::Identity, ObjectParams, FCollisionShape::MakeCapsule(CapsuleRadius, CapsuleHalfHeight), Params);
 	// 디버그: 캡슐 그리기
 	DrawDebugCapsule(GetWorld(), (Start + End) * 0.5f, CapsuleHalfHeight, CapsuleRadius, FRotationMatrix::MakeFromZ(End - Start).ToQuat(), bHit ? FColor::Red : FColor::Green, false, 1.0f);
 	

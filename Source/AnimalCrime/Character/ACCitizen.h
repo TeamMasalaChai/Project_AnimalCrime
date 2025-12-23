@@ -27,6 +27,8 @@ public:
 	
 #pragma region 엔진 제공 함수
 public:
+	virtual void PostInitializeComponents() override;
+	virtual void PostNetInit() override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
