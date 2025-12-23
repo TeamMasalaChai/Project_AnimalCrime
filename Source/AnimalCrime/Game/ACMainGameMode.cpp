@@ -21,21 +21,20 @@ AACMainGameMode::AACMainGameMode()
 {
 	PlayerControllerClass = AACMainPlayerController::StaticClass();
 	//DefaultPawnClass = AACMafiaCharacter::StaticClass();
-	//DefaultPawnClass = nullptr;
-
-	static ConstructorHelpers::FClassFinder<APawn> DefaultPawnBP(
-		TEXT("/Game/Project/Character/BP_ACMafia")
-	);
-
-	if (DefaultPawnBP.Succeeded())
-	{
-		DefaultPawnClass = DefaultPawnBP.Class;
-	}
+	DefaultPawnClass = nullptr;
 
 	GameStateClass = AACMainGameState::StaticClass();
 	PlayerStateClass = AACPlayerState::StaticClass();
 
-	MafiaPawnClass = AACMafiaCharacter::StaticClass();
+	//MafiaPawnClass = AACMafiaCharacter::StaticClass();
+	static ConstructorHelpers::FClassFinder<APawn> MafiaPawnBP(
+		TEXT("/Game/Project/Character/BP_ACMafia")
+	);
+
+	if (MafiaPawnBP.Succeeded())
+	{
+		MafiaPawnClass = MafiaPawnBP.Class;
+	}
 	PolicePawnClass = AACPoliceCharacter::StaticClass();
 
 	bUseSeamlessTravel = true;
