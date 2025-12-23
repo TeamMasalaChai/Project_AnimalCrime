@@ -34,13 +34,8 @@ AACCitizen::AACCitizen()
 	GetCapsuleComponent()->InitCapsuleSize(35.f, 90.0f);
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("CitizenCollision"));
 
-	// //캐릭터 무브먼트
-	// auto Move = GetCharacterMovement();
-	GetCharacterMovement()->MaxWalkSpeed = 400.f;
-	// Move->JumpZVelocity = 600.f;
-	// Move->AirControl = 0.3f;
-	// Move->bOrientRotationToMovement = true;
-	// Move->RotationRate = FRotator(0.f, 500.f, 0.f);
+	// 캐릭터 무브먼트(제거)
+	
 
 	//스켈레탈 메시
 	USkeletalMeshComponent* MeshComp = GetMesh();
