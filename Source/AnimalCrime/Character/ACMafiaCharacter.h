@@ -17,6 +17,8 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	virtual void PostNetInit() override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	//!< 상호작용 인터페이스
 protected:
@@ -65,4 +67,5 @@ protected:
 	UPROPERTY(Replicated,EditAnywhere)
 	TObjectPtr<class UACDestroyableStatComponent> Stat;
 
+	float TickDeltaTime = 1.0f;
 };

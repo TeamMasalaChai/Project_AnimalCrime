@@ -33,31 +33,53 @@ void AACMafiaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 float AACMafiaCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float SuperResult = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	
+	// 클라이언트에서 계산 시 데미지가 중첩되는 버그가 발생.
+	if (HasAuthority() == false)
+	{
+		return 0.0f;
+	}
 
-	UE_LOG(LogHY, Error, TEXT("Damage:%f"), DamageAmount);
+	AC_LOG(LogHY, Error, TEXT("Damage:%f"), DamageAmount);
 	if (EventInstigator != nullptr)
 	{
-		UE_LOG(LogHY, Error, TEXT("Constrol:%s"), *EventInstigator->GetName());
+		AC_LOG(LogHY, Error, TEXT("MyName:%s EventInstigator:%s"), *GetName(), *EventInstigator->GetName());
 	}
 	if (DamageCauser != nullptr)
 	{
-		UE_LOG(LogHY, Error, TEXT("Name:%s"), *DamageCauser->GetName());
+		AC_LOG(LogHY, Error, TEXT("MyName:%s DamageCauser:%s"), *GetName(), *DamageCauser->GetName());
 	}
 
 	float CurrentHp = Stat->GetCurrentHp();
 	CurrentHp -= 1.0f;
 	Stat->SetCurrentHp(CurrentHp);
+	AC_LOG(LogHY, Error, TEXT("My HP is %f"), Stat->GetCurrentHp());
 	if (CurrentHp <= 0)
 	{
 		// 상태 변경
 		CharacterState = ECharacterState::Stun;
 		
-		// 못 움직이도록 변경
-		GetCharacterMovement()->MaxWalkSpeed = 10;
-		GetCharacterMovement()->JumpZVelocity = 10;
+		OnRep_CharacterState();
 	}
 
 	return 1.0f;
+}
+
+void AACMafiaCharacter::PostNetInit()
+{
+	Super::PostNetInit();
+}
+
+void AACMafiaCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
+	TickDeltaTime -=DeltaSeconds;
+	if (TickDeltaTime <= 0.0f)
+	{
+		AC_LOG(LogHY, Error, TEXT("My HP is %f"), Stat->GetCurrentHp());
+		TickDeltaTime += 1.0f;
+	}
 }
 
 void AACMafiaCharacter::BeginPlay()
@@ -79,20 +101,17 @@ void AACMafiaCharacter::BeginPlay()
 	
 	// 마피아가 처음에 가지고 있는 돈 설정
 	MoneyComp->InitMoneyComponent(EMoneyType::MoneyMafiaType);
-	AC_LOG(LogHY, Warning, TEXT("Before BeginPlay HP=%f | Authority=%d"),
+	AC_LOG(LogHY, Warning, TEXT("Before HP=%f | Authority=%d"),
 		Stat->GetCurrentHp(),
 		HasAuthority());
 	
 	// 체력 설정.
-
-	Stat->SetMaxHp(5);
-	Stat->SetCurrentHp(5);
+	Stat->SetMaxHp(6);
+	Stat->SetCurrentHp(6);
 	Stat->SetArmor(0);
-	AC_LOG(LogHY, Warning, TEXT("After BeginPlay HP=%f | Authority=%d"),
-	Stat->GetCurrentHp(),
-	HasAuthority());
-	
-	ForceNetUpdate();
+	AC_LOG(LogHY, Warning, TEXT("After HP=%f | Authority=%d"),
+		Stat->GetCurrentHp(),
+		HasAuthority());
 }
 
 bool AACMafiaCharacter::CanInteract(AACCharacter* ACPlayer)
@@ -261,7 +280,7 @@ void AACMafiaCharacter::AttackHitCheck()
 	
 	if (bHit)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *Hit.GetActor()->GetName());
+		AC_LOG(LogHY, Warning, TEXT("Hit Actor: %s"), *Hit.GetActor()->GetName());
 		UGameplayStatics::ApplyDamage(Hit.GetActor(),30.0f, GetController(),this, nullptr);
 	}
 }
