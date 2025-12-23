@@ -19,6 +19,7 @@
 #include "Net/UnrealNetwork.h"
 
 #include "AnimalCrime.h"
+#include "Game/ACMainGameMode.h"
 
 
 // Sets default values
@@ -357,6 +358,24 @@ void AACCitizen::AttackHitCheck()
 		UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *Hit.GetActor()->GetName());
 		UGameplayStatics::ApplyDamage(Hit.GetActor(),30.0f, GetController(),this, nullptr);
 	}
+}
+
+void AACCitizen::ChangeClothes()
+{
+	AACMainGameMode* MainGameMode = Cast<AACMainGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (MainGameMode == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("MainGameMode is nullptr"));
+		return;
+	}
+	
+	FOutfitCombo OutfitCombo =  MainGameMode->GetClothesFromPool();
+	TopMesh = OutfitCombo.TopAsset.LoadSynchronous();
+	BottomMesh = OutfitCombo.BottomAsset.LoadSynchronous();
+	FaceMesh = OutfitCombo.FaceAsset.LoadSynchronous();
+	FaceAccMesh = OutfitCombo.FaceAccAsset.LoadSynchronous();
+	ShoesMesh = OutfitCombo.ShoesAsset.LoadSynchronous();
+	HeadMesh = OutfitCombo.HairAsset.LoadSynchronous();
 }
 
 void AACCitizen::OnRep_HeadMesh() const

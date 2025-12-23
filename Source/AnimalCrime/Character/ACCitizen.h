@@ -66,6 +66,10 @@ public:
 	
 	void AttackHitCheck();
 	
+#pragma region AI 스킬
+public:
+	void ChangeClothes();
+#pragma endregion
 
 #pragma region 매시 Get/Set
 	FORCEINLINE USkeletalMesh* GetHeadMesh()		const { return HeadMesh;}

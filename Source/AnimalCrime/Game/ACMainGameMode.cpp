@@ -340,6 +340,18 @@ FOutfitCombo AACMainGameMode::GiveOutfitFromPool()
 	return OutfitPool[CurrentOutfitIndex];
 }
 
+FOutfitCombo AACMainGameMode::GetClothesFromPool()
+{
+	if (OutfitPool.Num() == 0)
+	{
+		AC_LOG(LogHY, Error, TEXT("OutfitPool is EMPTY!"));
+		return FOutfitCombo();
+	}
+
+	int32 RandIndex = FMath::RandRange(0, OutfitPool.Num() - 1); 
+	return OutfitPool[RandIndex];
+}
+
 void AACMainGameMode::PostSeamlessTravel()
 {
 	Super::PostSeamlessTravel();

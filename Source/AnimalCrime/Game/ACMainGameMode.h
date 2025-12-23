@@ -101,6 +101,7 @@ public:
 	
 	void GenerateOutfitPool();
 	FOutfitCombo GiveOutfitFromPool();
+	FOutfitCombo GetClothesFromPool();
 	
 private:
 	UPROPERTY(EditAnywhere, meta=(AllowedClasses=Actor))
