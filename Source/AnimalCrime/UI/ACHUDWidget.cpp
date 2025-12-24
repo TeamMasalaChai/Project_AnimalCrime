@@ -78,8 +78,6 @@ void UACHUDWidget::HandleMoneyChanged(int32 NewMoney)
 	{
 		return;
 	}
-
-	UE_LOG(LogTemp, Log, TEXT("[UACHUDWidget::HandleMoneyChanged]: %d"), NewMoney);
 	
 	WBP_Money->UpdateMoney(NewMoney);
 }
@@ -120,8 +118,6 @@ void UACHUDWidget::BindMoneyComponent()
 
 			// 초기값 설정
 			HandleMoneyChanged(MoneyComp->GetMoney());
-
-			UE_LOG(LogHG, Log, TEXT("MoneyComponent 바인딩 성공, 초기 돈: %d"), MoneyComp->GetMoney());
 		}
 		else
 		{

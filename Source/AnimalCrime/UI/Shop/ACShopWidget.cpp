@@ -66,8 +66,6 @@ void UACShopWidget::NativeConstruct()
 
             // 현재 돈 초기 표시
             UpdateMoneyDisplay(MoneyComponent->GetMoney());
-
-            UE_LOG(LogHG, Log, TEXT("ACShopWidget: Money display initialized with %d"), MoneyComponent->GetMoney());
         }
         else
         {
@@ -89,7 +87,6 @@ void UACShopWidget::LoadAndCreateSlots(const FString& SearchPath)
     }
 
     // ===== AssetManager에서 자동으로 가져오기 =====
-    UE_LOG(LogHG, Warning, TEXT("Attempting to get AssetManager..."));
 
     if (GEngine == nullptr || GEngine->AssetManager == nullptr)
     {
@@ -104,7 +101,6 @@ void UACShopWidget::LoadAndCreateSlots(const FString& SearchPath)
         return;
     }
 
-    UE_LOG(LogHG, Warning, TEXT("AssetManager obtained successfully"));
     TArray<UACItemData*> LoadedItems = AssetManager->GetAllItemData();
 
     // 배열 초기화
@@ -117,8 +113,6 @@ void UACShopWidget::LoadAndCreateSlots(const FString& SearchPath)
     ShoesItems.Empty();
 
     AllItemData = LoadedItems;
-
-    UE_LOG(LogHG, Warning, TEXT("Loaded %d ItemData from AssetManager"), AllItemData.Num());
 
     if (AllItemData.Num() == 0)
     {
@@ -157,9 +151,6 @@ void UACShopWidget::LoadAndCreateSlots(const FString& SearchPath)
             }
         }
     }
-
-    UE_LOG(LogHG, Warning, TEXT("Categorized: Weapon=%d, Head=%d, FaceAcc=%d, Top=%d, Bottom=%d, Shoes=%d"),
-        WeaponItems.Num(), HeadItems.Num(), FaceAccItems.Num(), TopItems.Num(), BottomItems.Num(), ShoesItems.Num());
 
     CreateSlotsForCategory(CurrentCategory);
 }
@@ -239,8 +230,6 @@ void UACShopWidget::CreateSlotsForCategory(EShopCategory Category)
         ContentGridPanel->AddChildToUniformGrid(NewSlot, Row, Column);
         ContentGridPanel->SetSlotPadding(FMargin(10.0f));
 
-        UE_LOG(LogHG, Log, TEXT("Created slot for: %s at [%d, %d]"), *ItemData->ItemName.ToString(), Row,
-            Column);
     }
 }
 
@@ -292,8 +281,6 @@ void UACShopWidget::UpdateMoneyDisplay(int32 NewMoney)
     // "1000G" 형식으로 표시
     FText MoneyText = FText::Format(FText::FromString(TEXT("{0}G")), NewMoney);
     MyMoneyText->SetText(MoneyText);
-
-    UE_LOG(LogHG, Log, TEXT("Money display updated: %d"), NewMoney);
 }
 
 void UACShopWidget::ShowCategory(EShopCategory Category)

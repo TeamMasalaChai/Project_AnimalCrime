@@ -44,7 +44,6 @@ void UACSlotWidget::SetItemData(UACItemData* InItemData)
         {
             // PreviewImage가 없으면 투명 처리
             ItemPreviewImage->SetColorAndOpacity(FLinearColor(0.2f, 0.2f, 0.2f, 0.0f));
-            UE_LOG(LogHG, Warning, TEXT("PreviewImage is missing for item: %s"), *InItemData->ItemName.ToString());
         }
     }
 
@@ -80,12 +79,10 @@ void UACSlotWidget::OnPurchaseButtonClicked()
     {
         // 무기는 퀵슬롯에 추가 (로컬 처리만, 캐릭터에 부착 안 함)
         ShopComponent->PurchaseAndAddToQuickSlot(ItemData);
-        UE_LOG(LogHG, Log, TEXT("Weapon purchased, adding to quickslot: %s"), *ItemData->ItemName.ToString());
     }
     else
     {
         // 의류는 바로 착용 (서버 RPC 처리)
         ShopComponent->PurchaseAndEquipItem(ItemData);
-        UE_LOG(LogHG, Log, TEXT("Clothing purchased and equipped: %s"), *ItemData->ItemName.ToString());
     }
 }

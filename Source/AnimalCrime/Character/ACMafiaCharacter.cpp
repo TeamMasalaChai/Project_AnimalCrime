@@ -125,7 +125,6 @@ void AACMafiaCharacter::BeginPlay()
 	{
 		// Mafia는 100원으로 시작
 		MoneyComp->InitMoneyComponent(EMoneyType::MoneyMafiaType);
-		UE_LOG(LogHG, Log, TEXT("Mafia BeginPlay: MoneyMafiaType 초기화"));
 
 		// GameState에 등록
 		AACMainGameState* GS = GetWorld()->GetGameState<AACMainGameState>();

@@ -52,7 +52,6 @@ void AACPoliceCharacter::BeginPlay()
 	if (HasAuthority())
 	{
 		MoneyComp->InitMoneyComponent(EMoneyType::MoneyPoliceType);
-		UE_LOG(LogHG, Log, TEXT("Police BeginPlay: MoneyPoliceType 초기화"));
 	}
 }
 

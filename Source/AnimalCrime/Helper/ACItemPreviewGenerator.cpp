@@ -66,8 +66,6 @@ UTexture2D* UACItemPreviewGenerator::GeneratePreviewForItem(UACItemData* ItemDat
     {
         ItemData->PreviewImage = SavedTexture;
         ItemData->MarkPackageDirty();
-
-        UE_LOG(LogHG, Log, TEXT("Successfully generated preview for: %s"), *ItemData->ItemName.ToString());
     }
 
     return SavedTexture;
@@ -95,8 +93,6 @@ int32 UACItemPreviewGenerator::GenerateAllPreviews(const FString& SearchPath, AA
 
     AssetRegistry.GetAssets(Filter, AssetDataList);
 
-    UE_LOG(LogHG, Warning, TEXT("Found %d ItemData assets in %s"), AssetDataList.Num(), *SearchPath);
-
     int32 GeneratedCount = 0;
 
     // 각 ItemData에 대해 프리뷰 생성
@@ -113,7 +109,6 @@ int32 UACItemPreviewGenerator::GenerateAllPreviews(const FString& SearchPath, AA
         }
     }
 
-    UE_LOG(LogHG, Warning, TEXT("Generated %d preview images"), GeneratedCount);
     return GeneratedCount;
 }
 
@@ -180,8 +175,6 @@ UTexture2D* UACItemPreviewGenerator::SaveRenderTargetAsTexture2D(UTextureRenderT
 
     if (UPackage::SavePackage(Package, NewTexture, *PackageFileName, SaveArgs) == true)
     {
-        UE_LOG(LogHG, Log, TEXT("Successfully saved texture: %s"), *PackageName);
-
         // Asset Registry에 알림
         FAssetRegistryModule::AssetCreated(NewTexture);
     }

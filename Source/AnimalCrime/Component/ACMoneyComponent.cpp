@@ -88,8 +88,6 @@ void UACMoneyComponent::EarnMoney(int32 InMoney)
 	{
 		OnMoneyChanged.Broadcast(MoneyData.Money);
 	}
-
-	UE_LOG(LogHG, Log, TEXT("돈 획득: +%d, 현재: %d"), InMoney, MoneyData.Money);
 }
 
 bool UACMoneyComponent::SpendMoney(int32 InMoney)
@@ -104,7 +102,6 @@ bool UACMoneyComponent::SpendMoney(int32 InMoney)
 	}
 	if (MoneyData.Money < InMoney)
 	{
-		UE_LOG(LogHG, Warning, TEXT("돈 부족: 필요 %d, 보유 %d"), InMoney, MoneyData.Money);
 		return false;
 	}
 
@@ -117,13 +114,11 @@ bool UACMoneyComponent::SpendMoney(int32 InMoney)
 		OnMoneyChanged.Broadcast(MoneyData.Money);
 	}
 
-	UE_LOG(LogHG, Log, TEXT("구매 성공(돈 차감): -%d, 현재: %d"), InMoney, MoneyData.Money);
 	return true;
 }
 
 int32 UACMoneyComponent::LoseMoney(int32 InMoney)
 {
-	UE_LOG(LogTemp, Log, TEXT("[LoseMoney] 요청: %d, 보유: %d"), InMoney, MoneyData.Money);
 	if (InMoney < 0)
 	{
 		return -1;
@@ -143,16 +138,12 @@ int32 UACMoneyComponent::LoseMoney(int32 InMoney)
 	{
 		OnMoneyChanged.Broadcast(MoneyData.Money);
 	}
-
-	UE_LOG(LogHG, Log, TEXT("돈 상실: -%d, 현재: %d"), InMoney, MoneyData.Money);
 	return InMoney;
 }
 
 void UACMoneyComponent::OnRep_MoneyData()
 {
 	// 클라이언트에서 MoneyData가 복제되면 자동 호출됨
-	UE_LOG(LogHG, Log, TEXT("[OnRep_MoneyData] Money changed to: %d"), MoneyData.Money);
-
 	// 델리게이트 브로드캐스트 → UI 자동 업데이트
 	OnMoneyChanged.Broadcast(MoneyData.Money);
 }
@@ -193,15 +184,12 @@ void UACMoneyComponent::InitMoney(int32 InMoney)
 void UACMoneyComponent::GenerateRandomMoney(int32 InMaxMoney)
 {
 	MoneyData.Money = FMath::RandRange(0, InMaxMoney);
-	UE_LOG(LogTemp, Error, TEXT("내 돈은 얼마일까? %d"), MoneyData.Money);
 
 	// 서버에서 초기화 시 델리게이트 브로드캐스트
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
 		OnMoneyChanged.Broadcast(MoneyData.Money);
 	}
-
-	UE_LOG(LogHG, Log, TEXT("시민 돈 랜덤 생성: %d"), MoneyData.Money);
 }
 
 

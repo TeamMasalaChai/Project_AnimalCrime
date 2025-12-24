@@ -71,7 +71,6 @@ void AACCCTVArea::OnInteract(AACCharacter* ACPlayer)
     }
 
     // 서버에서 클라이언트에게 위젯 토글 명령 전송
-    UE_LOG(LogHG, Log, TEXT("Server: Sending toggle command to %s"), *ACPlayer->GetName());
     PC->ClientToggleCCTVWidget(CCTVWidgetClass);
 }
 
@@ -89,6 +88,5 @@ void AACCCTVArea::OnInteractBoxOverlapEnd(UPrimitiveComponent* OverlappedCompone
     if (PC != nullptr)
     {
         PC->CloseCCTV();
-        UE_LOG(LogHG, Log, TEXT("Player left CCTV area - closing CCTV UI"));
     }
 }

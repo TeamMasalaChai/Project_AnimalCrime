@@ -514,8 +514,6 @@ void AACMainPlayerController::ClientToggleShopWidget_Implementation(TSubclassOf<
 	else
 	{
 		// ===== 상점 열기 =====
-		UE_LOG(LogHG, Log, TEXT("Client: Opening Shop UI"));
-
 		UACShopWidget* ShopWidget = CreateWidget<UACShopWidget>(GetWorld(), WidgetClass);
 
 		if (ShopWidget != nullptr)
@@ -556,8 +554,6 @@ void AACMainPlayerController::CloseShop()
 	}
 
 	// ===== 상점 닫기 =====
-	UE_LOG(LogHG, Log, TEXT("Client: Closing Shop UI"));
-
 	CurrentShopWidget->RemoveFromParent();
 	CurrentShopWidget = nullptr;
 
@@ -584,8 +580,6 @@ void AACMainPlayerController::CloseCCTV()
 	}
 
 	// ===== CCTV 닫기 =====
-	UE_LOG(LogHG, Log, TEXT("Client: Closing CCTV UI"));
-
 	CurrentCCTVWidget->RemoveFromParent();
 	CurrentCCTVWidget = nullptr;
 
@@ -832,8 +826,6 @@ void AACMainPlayerController::ClientToggleCCTVWidget_Implementation(TSubclassOf<
 	else
 	{
 		// ===== CCTV 열기 =====
-		UE_LOG(LogHG, Log, TEXT("Client: Opening CCTV UI"));
-
 		UACCCTVWidget* CCTVWidget = CreateWidget<UACCCTVWidget>(GetWorld(), WidgetClass);
 
 		if (CCTVWidget != nullptr)

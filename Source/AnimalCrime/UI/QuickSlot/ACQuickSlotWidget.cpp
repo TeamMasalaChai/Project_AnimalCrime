@@ -83,20 +83,17 @@ bool UACQuickSlotWidget::TryAddItem(UACItemData* ItemData)
     if (IsMainSlotEmpty() == true)
     {
         AddItem(ItemData, true);
-        UE_LOG(LogHG, Log, TEXT("Item added to Main Slot: %s"), *ItemData->ItemName.ToString());
         return true;
     }
     // 메인 슬롯은 차있고 서브 슬롯이 비어있으면 서브 슬롯에 추가
     else if (IsSubSlotEmpty() == true)
     {
         AddItem(ItemData, false);
-        UE_LOG(LogHG, Log, TEXT("Item added to Sub Slot: %s"), *ItemData->ItemName.ToString());
         return true;
     }
     // 둘 다 차있으면 추가 실패
     else
     {
-        UE_LOG(LogHG, Warning, TEXT("QuickSlot is full! Cannot add item: %s"), *ItemData->ItemName.ToString());
         return false;
     }
 }
@@ -152,7 +149,6 @@ void UACQuickSlotWidget::ToggleSlotEquip(int32 SlotIndex)
 
     // 무기 장착/해제 토글 (RPC)
     ShopComponent->ToggleWeaponEquip(TargetItem);
-    UE_LOG(LogHG, Log, TEXT("Toggling Slot %d weapon: %s"), SlotIndex, *TargetItem->ItemName.ToString());
 }
 
 void UACQuickSlotWidget::BindShopComponent()
@@ -191,20 +187,16 @@ void UACQuickSlotWidget::BindShopComponent()
     UpdateHighlight(ShopComponent->EquippedWeapon);
 
     bShopComponentBound = true;
-    UE_LOG(LogHG, Log, TEXT("QuickSlot: ShopComponent 바인딩 성공"));
 }
 
 void UACQuickSlotWidget::UpdateHighlight(UACItemData* EquippedWeapon)
 {
-    UE_LOG(LogHG, Log, TEXT("[UpdateHighlight] Weapon: %s"),
-        EquippedWeapon ? *EquippedWeapon->ItemName.ToString() : TEXT("None"));
-
     // 모든 하이라이트를 먼저 숨김
-    if (MainSlotHighlight)
+    if (MainSlotHighlight != nullptr)
     {
         MainSlotHighlight->SetBrushColor(FLinearColor(1, 1, 1, 0));
     }
-    if (SubSlotHighlight)
+    if (SubSlotHighlight != nullptr)
     {
         SubSlotHighlight->SetBrushColor(FLinearColor(1, 1, 1, 0));
     }
@@ -218,16 +210,14 @@ void UACQuickSlotWidget::UpdateHighlight(UACItemData* EquippedWeapon)
     // 현재 장착된 무기와 매칭되는 슬롯의 하이라이트만 보이기
     // 메인 슬롯 체크
     if (MainSlotItem != nullptr &&
-        MainSlotItem->ItemName.EqualTo(EquippedWeapon->ItemName))
+        MainSlotItem->ItemName.EqualTo(EquippedWeapon->ItemName) == true)
     {
         MainSlotHighlight->SetBrushColor(FLinearColor(0, 1, 0, 1)); // 초록색 불투명
-        UE_LOG(LogHG, Log, TEXT("MainSlot 하이라이트 켜짐"));
     }
     // 서브 슬롯 체크
     else if (SubSlotItem != nullptr &&
-        SubSlotItem->ItemName.EqualTo(EquippedWeapon->ItemName))
+        SubSlotItem->ItemName.EqualTo(EquippedWeapon->ItemName) == true)
     {
         SubSlotHighlight->SetBrushColor(FLinearColor(0, 1, 0, 1)); // 초록색 불투명
-        UE_LOG(LogHG, Log, TEXT("SubSlot 하이라이트 켜짐"));
     }
 }

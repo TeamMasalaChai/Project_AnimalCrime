@@ -108,9 +108,6 @@ void UACShopComponent::ToggleWeaponEquip(UACItemData* ItemData)
 
 void UACShopComponent::OnRep_EquippedWeapon()
 {
-    UE_LOG(LogHG, Log, TEXT("[OnRep_EquippedWeapon] Weapon changed to: %s"),
-        EquippedWeapon ? *EquippedWeapon->ItemName.ToString() : TEXT("None"));
-
     // 델리게이트 브로드캐스트
     OnWeaponEquippedChanged.Broadcast(EquippedWeapon);
 }
@@ -167,8 +164,6 @@ void UACShopComponent::EquipClothing(UACItemData* ItemData)
 
     TargetMeshComponent->SetSkeletalMesh(ItemData->ClothingMesh);
     TargetMeshComponent->SetLeaderPoseComponent(Character->GetMesh());
-
-    UE_LOG(LogHG, Log, TEXT("Equipped clothing: %s to slot %d"), *ItemData->ItemName.ToString(), (int32)ItemData->ClothingSlot);
 }
 
 void UACShopComponent::EquipWeapon(UACItemData* ItemData)
@@ -220,8 +215,6 @@ void UACShopComponent::EquipWeapon(UACItemData* ItemData)
         // 서버에서 델리게이트 브로드캐스트
         OnWeaponEquippedChanged.Broadcast(EquippedWeapon);
     }
-
-    UE_LOG(LogHG, Log, TEXT("Equipped weapon: %s to socket %s"), *ItemData->ItemName.ToString(), *ItemData->AttachSocketName.ToString());
 }
 
 void UACShopComponent::UnequipWeapon()
@@ -247,7 +240,6 @@ void UACShopComponent::UnequipWeapon()
         if (MeshComp->GetAttachSocketName() == EquippedWeapon->AttachSocketName)
         {
             MeshComp->DestroyComponent();
-            UE_LOG(LogHG, Log, TEXT("Unequipped weapon: %s from socket %s"), *EquippedWeapon->ItemName.ToString(), *EquippedWeapon->AttachSocketName.ToString());
             break;
         }
     }
@@ -277,13 +269,12 @@ void UACShopComponent::ClientAddToQuickSlot_Implementation(UACItemData* ItemData
 
     if (PC->ACHUDWidget->WBP_QuickSlot->IsFull())
     {
-        UE_LOG(LogHG, Warning, TEXT("QuickSlot is full! Cannot add item: %s"), *ItemData->ItemName.ToString());
         return;
     }
 
     if (PC->ACHUDWidget->WBP_QuickSlot->TryAddItem(ItemData))
     {
-        UE_LOG(LogHG, Log, TEXT("Item added to quickslot: %s"), *ItemData->ItemName.ToString());
+        //UE_LOG(LogHG, Log, TEXT("Item added to quickslot: %s"), *ItemData->ItemName.ToString());
     }
 }
 

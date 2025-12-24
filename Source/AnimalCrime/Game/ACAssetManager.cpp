@@ -23,8 +23,6 @@ UACAssetManager& UACAssetManager::Get()
 void UACAssetManager::StartInitialLoading()
 {
 	Super::StartInitialLoading();
-
-	UE_LOG(LogHG, Warning, TEXT("ACAssetManager: StartInitialLoading called (ItemData will be loaded on first access)"));
 }
 
 void UACAssetManager::LoadItemDataInternal()
@@ -33,8 +31,6 @@ void UACAssetManager::LoadItemDataInternal()
 	{
 		return; // 이미 로드됨
 	}
-
-	UE_LOG(LogHG, Warning, TEXT("ACAssetManager: Loading ItemData for the first time..."));
 
 	CachedItemData.Empty();
 
@@ -52,27 +48,20 @@ void UACAssetManager::LoadItemDataInternal()
 
 	AssetRegistry.GetAssets(Filter, AssetDataList);
 
-	UE_LOG(LogHG, Warning, TEXT("[EDITOR] ACAssetManager: Found %d ItemData assets via AssetRegistry"), AssetDataList.Num());
-
 	for (const FAssetData& AssetData : AssetDataList)
 	{
 		UACItemData* ItemData = Cast<UACItemData>(AssetData.GetAsset());
 		if (ItemData)
 		{
 			CachedItemData.Add(ItemData);
-			UE_LOG(LogHG, Log, TEXT("  - Loaded ItemData: %s"), *ItemData->ItemName.ToString());
 		}
 	}
 #else
 	// ===== 패키징: Primary Asset 방식으로 로드 =====
-	UE_LOG(LogHG, Warning, TEXT("[PACKAGED] ACAssetManager: Loading ItemData via Primary Asset"));
-
 	UAssetManager& Manager = UAssetManager::Get();
 
 	TArray<FPrimaryAssetId> ItemAssetIds;
 	Manager.GetPrimaryAssetIdList(FPrimaryAssetType("ItemData"), ItemAssetIds);
-
-	UE_LOG(LogHG, Warning, TEXT("[PACKAGED] Found %d Primary Asset IDs"), ItemAssetIds.Num());
 
 	if (ItemAssetIds.Num() == 0)
 	{
@@ -103,7 +92,6 @@ void UACAssetManager::LoadItemDataInternal()
 		if (ItemData)
 		{
 			CachedItemData.Add(ItemData);
-			UE_LOG(LogHG, Warning, TEXT("  - Loaded: %s (from %s)"), *ItemData->ItemName.ToString(), *AssetPath.ToString());
 			SuccessCount++;
 		}
 		else
@@ -112,11 +100,7 @@ void UACAssetManager::LoadItemDataInternal()
 			FailCount++;
 		}
 	}
-
-	UE_LOG(LogHG, Warning, TEXT("[PACKAGED] Load result: %d succeeded, %d failed"), SuccessCount, FailCount);
 #endif
-
-	UE_LOG(LogHG, Warning, TEXT("ACAssetManager: Successfully loaded and cached %d ItemData assets"), CachedItemData.Num());
 	bItemDataLoaded = true;
 }
 

@@ -56,9 +56,6 @@ void AACItemPreviewCapture::BeginPlay()
 
 void AACItemPreviewCapture::InitializeRenderTarget(bool bForceRecreate)
 {
-    UE_LOG(LogHG, Warning, TEXT("ACItemPreviewCapture InitializeRenderTarget Called! ForceRecreate: %d"),
-        bForceRecreate);
-
     // 강제 재생성이면 기존 RenderTarget 제거
     if (bForceRecreate && RenderTarget)
     {
@@ -114,8 +111,6 @@ void AACItemPreviewCapture::SetItemData(UACItemData* InItemData)
         return;
     }
 
-    UE_LOG(LogHG, Warning, TEXT("SetItemData called for: %s"), *InItemData->ItemName.ToString());
-
     CurrentItemData = InItemData;
 
     // 아이템 타입에 따라 메시 설정
@@ -125,7 +120,6 @@ void AACItemPreviewCapture::SetItemData(UACItemData* InItemData)
     {
         if (InItemData->ClothingMesh)
         {
-            UE_LOG(LogHG, Warning, TEXT("Setting Clothing Mesh: %s"), *InItemData->ClothingMesh->GetName());
             ClothingMeshComponent->SetSkeletalMesh(InItemData->ClothingMesh);
             ClothingMeshComponent->SetVisibility(true);
             EquipmentMeshComponent->SetVisibility(false);
@@ -133,8 +127,6 @@ void AACItemPreviewCapture::SetItemData(UACItemData* InItemData)
             // 메시를 원점에 배치하고 정면을 보도록 회전
             ClothingMeshComponent->SetRelativeLocation(FVector(0, 0, 0));
             ClothingMeshComponent->SetRelativeRotation(FRotator(0, 90, 0));
-
-            UE_LOG(LogHG, Log, TEXT("Set Clothing Mesh: %s"), *InItemData->ItemName.ToString());
         }
         break;
     }
@@ -143,7 +135,6 @@ void AACItemPreviewCapture::SetItemData(UACItemData* InItemData)
     {
         if (InItemData->EquipmentMesh)
         {
-            UE_LOG(LogHG, Warning, TEXT("Setting Equipment Mesh: %s"), *InItemData->EquipmentMesh->GetName());
             EquipmentMeshComponent->SetStaticMesh(InItemData->EquipmentMesh);
             EquipmentMeshComponent->SetVisibility(true);
             ClothingMeshComponent->SetVisibility(false);
@@ -151,8 +142,6 @@ void AACItemPreviewCapture::SetItemData(UACItemData* InItemData)
             // 메시를 원점에 배치하고 정면을 보도록 회전
             EquipmentMeshComponent->SetRelativeLocation(FVector(0, 0, 0));
             EquipmentMeshComponent->SetRelativeRotation(FRotator(0, 90, 0));
-
-            UE_LOG(LogHG, Log, TEXT("Set Equipment Mesh: %s"), *InItemData->ItemName.ToString());
         }
         break;
     }
@@ -168,9 +157,7 @@ void AACItemPreviewCapture::SetItemData(UACItemData* InItemData)
         SceneCaptureComponent->ShowOnlyComponents.Add(ClothingMeshComponent);
         SceneCaptureComponent->ShowOnlyComponents.Add(EquipmentMeshComponent);
 
-        UE_LOG(LogHG, Warning, TEXT("Calling CaptureScene..."));
         SceneCaptureComponent->CaptureScene();
-        UE_LOG(LogHG, Warning, TEXT("CaptureScene Complete!"));
     }
 }
 
@@ -215,7 +202,4 @@ void AACItemPreviewCapture::AutoAdjustCamera()
     // 카메라가 메시 중심을 바라보도록 회전
     FRotator LookAtRotation = (MeshCenter - CameraLocation).Rotation();
     SceneCaptureComponent->SetWorldRotation(LookAtRotation);
-
-    UE_LOG(LogHG, Warning, TEXT("Camera adjusted - Distance: %.2f, MeshRadius: %.2f, Center: %s"),
-        DesiredDistance, MeshRadius, *MeshCenter.ToString());
 }
