@@ -187,14 +187,6 @@ void AACMainPlayerController::BeginPlay()
 	}
 	AC_LOG(LogHY, Warning, TEXT("End"));
 
-	//관전 자동 변경 델리게이트 바인딩
-	AACMainGameState* GS = GetWorld()->GetGameState<AACMainGameState>();
-	if (GS == nullptr)
-	{
-		return;
-	}
-	GS->OnSpectatablePawnRemoved.AddDynamic(this, &AACMainPlayerController::OnSpectatablePawnRemoved);
-
 }
 
 void AACMainPlayerController::SetupInputComponent()
@@ -391,53 +383,8 @@ void AACMainPlayerController::HandleSpectatorChange(const FInputActionValue& Val
 		return;
 	}
 
-	AACMainGameState* GS = GetWorld()->GetGameState<AACMainGameState>();
-	if (GS == nullptr)
-	{
-		AC_LOG(LogSY, Log, TEXT("GS is nullptr"));
-		return;
-	}
-
-	const TArray<TObjectPtr<APawn>>& Targets = GS->GetSpectatablePawns();
-	if (Targets.Num() == 0)
-	{
-		AC_LOG(LogSY, Log, TEXT("Targets zero"));
-		return;
-	}
-
-	// 현재 인덱스 초기화
-	if (CurrentSpectateIndex == INDEX_NONE)
-	{
-		CurrentSpectateIndex = -1; // 다음 루프에서 0부터 시작
-	}
-
-	// 다음 유효한 폰 찾기 (최대 한 바퀴 순회)
-	int32 StartIndex = CurrentSpectateIndex;
-	int32 SearchCount = 0;
-
-	do
-	{
-		CurrentSpectateIndex = (CurrentSpectateIndex + 1) % Targets.Num();
-		SearchCount++;
-
-		if (APawn* NextPawn = Targets[CurrentSpectateIndex].Get())
-		{
-			// 유효한 폰을 찾았을 때
-			SetViewTargetWithBlend(NextPawn, 0.0f);
-			AC_LOG(LogSY, Log, TEXT("Spectate target changed: %s (Index: %d)"),
-				*NextPawn->GetName(), CurrentSpectateIndex);
-			return;
-		}
-
-		// 모든 타겟을 다 확인했는데 유효한 폰이 없을 경우
-		if (SearchCount >= Targets.Num())
-		{
-			AC_LOG(LogSY, Warning, TEXT("No valid spectatable pawns found"));
-			CurrentSpectateIndex = INDEX_NONE;
-			return;
-		}
-
-	} while (CurrentSpectateIndex != StartIndex);
+	//관전 대상 변경
+	ServerSwitchToNextSpectateTarget();
 }
 
 void AACMainPlayerController::HandleQuickSlot(const FInputActionValue& Value)
@@ -706,27 +653,36 @@ void AACMainPlayerController::ScreenSetRole()
 	AC_LOG(LogSY, Log, TEXT("Set Role!"));
 }
 
-void AACMainPlayerController::OnSpectatablePawnRemoved(APawn* RemovedPawn)
+void AACMainPlayerController::ClientNotifySpectateTargetRemoved_Implementation(APawn* RemovedPawn)
 {
 	if (IsLocalController() == false)
 	{
 		return;
 	}
 
-	// 현재 관전 중인 대상이 제거된 경우
+	// 현재 관전 중인 대상 확인
 	AActor* CurrentViewTarget = GetViewTarget();
+
+	// 제거된 폰이 현재 관전 중인 대상인 경우
 	if (CurrentViewTarget == RemovedPawn)
 	{
-		AC_LOG(LogSY, Log, TEXT("Current spectate target removed. Switching to next target."));
-		SwitchToNextValidSpectateTarget();
+		AC_LOG(LogSY, Log, TEXT("Current spectate target removed. Requesting auto-switch to next target."));
+
+		// 서버에 다음 대상으로 전환 요청
+		ServerSwitchToNextSpectateTarget();
+	}
+	else
+	{
+		AC_LOG(LogSY, Log, TEXT("Removed pawn is not current view target. No action needed."));
 	}
 }
 
-void AACMainPlayerController::SwitchToNextValidSpectateTarget()
+void AACMainPlayerController::ServerSwitchToNextSpectateTarget_Implementation()
 {
 	AACMainGameState* GS = GetWorld()->GetGameState<AACMainGameState>();
 	if (GS == nullptr)
 	{
+		AC_LOG(LogSY, Error, TEXT("GameState is nullptr"));
 		return;
 	}
 
@@ -735,45 +691,45 @@ void AACMainPlayerController::SwitchToNextValidSpectateTarget()
 	// 관전 가능한 대상이 없는 경우
 	if (Targets.Num() == 0)
 	{
-		AC_LOG(LogSY, Warning, TEXT("No more spectatable targets available"));
+		AC_LOG(LogSY, Warning, TEXT("No spectatable targets available"));
 		CurrentSpectateIndex = INDEX_NONE;
-
-		// 옵션: 자신의 폰으로 돌아가거나, 고정 카메라로 전환
-		// SetViewTarget(this);
 		return;
 	}
 
-	// 현재 인덱스가 유효하지 않으면 처음부터 시작
-	if (CurrentSpectateIndex == INDEX_NONE || !Targets.IsValidIndex(CurrentSpectateIndex))
+	// 현재 인덱스 초기화
+	if (CurrentSpectateIndex == INDEX_NONE || Targets.IsValidIndex(CurrentSpectateIndex) == false)
 	{
 		CurrentSpectateIndex = -1;
 	}
 
 	// 다음 유효한 대상 찾기
 	int32 SearchCount = 0;
-	int32 StartIndex = CurrentSpectateIndex;
 
 	do
 	{
+		// 다음 인덱스 이동
 		CurrentSpectateIndex = (CurrentSpectateIndex + 1) % Targets.Num();
 		SearchCount++;
 
-		if (APawn* NextPawn = Targets[CurrentSpectateIndex].Get())
+		APawn* NextPawn = Targets[CurrentSpectateIndex];
+
+		// 유효한 폰인지 확인
+		if (NextPawn != nullptr && IsValid(NextPawn) == true)
 		{
+			// ViewTarget 설정
 			SetViewTargetWithBlend(NextPawn, 0.0f);
-			AC_LOG(LogSY, Log, TEXT("Auto-switched to spectate target: %s"), *NextPawn->GetName());
 			return;
 		}
 
 		// 모든 대상을 확인했는데 유효한 폰이 없는 경우
 		if (SearchCount >= Targets.Num())
 		{
-			AC_LOG(LogSY, Warning, TEXT("No valid spectatable pawns found after search"));
+			AC_LOG(LogSY, Warning, TEXT("No valid spectatable pawns found"));
 			CurrentSpectateIndex = INDEX_NONE;
 			return;
 		}
 
-	} while (CurrentSpectateIndex != StartIndex);
+	} while (SearchCount < Targets.Num());
 }
 
 
@@ -788,32 +744,8 @@ void AACMainPlayerController::ServerStartSpectateOtherPlayer_Implementation()
 	MyPawn->SetActorHiddenInGame(true);
 	MyPawn->SetActorEnableCollision(false);
 
-	// 초기 관전 대상 선택
-	AACMainGameState* GS = GetWorld()->GetGameState<AACMainGameState>();
-	if (GS == nullptr)
-	{
-		AC_LOG(LogSY, Error, TEXT("GameState is nullptr"));
-		return;
-	}
-
-	const TArray<TObjectPtr<APawn>>& Targets = GS->GetSpectatablePawns();
-	if (Targets.Num() == 0)
-	{
-		AC_LOG(LogSY, Warning, TEXT("No spectatable pawns available"));
-		return;
-	}
-
-	// 유효한 첫 번째 폰 찾기
-	for (int32 i = 0; i < Targets.Num(); ++i)
-	{
-		if (APawn* TargetPawn = Targets[i].Get())
-		{
-			CurrentSpectateIndex = i;
-			SetViewTargetWithBlend(TargetPawn, 0.5f);
-			AC_LOG(LogSY, Log, TEXT("Initial spectate target: %s"), *TargetPawn->GetName());
-			return;
-		}
-	}
+	//관전 대상 선택
+	ServerSwitchToNextSpectateTarget();
 }
 
 void AACMainPlayerController::ClientToggleCCTVWidget_Implementation(TSubclassOf<class UACCCTVWidget> WidgetClass)

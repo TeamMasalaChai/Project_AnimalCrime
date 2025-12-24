@@ -38,5 +38,6 @@ void AACPlayerState::EnterSpectatorState()
 		return;
 	}
 
+	//자신을 관전 대상에서 제외
 	GS->RemoveSpectatablePawn(PC->GetPawn());
 }

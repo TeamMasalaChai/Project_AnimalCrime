@@ -8,7 +8,6 @@
 #include "ACMainGameState.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnScoreChanged, float, NewScore);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpectatablePawnRemoved, APawn*, RemovedPawn);
 /**
  * 
  */
@@ -35,8 +34,15 @@ public:
 
 #pragma region 관전
 public:
-
+ /**
+     @brief 관전가능대상 폰 배열인 SpectatablePawns에 폰을 추가하는 함수
+     @param Pawn - 관전 대상으로 추가할 폰
+ **/
 	void AddSpectatablePawn(APawn* Pawn);
+ /**
+     @brief SpectatablePawns에 폰을 삭제한다. 모든 클라이언트의 관전 대상이 사라졌는지 확인하고, 사라졌다면 다른 폰을 관전한다.
+     @param Pawn - 관전 대상에서 삭제할 폰
+ **/
 	void RemoveSpectatablePawn(APawn* Pawn);
 
 	FORCEINLINE const TArray<TObjectPtr<APawn>>& GetSpectatablePawns() const
@@ -106,9 +112,6 @@ public:
  //!< 관전 가능한 폰 목록
 	UPROPERTY(Replicated)
 	TArray<TObjectPtr<APawn>> SpectatablePawns;
- //!< 플레이어가 탈출시 관전 대상 갱신
-	UPROPERTY(BlueprintAssignable)
-	FOnSpectatablePawnRemoved OnSpectatablePawnRemoved;
 	
 public:
 	FOnScoreChanged OnScoreChanged;

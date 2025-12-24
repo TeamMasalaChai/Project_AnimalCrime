@@ -58,6 +58,10 @@ public:
 	//virtual AActor* ChoosePlayerStart(AController* Player) override;
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 
+ /**
+     @brief 플레이어 재시작 시 폰을 생성/소유한 뒤, GameState에 해당 폰을 관전 가능 대상(SpectatablePawn)으로 등록한다.
+     @param NewPlayer - 재시작 대상이 되는 플레이어 컨트롤러
+ **/
 	virtual void RestartPlayer(AController* NewPlayer) override;
 protected:
 
