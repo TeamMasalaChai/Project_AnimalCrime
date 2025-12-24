@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "Game/ACMainGameState.h"
+#include "Game/ACMainGameMode.h"
 #include "AnimalCrime.h"
 #include "Components/CapsuleComponent.h"
 #include "Component/ACMoneyComponent.h"
@@ -54,7 +55,13 @@ void AACMafiaCharacter::BeginPlay()
 
 bool AACMafiaCharacter::CanInteract(AACCharacter* ACPlayer)
 {
-	return true;
+	// 경찰과 상호작용(신분증)
+	if (ACPlayer->GetCharacterType() == EACCharacterType::Police)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 void AACMafiaCharacter::OnInteract(AACCharacter* ACPlayer)
@@ -67,9 +74,12 @@ void AACMafiaCharacter::OnInteract(AACCharacter* ACPlayer)
 	ShowInteractDebug(ACPlayer, GetName());
 
 	// 경찰과 상호작용(신분증)
-	if (EACCharacterType::Police == ACPlayer->GetCharacterType())
+	AC_LOG(LogSW, Log, TEXT("마피아 신분증!"));
+
+	AACMainGameMode* GM = GetWorld()->GetAuthGameMode<AACMainGameMode>();
+	if (GM)
 	{
-		AC_LOG(LogSW, Log, TEXT("마피아 신분증!"));
+		GM->ImprisonCharacter(this);  // GameMode에 캡슐화 함수 사용
 	}
 	
 }

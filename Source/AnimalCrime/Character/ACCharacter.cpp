@@ -206,53 +206,57 @@ void AACCharacter::Look(const FInputActionValue& Value)
 void AACCharacter::InteractStarted()
 {
 	//AC_LOG(LogSW, Log, TEXT("Interact Pressed"));
-
-	if (SortNearInteractables() == true)
+	if (SortNearInteractables() == false)
 	{
-		// 정렬된 NearInteractables에서 서버로 보내줄 하나의 액터를 찾는다.
-		for (AActor* Target : NearInteractables)
+		return;
+	}
+
+	// 정렬된 NearInteractables에서 서버로 보내줄 하나의 액터를 찾는다.
+	for (AActor* Target : NearInteractables)
+	{
+		IACInteractInterface* Interactable = Cast<IACInteractInterface>(Target);
+		if (Interactable == nullptr)
 		{
-			IACInteractInterface* Interactable = Cast<IACInteractInterface>(Target);
-			if (Interactable == nullptr)
-			{
-				AC_LOG(LogSW, Log, TEXT("%s has No Interface!!"), *Target->GetName());
-				continue;
-			}
-
-			// 클라에서 상호작용 가능한지 체크
-			if (Interactable->CanInteract(this) == false)
-			{
-				AC_LOG(LogSW, Log, TEXT("%s Cant Interact with %s!!"), *Target->GetName(), *GetName());
-				continue;
-			}
-
-			// 클라이언트에서 상호작용이 가능한지 판단이 완료되면 서버를 호출한다.
-			RequiredHoldTime = Interactable->GetRequiredHoldTime();
-
-			// 0초면 즉시 상호작용
-			if (RequiredHoldTime <= KINDA_SMALL_NUMBER)
-			{
-				ServerInteract(Target);
-			}
-			// 0초보다 크면 홀드 상호작용
-			else
-			{
-				// 홀드 시작
-				bIsHoldingInteract = true;
-				CurrentHoldTarget = Target;
-				CurrentHoldTime = 0.f;
-
-				// UI 표시
-				AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
-				if (PC)
-				{
-					UE_LOG(LogSW, Log, TEXT("Show start"));
-					PC->ShowInteractProgress(CurrentHoldTarget->GetName());
-				}
-			}
-			
-			return;
+			AC_LOG(LogSW, Log, TEXT("%s has No Interface!!"), *Target->GetName());
+			continue;
 		}
+
+		// 클라에서 상호작용 가능한지 체크
+		if (Interactable->CanInteract(this) == false)
+		{
+			AC_LOG(LogSW, Log, TEXT("%s Cant Interact with %s!!"), *Target->GetName(), *GetName());
+			continue;
+		}
+
+		// 클라이언트에서 상호작용이 가능한지 판단이 완료되면 서버를 호출한다.
+		RequiredHoldTime = Interactable->GetRequiredHoldTime();
+
+		// 0초면 즉시 상호작용
+		if (RequiredHoldTime <= KINDA_SMALL_NUMBER)
+		{
+			ServerInteract(Target);
+		}
+		// 0초보다 크면 홀드 상호작용
+		else
+		{
+			// 홀드 시작
+			bIsHoldingInteract = true;
+			CurrentHoldTarget = Target;
+			CurrentHoldTime = 0.f;
+
+
+			AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
+			if (PC == nullptr)
+			{
+				return;
+			}
+
+			// 홀드 UI 표시
+			//UE_LOG(LogSW, Log, TEXT("Show start"));
+			PC->ShowInteractProgress(CurrentHoldTarget->GetName());
+		}
+
+		break;
 	}
 }
 
@@ -260,7 +264,7 @@ void AACCharacter::InteractHolding(const float DeltaTime)
 {
 	if (bIsHoldingInteract == false)
 	{
-		ResetHoldInteract();
+		//ResetHoldInteract();
 		return;
 	}
 	//todo: isvalid?
@@ -269,7 +273,7 @@ void AACCharacter::InteractHolding(const float DeltaTime)
 		InteractReleased();
 		return;
 	}
-	if (!NearInteractables.Contains(CurrentHoldTarget))
+	if (NearInteractables.Contains(CurrentHoldTarget) == false)
 	{
 		InteractReleased();
 		return;
@@ -282,12 +286,12 @@ void AACCharacter::InteractHolding(const float DeltaTime)
 
 	// UI 업데이트
 	AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
-	if (PC)
+	if (PC != nullptr)
 	{
 		PC->UpdateInteractProgress(GetHoldProgress());
 	}
 
-	// 완료 체크
+	// 홀드 시간 완료 시 상호작용 실행
 	if (CurrentHoldTime >= RequiredHoldTime)
 	{
 		ServerInteract(CurrentHoldTarget);
@@ -305,9 +309,9 @@ void AACCharacter::InteractReleased()
 
 	// UI 표시
 	AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
-	if (PC)
+	if (PC != nullptr)
 	{
-		UE_LOG(LogSW, Log, TEXT("Hide start"));
+		//UE_LOG(LogSW, Log, TEXT("Hide start"));
 		PC->HideInteractProgress();
 	}
 
@@ -509,7 +513,7 @@ bool AACCharacter::SortNearInteractables()
 
 	if (NearInteractables.Num() == 1)
 	{
-		AC_LOG(LogSW, Log, TEXT("NO NEED TO SORT!!"));
+		//AC_LOG(LogSW, Log, TEXT("NO NEED TO SORT!!"));
 		return true;
 	}
 
