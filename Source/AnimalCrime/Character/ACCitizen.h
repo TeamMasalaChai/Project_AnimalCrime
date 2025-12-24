@@ -66,6 +66,12 @@ public:
 	
 	void AttackHitCheck();
 	
+#pragma region AI 스킬
+public:
+	void ChangeClothes();
+	bool DetectPolice(); 
+	void RunFromPolice();
+#pragma endregion
 
 #pragma region 매시 Get/Set
 	FORCEINLINE USkeletalMesh* GetHeadMesh()		const { return HeadMesh;}
@@ -126,6 +132,11 @@ public:
 	UPROPERTY(meta=(AllowPrivateAccess=true))
 	float LastHitTime;
 	
+	FTimerHandle InitialSkillBlockTimerHandle;
+
+	FORCEINLINE bool IsInitialSkillBlocked() const {return bIsInitialSkillBlocked;}
+	bool bIsInitialSkillBlocked = true;
+	
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
 	TObjectPtr<class UAnimMontage> DamagedMontage;
 	
@@ -175,6 +186,9 @@ private:
 	
 	UPROPERTY(ReplicatedUsing=OnRep_FaceAccMesh)
 	TObjectPtr<class USkeletalMesh> FaceAccMesh;
+	
+	UPROPERTY()
+	TObjectPtr<class AACPoliceCharacter> PoliceCharacter;
 	
 private:
 #pragma endregion

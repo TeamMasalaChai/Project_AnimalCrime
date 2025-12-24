@@ -128,6 +128,8 @@ public:
 	void ImprisonCharacter(class AACCharacter* Character);
 #pragma endregion
 	
+	FOutfitCombo GetClothesFromPool();
+	
 private:
 	UPROPERTY(EditAnywhere, meta=(AllowedClasses=Actor))
 	TArray<TObjectPtr<class AACCitizen>> AIObjectArray;
