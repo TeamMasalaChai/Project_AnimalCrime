@@ -25,7 +25,10 @@ EBTNodeResult::Type UBTTask_DoSomething::ExecuteTask(UBehaviorTreeComponent& Own
 		return EBTNodeResult::Failed;
 	}
 	
-	CitizenPawn->ChangeClothes();
-	
-	return EBTNodeResult::Succeeded; 
+	if (CitizenPawn->DetectPolice())
+	{
+		CitizenPawn->RunFromPolice();
+		return EBTNodeResult::Succeeded;	
+	}
+	return EBTNodeResult::Succeeded;
 }
