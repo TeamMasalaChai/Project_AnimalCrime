@@ -130,6 +130,11 @@ public:
 	UPROPERTY(meta=(AllowPrivateAccess=true))
 	float LastHitTime;
 	
+	FTimerHandle InitialSkillBlockTimerHandle;
+
+	FORCEINLINE bool IsInitialSkillBlocked() const {return bIsInitialSkillBlocked;}
+	bool bIsInitialSkillBlocked = true;
+	
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
 	TObjectPtr<class UAnimMontage> DamagedMontage;
 	
