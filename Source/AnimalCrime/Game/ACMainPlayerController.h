@@ -24,7 +24,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
 
-	
+
 	virtual void OnRep_PlayerState() override;
 	// ===== 입력 처리 핸들러 =====
 protected:
@@ -49,24 +49,21 @@ public:
 	**/
 	void ChangeInputMode(EInputMode NewMode);
 
+
+	// ===== 상점 관련 =====
 public:
+	/**
+			@brief  상점 위젯 토글 (서버 → 클라이언트 명령)
+			@param WidgetClass - 상점 위젯
+	**/
 	UFUNCTION(Client, Reliable)
-	void ClientOnEscapeSuccess();
+	void ClientToggleShopWidget(TSubclassOf<class UACShopWidget> WidgetClass);
 
-    // ===== 상점 관련 =====
-public:
-    /**
-            @brief  상점 위젯 토글 (서버 → 클라이언트 명령)
-            @param WidgetClass - 상점 위젯
-    **/
-    UFUNCTION(Client, Reliable)
-    void ClientToggleShopWidget(TSubclassOf<class UACShopWidget> WidgetClass);
-
-    /**
-            @brief  상점 닫기 (위젯의 CloseButton이나 다른 곳에서 호출)
-    **/
-    UFUNCTION()
-    void CloseShop();
+	/**
+			@brief  상점 닫기 (위젯의 CloseButton이나 다른 곳에서 호출)
+	**/
+	UFUNCTION()
+	void CloseShop();
 
 	/**
 		   @brief  CCTV 닫기 (위젯의 CloseButton이나 다른 곳에서 호출)
@@ -75,15 +72,15 @@ public:
 	void CloseCCTV();
 
 protected:
-    /**
-            @brief 상점용 카메라로 전환
-    **/
-    void SetShopCamera();
+	/**
+			@brief 상점용 카메라로 전환
+	**/
+	void SetShopCamera();
 
-    /**
-            @brief 원래 카메라로 복원
-    **/
-    void RestoreOriginalCamera();
+	/**
+			@brief 원래 카메라로 복원
+	**/
+	void RestoreOriginalCamera();
 
 	// ===== CCTV 관련 =====
 public:
@@ -109,13 +106,31 @@ protected:
 
 	// ===== 관전 =====
 public:
+
+	/**
+		@brief 탈출 성공 UI를 띄우고 IMC를 관전용으로 바꾸는 함수
+	**/
+	UFUNCTION(Client, Reliable)
+	void ClientOnEscapeSuccess();
+
+	/**
+		@brief 폰을 숨기고 관전으로 바꾸는 함수
+	**/
 	UFUNCTION(Server, Reliable)
 	void ServerStartSpectateOtherPlayer();
-private:
-	UFUNCTION()
-	void OnSpectatablePawnRemoved(APawn* RemovedPawn);
 
-	void SwitchToNextValidSpectateTarget();
+	/**
+		@brief 다음 관전 대상으로 전환
+	**/
+	UFUNCTION(Server, Reliable)
+	void ServerSwitchToNextSpectateTarget();
+
+	/**
+		@brief 관전 대상이 제거가 되었으면 관전 대상을 바꾼다.
+		@param RemovedPawn - 제거된 폰
+	**/
+	UFUNCTION(Client, Reliable)
+	void ClientNotifySpectateTargetRemoved(APawn* RemovedPawn);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
@@ -156,25 +171,25 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputAction> SpectatorChangeAction;
 
-    // ===== 상점 관련 =====
+	// ===== 상점 관련 =====
 protected:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|Shop")
-    TSubclassOf<class UACShopWidget> ShopWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|Shop")
+	TSubclassOf<class UACShopWidget> ShopWidgetClass;
 
 private:
-    // 현재 열려있는 상점 위젯
-    UPROPERTY()
-    TObjectPtr<class UACShopWidget> CurrentShopWidget;
+	// 현재 열려있는 상점 위젯
+	UPROPERTY()
+	TObjectPtr<class UACShopWidget> CurrentShopWidget;
 
-    // 상점 열기 전 카메라 상태 저장
-    FRotator SavedControlRotation;
-    float SavedTargetArmLength;
-    FVector SavedTargetOffset;
-    FVector SavedRelativeLocation;
-    FRotator SavedRelativeRotation;
-    bool bSavedUsePawnControlRotation;
+	// 상점 열기 전 카메라 상태 저장
+	FRotator SavedControlRotation;
+	float SavedTargetArmLength;
+	FVector SavedTargetOffset;
+	FVector SavedRelativeLocation;
+	FRotator SavedRelativeRotation;
+	bool bSavedUsePawnControlRotation;
 
-    uint8 bShopCameraActive : 1 = false;
+	uint8 bShopCameraActive : 1 = false;
 
 	// ===== CCTV 관련 =====
 protected:
@@ -185,7 +200,7 @@ private:
 	// 현재 열려있는 CCTV 위젯
 	UPROPERTY()
 	TObjectPtr<class UACCCTVWidget> CurrentCCTVWidget;
-	
+
 #pragma region HUD
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
@@ -204,6 +219,6 @@ protected:
 
 
 protected:
- //!< 관전자 Index
+	//!< 관전자 Index
 	int32 CurrentSpectateIndex = INDEX_NONE;
 };

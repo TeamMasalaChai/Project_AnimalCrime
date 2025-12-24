@@ -9,6 +9,7 @@ void AACPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AACPlayerState, PlayerRole);
+	DOREPLIFETIME(AACPlayerState, CharacterState);
 }
 
 void AACPlayerState::EnterSpectatorState()
@@ -20,6 +21,8 @@ void AACPlayerState::EnterSpectatorState()
 
 	//관전 상태로 전환
 	SetIsSpectator(true); 
+
+	CharacterState = ECharacterState::Escape;
 
 	if (HasAuthority() == false)
 	{
@@ -38,5 +41,6 @@ void AACPlayerState::EnterSpectatorState()
 		return;
 	}
 
+	//자신을 관전 대상에서 제외
 	GS->RemoveSpectatablePawn(PC->GetPawn());
 }

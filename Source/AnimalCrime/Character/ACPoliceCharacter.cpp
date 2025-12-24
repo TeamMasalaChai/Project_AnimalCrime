@@ -10,6 +10,9 @@
 
 AACPoliceCharacter::AACPoliceCharacter()
 {
+	// 콜리전 세팅
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("PoliceCollision"));
+	
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> HeadMeshRef(TEXT("/Game/Creative_Characters_FREE/Skeleton_Meshes/SK_Hat_057.SK_Hat_057"));
 	if (HeadMeshRef.Succeeded() == true)
 	{
@@ -37,6 +40,8 @@ AACPoliceCharacter::AACPoliceCharacter()
 	}
 
 	ShoesMesh->SetSkeletalMesh(nullptr);
+	
+	
 }
 
 EACCharacterType AACPoliceCharacter::GetCharacterType()
@@ -109,6 +114,6 @@ bool AACPoliceCharacter::CanInteract(AACCharacter* ACPlayer)
 
 void AACPoliceCharacter::OnInteract(AACCharacter* ACPlayer)
 {
-	ShowInteractDebug(ACPlayer, GetName());
+	//ShowInteractDebug(ACPlayer, GetName());
 }
 

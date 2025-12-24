@@ -64,8 +64,8 @@ void AACEscapeMissionBomb::BeginPlay()
 	InteractBoxComponent->SetMargin(FVector(50.f));
 	//InteractBoxComponent->SetBoxExtent(RootBounds.BoxExtent + Margin);
 
-	// 박스 위치 루트에 맞추기
-	InteractBoxComponent->SetRelativeLocation(FVector::ZeroVector);
+	//// 박스 위치 루트에 맞추기
+	//InteractBoxComponent->SetRelativeLocation(FVector::ZeroVector);
 }
 
 void AACEscapeMissionBomb::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -145,7 +145,7 @@ bool AACEscapeMissionBomb::CanInteract(AACCharacter* ACPlayer)
 
 void AACEscapeMissionBomb::OnInteract(AACCharacter* ACPlayer)
 {
-	ShowInteractDebug(ACPlayer, GetName());
+	//ShowInteractDebug(ACPlayer, GetName());
 
 	AACMafiaCharacter* ACPlayerMafia = Cast<AACMafiaCharacter>(ACPlayer);
 

@@ -45,10 +45,6 @@ void AACEscapeArea::OnEscapeOverlapBegin(UPrimitiveComponent* OverlappedComponen
 		AC_LOG(LogSY, Log, TEXT("HasAuthority false!"));
 		return;
 	}
-	else
-	{
-		AC_LOG(LogSY, Log, TEXT("HasAuthority true!"));
-	}
 
 	AACMainPlayerController* PC = Cast<AACMainPlayerController>(Mafia->GetController());
 	if (PC == nullptr)
@@ -59,7 +55,6 @@ void AACEscapeArea::OnEscapeOverlapBegin(UPrimitiveComponent* OverlappedComponen
 	// UI변경, IMC 변경
 	PC->ClientOnEscapeSuccess();
 
-	//관전으로 변경
 	AACPlayerState* PS = PC->GetPlayerState<AACPlayerState>();
 	if (PS == nullptr)
 	{

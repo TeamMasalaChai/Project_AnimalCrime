@@ -7,6 +7,7 @@
 
 #include "Character/ACMafiaCharacter.h"
 #include "ACPlayerState.h"
+#include "ACMainPlayerController.h"
 #include "EscapeQuest/ACEscapeArea.h"
 #include "AnimalCrime.h"
 
@@ -34,7 +35,7 @@ void AACMainGameState::OnRep_ReplicatedHasBegunPlay()
 void AACMainGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
+
 	DOREPLIFETIME(AACMainGameState, TeamScore);
 	DOREPLIFETIME(AACMainGameState, EscapeState);
 	DOREPLIFETIME(AACMainGameState, SpectatablePawns);
@@ -69,9 +70,41 @@ void AACMainGameState::RemoveSpectatablePawn(APawn* Pawn)
 	{
 		AC_LOG(LogSY, Log, TEXT("RemoveSpectatablePawn: %s"), *Pawn->GetName());
 
-		// 델리게이트 브로드캐스트
-		OnSpectatablePawnRemoved.Broadcast(Pawn);
+		// 모든 클라이언트에 직접 알림
+		for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			AACMainPlayerController* PC = Cast<AACMainPlayerController>(It->Get());
+			if (PC == nullptr)
+			{
+				continue;
+			}
+
+			//만약 삭제된 폰이 관전 대상이었으면 관전대상 변경
+			PC->ClientNotifySpectateTargetRemoved(Pawn);
+		}
 	}
+}
+
+TArray<TObjectPtr<class AACPlayerState>> AACMainGameState::GetPlayersByState(ECharacterState CharacterState) const
+{
+	TArray<TObjectPtr<AACPlayerState>> Result;
+
+	for (APlayerState* PS : PlayerArray)
+	{
+		AACPlayerState* ACPS = Cast<AACPlayerState>(PS);
+		if (ACPS == nullptr)
+		{
+			continue;
+		}
+
+		//찾는 State와 같으면 배열에 추가
+		if (ACPS->CharacterState == CharacterState)
+		{
+			Result.Add(ACPS);
+		}
+	}
+
+	return Result;
 }
 
 #pragma region GameRuleManager와 동기화 및 테스트 함수
@@ -88,22 +121,22 @@ float AACMainGameState::GetTeamScore() const
 void AACMainGameState::OnRep_TeamScore()
 {
 	UE_LOG(LogTemp, Error, TEXT("OnRep_Score 호출 :%f"), TeamScore);
-	
+
 	OnScoreChanged.Broadcast(TeamScore);
 }
 #pragma endregion
 
 void AACMainGameState::RegisterDestination(AActor* Actor)
 {
-	for (auto InObject:DestinationObjects)
+	for (auto InObject : DestinationObjects)
 	{
 		if (InObject == Actor)
 		{
 			AC_LOG(LogHY, Error, TEXT("Already In..."));
-			return ;
+			return;
 		}
 	}
-	
+
 	// 객체 추가.
 	DestinationObjects.Add(Actor);
 }
@@ -115,7 +148,7 @@ AActor* AACMainGameState::GetDestinationActor() const
 		UE_LOG(LogTemp, Error, TEXT("DestinationObjects가 존재하지 않습니다."));
 		return nullptr;
 	}
-	
+
 	// @InComplete
 	// @Todo 현재 랜덤 값이지만, 나중에는 최대 인원수를 둬야할 것 같음.
 	int32 RandIndex = FMath::RandRange(0, DestinationObjects.Num() - 1);

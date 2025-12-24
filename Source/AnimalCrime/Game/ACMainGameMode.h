@@ -35,9 +35,7 @@ struct FOutfitCombo
 };
 	
 
-/**
- * 
- */
+class UACGameRuleManager;
 UCLASS()
 class ANIMALCRIME_API AACMainGameMode : public AGameMode
 {
@@ -58,6 +56,10 @@ public:
 	//virtual AActor* ChoosePlayerStart(AController* Player) override;
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 
+ /**
+     @brief 플레이어 재시작 시 폰을 생성/소유한 뒤, GameState에 해당 폰을 관전 가능 대상(SpectatablePawn)으로 등록한다.
+     @param NewPlayer - 재시작 대상이 되는 플레이어 컨트롤러
+ **/
 	virtual void RestartPlayer(AController* NewPlayer) override;
 protected:
 
@@ -72,6 +74,10 @@ protected:
 	
 public:
 #pragma region GameRule
+	UACGameRuleManager* GetGameRuleManager() const
+	{
+		return GameRuleManager;
+	}
 	/** BP_Bush 테스트하던 용도. */
 	UFUNCTION(BlueprintCallable)
 	void AddTeamScore(int32 Score);
@@ -102,6 +108,27 @@ public:
 	
 	void GenerateOutfitPool();
 	FOutfitCombo GiveOutfitFromPool();
+
+#pragma region PrisonManager
+public:
+ /**
+     @brief 감옥 등록.
+	 감옥매니저에 전달하는 래퍼 함수.
+     @param Prison - 등록할 감옥.
+ **/
+	UFUNCTION(BlueprintCallable)
+	void RegisterPrison(class AACPrisonBase* Prison);
+
+/**
+	@brief 투옥.
+	감옥매니저에 전달하는 래퍼 함수.
+	@param Prison - 투옥할 캐릭터.
+**/
+	UFUNCTION(BlueprintCallable)
+	void ImprisonCharacter(class AACCharacter* Character);
+#pragma endregion
+	
+	FOutfitCombo GetClothesFromPool();
 	
 private:
 	UPROPERTY(EditAnywhere, meta=(AllowedClasses=Actor))
@@ -138,6 +165,13 @@ private:
 	/** 게임 Score와 종료 시점을 판단하는 매니저 */
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
 	TObjectPtr<class UACGameRuleManager> GameRuleManager;
+#pragma endregion 
+
+#pragma region 감옥을 관리하는 맴버 변수
+public:
+	/** 게임 감옥 매니저 */
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
+	TObjectPtr<class UACPrisonManager> PrisonManager;
 #pragma endregion 
 
 	virtual void PostSeamlessTravel() override;
