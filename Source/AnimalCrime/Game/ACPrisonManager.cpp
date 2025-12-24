@@ -9,7 +9,6 @@
 
 void UACPrisonManager::RegisterPrison(AACPrisonBase* InPrison)
 {
-    UE_LOG(LogSW, Log, TEXT("RegisterED"))
 	Prisons.Add(InPrison);
 }
 

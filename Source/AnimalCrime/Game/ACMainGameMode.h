@@ -110,15 +110,6 @@ public:
 	FOutfitCombo GiveOutfitFromPool();
 
 #pragma region PrisonManager
-public:
- /**
-     @brief 감옥 등록.
-	 감옥매니저에 전달하는 래퍼 함수.
-     @param Prison - 등록할 감옥.
- **/
-	UFUNCTION(BlueprintCallable)
-	void RegisterPrison(class AACPrisonBase* Prison);
-
 /**
 	@brief 투옥.
 	감옥매니저에 전달하는 래퍼 함수.
