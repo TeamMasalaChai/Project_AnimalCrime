@@ -72,6 +72,8 @@ void UACAdvancedFriendsGameInstance::UpdateMap(const EMapType InMapType)
         return ;
     }
 
+    GEngine->Exec(GetWorld(), TEXT("ToggleSpeaking 0"));
+
     switch (InMapType)
     {
     case EMapType::Lobby:
