@@ -70,13 +70,10 @@ void UACAdvancedFriendsGameInstance::UpdateMap(const EMapType InMapType)
     {
         UE_LOG(LogTemp, Error, TEXT("CurrentMapType == InMapType"));
         return ;
-    }
-
-    GEngine->Exec(GetWorld(), TEXT("ToggleSpeaking 0"));
-
-    switch (InMapType)
-    {
-    case EMapType::Lobby:
+        }
+        switch (InMapType)
+        {
+        case EMapType::Lobby:
         GetWorld()->ServerTravel("LobbyMap", true);
         break;
     case EMapType::Game:
