@@ -178,12 +178,21 @@ void AACLobbyPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 로컬 플레이어만 UI 생성
-	if (!IsLocalController())
+	// 로컬 플레이어만 UI 생성, 보이스 연결
+	if (IsLocalController() == false)
 	{
 		return;
 	}
 
+	//보이스 연결
+	UACAdvancedFriendsGameInstance* GI = GetGameInstance<UACAdvancedFriendsGameInstance>();
+	if (GI == nullptr)
+	{
+		return;
+	}
+	GI->TryStartVoice();
+
+	//UI 연동
 	LobbyScreen = CreateWidget<UACLobbyScreen>(this, LobbyScreenClass);
 	if (LobbyScreen == nullptr)
 	{

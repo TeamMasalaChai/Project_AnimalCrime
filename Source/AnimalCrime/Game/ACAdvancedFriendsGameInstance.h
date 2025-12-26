@@ -66,6 +66,22 @@ protected:
     UFUNCTION()
     void HandleTravelFailure(UWorld* World, ETravelFailure::Type FailureType, const FString& ErrorString);
     
+public:
+    /**
+        @brief 온라인 세션이 삭제가 완료되었을 때 호출되는 콜백 함수
+        @param SessionName    - 삭제된 세션의 이름
+        @param bWasSuccessful - 세션 삭제 성공 여부 (true = 성공, false = 실패)
+    **/
+    UFUNCTION()
+    void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+    /**
+        @brief 음성 채팅(보이스)을 시작하기 위한 초기화 시도 함수
+    **/
+    void TryStartVoice();
+
+private:
+    FDelegateHandle OnDestroySessionCompleteHandle;
+
 #pragma region Map Level 관련 맴버 변수 
 private:
     UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
@@ -81,5 +97,8 @@ private:
 public:
     //!< 플레이어 역할 저장
     TMap<FUniqueNetIdRepl, EPlayerRole> SavedPlayerRoles;
+
+private:
+    bool bVoiceInitialized = false;
 };
 
