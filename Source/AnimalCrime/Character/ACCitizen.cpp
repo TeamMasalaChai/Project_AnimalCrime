@@ -20,6 +20,7 @@
 #include "Net/UnrealNetwork.h"
 
 #include "AnimalCrime.h"
+#include "Engine/DamageEvents.h"
 #include "Engine/OverlapResult.h"
 #include "Game/ACGameRuleManager.h"
 #include "Game/ACMainGameMode.h"
@@ -29,7 +30,7 @@
 AACCitizen::AACCitizen()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	// PrimaryActorTick.bCanEverTick = true;
 
 	// AI 설정
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
@@ -42,7 +43,6 @@ AACCitizen::AACCitizen()
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("CitizenCollision"));
 
 	// 캐릭터 무브먼트(제거)
-	
 
 	//스켈레탈 메시
 	USkeletalMeshComponent* MeshComp = GetMesh();
@@ -288,7 +288,7 @@ FVector AACCitizen::GetRunPosition(const FVector& Attack) const
 	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
 	if (NavSys == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No navigation found1"));
+		AC_LOG(LogHY, Warning, TEXT("No navigation found1"));
 		return FVector(0.0f, 0.0f, 0.0f);
 	}
 	
@@ -299,7 +299,7 @@ FVector AACCitizen::GetRunPosition(const FVector& Attack) const
 	bool bFound = NavSys->ProjectPointToNavigation(Desired, Result, FVector(1000.f, 1000.f, 200.f));
 	if (bFound == false)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No navigation found2"));
+		AC_LOG(LogHY, Warning, TEXT("No navigation found2"));
 		return FVector(0.0f, 0.0f, 0.0f);
 	}
 	
@@ -309,30 +309,114 @@ FVector AACCitizen::GetRunPosition(const FVector& Attack) const
 
 void AACCitizen::OnDamaged()
 {
-	// DamagedFlag += 1;
-	// if (DamagedFlag > 1)
-	// {
-	// 	AAIController* AICon = GetController<AAIController>();
-	// 	AICon->GetBrainComponent()->StopLogic("HitAbort");
-	//
-	// 	AICon->GetBrainComponent()->StartLogic();
-	// 	
-	// 	
-	// }
-	
-	AACMainGameMode* GameMode = Cast<AACMainGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-	if (GameMode == nullptr)
+	DamagedFlag += 1;
+	if (DamagedFlag > 0)
 	{
-		return;
+		AAIController* AICon = GetController<AAIController>();
+		AICon->GetBrainComponent()->StopLogic("HitAbort");
+		AICon->GetBrainComponent()->StartLogic();
 	}
-
-	// 2️⃣ 스코어 업데이트 로직 호출
-	GameMode->UpdateGameScoreFromMafia(EMafiaAction::AttackCivilian,500);
 }
 
 void AACCitizen::OnArrive()
 {
 	DamagedFlag = 0;
+}
+
+void AACCitizen::OnUpdateScore(AActor* Actor)
+{
+	// Actor 체크
+	if (Actor == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("Actor is nullptr"));
+		return;
+	}
+	
+	AACMainGameMode* GameMode = Cast<AACMainGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	// GameMode 체크
+	if (GameMode == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("GameMode is nullptr"));
+		return;
+	}
+
+	//  
+	AACCharacter* ACCharacter = Cast<AACCharacter>(Actor);
+	if (ACCharacter == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("ACCharacter is nullptr"));
+		return;
+	}
+	
+	EACCharacterType CharacterType = ACCharacter->GetCharacterType();
+	switch (CharacterType)
+	{
+		case EACCharacterType::Police:
+		{
+			GameMode->UpdateGameScoreFromPolice(EPoliceAction::AttackCivilian,500);
+			break;
+		}
+		case EACCharacterType::Mafia:
+		{
+			GameMode->UpdateGameScoreFromMafia(EMafiaAction::AttackCivilian,10);
+			break;
+		}
+	}
+}
+
+void AACCitizen::OnUpdateMoney(AActor* Actor)
+{
+	// Actor 체크
+	if (Actor == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("Actor is nullptr"));
+		return;
+	}
+	
+	AACMainGameMode* GameMode = Cast<AACMainGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	// GameMode 체크
+	if (GameMode == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("GameMode is nullptr"));
+		return;
+	}
+
+	//  
+	AACCharacter* ACCharacter = Cast<AACCharacter>(Actor);
+	if (ACCharacter == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("ACCharacter is nullptr"));
+		return;
+	}
+	
+	int32 Money = FMath::RandRange(1, 100);
+	EACCharacterType CharacterType = ACCharacter->GetCharacterType();
+	switch (CharacterType)
+	{
+		case EACCharacterType::Police:
+		{
+			MoneyComp->EarnMoney(Money);
+			ACCharacter->MoneyComp->LoseMoney(Money);
+			AC_LOG(LogHY, Warning, TEXT("Police Lost Money: %d Cur Money: %d"), Money, ACCharacter->MoneyComp->GetMoney());
+			return;
+		}
+		case EACCharacterType::Mafia:
+		{
+			if (GetWorld()->GetTimerManager().IsTimerActive(MoneyCoolTimerHandle) == true)
+			{
+				return ;
+			}
+			GetWorldTimerManager().SetTimer(MoneyCoolTimerHandle, FTimerDelegate::CreateLambda([this]
+			{
+				AC_LOG(LogHY, Error, TEXT("끝"));
+			}), 10, false);
+			int32 Result = MoneyComp->LoseMoney(Money);
+			ACCharacter->MoneyComp->EarnMoney(Result);
+			AC_LOG(LogHY, Warning, TEXT("Mafia Earn Money: %d Cur Money: %d"), Result, ACCharacter->MoneyComp->GetMoney());
+
+			break;
+		}
+	}
 }
 
 float AACCitizen::GetLastHitTime() const
@@ -464,11 +548,11 @@ void AACCitizen::RunFromPolice()
 		return ;
 	}
 	
-	// AC_LOG(LogHY, Log, TEXT("Enemy:%s"), *EnemyPosition.ToString());
-	// AC_LOG(LogHY, Log, TEXT("My:%s"), *CurrentPosition.ToString());
-	// AC_LOG(LogHY, Log, TEXT("Dir:%s"), *DirVector.ToString());
-	// AC_LOG(LogHY, Log, TEXT("Next:%s"), *NextPoint.ToString());
-	// AC_LOG(LogHY, Log, TEXT("Random Point: %s"), *RandomPoint.Location.ToString());
+	AC_LOG(LogHY, Log, TEXT("Enemy:%s"), *EnemyPosition.ToString());
+	AC_LOG(LogHY, Log, TEXT("My:%s"), *CurrentPosition.ToString());
+	AC_LOG(LogHY, Log, TEXT("Dir:%s"), *DirVector.ToString());
+	AC_LOG(LogHY, Log, TEXT("Next:%s"), *NextPoint.ToString());
+	AC_LOG(LogHY, Log, TEXT("Random Point: %s"), *RandomPoint.Location.ToString());
 	
 	AACCitizenAIController* AIController = Cast<AACCitizenAIController>(GetController());
 	if (AIController == nullptr)
@@ -539,6 +623,7 @@ void AACCitizen::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(AACCitizen, HeadMesh);
+	DOREPLIFETIME(AACCitizen, FaceMesh);
 	DOREPLIFETIME(AACCitizen, TopMesh);
 	DOREPLIFETIME(AACCitizen, BottomMesh);
 	DOREPLIFETIME(AACCitizen, ShoesMesh);
@@ -620,44 +705,42 @@ void AACCitizen::MulticastOnPlayMontage_Implementation(const FVector& Attack)
 	}
 }
 
-
 float AACCitizen::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	float SuperDamage =  Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	
-	UE_LOG(LogTemp, Log, TEXT("TakeDamage: %f"), SuperDamage);
+	float SuperDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	// AC_LOG(LogTemp, Error,
+	// 	TEXT("[TakeDamage] Damage=%.1f Instigator=%s Causer=%s Event=%s"),
+	// 	DamageAmount,
+	// 	*GetNameSafe(EventInstigator),
+	// 	*GetNameSafe(DamageCauser),
+	// 	DamageEvent.GetTypeID().to_string()
+	// );
 	AACCitizenAIController* AIControler = Cast<AACCitizenAIController>(GetController());
-	if (AIControler)
+	
+	// AIControler 여부 확인
+	if (AIControler == nullptr)
 	{
-		UBlackboardComponent* BBComp = AIControler->GetBlackboardComponent();
-		if (BBComp)
-		{
-			// 의미가 있는 코드일까? 언제 전송되는데
-			BBComp->SetValueAsBool("bDamage", true);
-			
-			FVector RunPosition = GetRunPosition(DamageCauser->GetActorLocation());
-			BBComp->SetValueAsVector("RunPosition", RunPosition);
-			LastHitTime = GetWorld()->GetTimeSeconds();
-			BBComp->SetValueAsFloat("LastHitTime", LastHitTime);
-			OnDamaged();
-			//PlayDamagedMontage(DamageCauser->GetActorLocation());
-			MulticastOnPlayMontage(DamageCauser->GetActorLocation());
-		}
-		
-		int32 Money = FMath::RandRange(1, 100);
-		int32 Result = MoneyComp->LoseMoney(Money);
-		AACCharacter* Test = Cast<AACCharacter>(DamageCauser);
-		if (Test == nullptr)
-		{
-			return SuperDamage;
-		}
-		Test->MoneyComp->EarnMoney(Result);
-		UE_LOG(LogTemp, Warning, TEXT("Earn Money: %d Cur Money: %d"), Result, Test->MoneyComp->GetMoney());
+		return 0.0f;
 	}
-	else
+	
+	// BlackBoard 여부 확인
+	UBlackboardComponent* BBComp = AIControler->GetBlackboardComponent();
+	if (BBComp == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Oh No"));
+		return 0.0f;
 	}
+	
+	FVector RunPosition = GetRunPosition(DamageCauser->GetActorLocation());
+	BBComp->SetValueAsVector("RunPosition", RunPosition);
+	LastHitTime = GetWorld()->GetTimeSeconds();
+	BBComp->SetValueAsFloat("LastHitTime", LastHitTime);
+	OnDamaged();
+	OnUpdateScore(DamageCauser);
+	OnUpdateMoney(DamageCauser);
+	
+	//PlayDamagedMontage(DamageCauser->GetActorLocation());
+	//MulticastOnPlayMontage(DamageCauser->GetActorLocation());
+
 	return SuperDamage;
 }
 
