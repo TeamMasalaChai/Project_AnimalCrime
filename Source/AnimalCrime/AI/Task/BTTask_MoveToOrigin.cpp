@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "AI/Task/BTTask_MoveToOrigin.h"
@@ -9,7 +9,7 @@
 
 UBTTask_MoveToOrigin::UBTTask_MoveToOrigin()
 {
-	UE_LOG(LogHY, Error, TEXT("생성자"));
+	//UE_LOG(LogHY, Error, TEXT("생성자"));
 }
 
 EBTNodeResult::Type UBTTask_MoveToOrigin::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)

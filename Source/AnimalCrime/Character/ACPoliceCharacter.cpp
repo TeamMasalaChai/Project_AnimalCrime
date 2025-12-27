@@ -7,6 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Component/ACMoneyComponent.h"
 #include <Kismet/GameplayStatics.h>
+#include "GameFramework/CharacterMovementComponent.h"
 
 AACPoliceCharacter::AACPoliceCharacter()
 {
@@ -41,7 +42,7 @@ AACPoliceCharacter::AACPoliceCharacter()
 
 	ShoesMesh->SetSkeletalMesh(nullptr);
 	
-	
+	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
 }
 
 EACCharacterType AACPoliceCharacter::GetCharacterType()
