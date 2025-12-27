@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interface/ACInteractInterface.h"
+#include "Game/ACGameEnums.h"
 #include "ACCitizen.generated.h"
 
 UCLASS()
@@ -95,6 +96,11 @@ public:
 	void OnArrive();
 	
 	/**
+	 * @brief  최종 상태 변화 함수
+	 */
+	void OnChangeState();
+	
+	/**
 	 * @brief  피격 시 호출되는 함수
 	 */
 	void OnDamaged();
@@ -127,6 +133,12 @@ public:
 	 * @brief  경찰로 부터 도망가는 스킬 함수
 	 */
 	void RunFromPolice();
+	
+	/**
+	 * @brief  경찰로 부터 도망가는 스킬 함수
+	 */
+	void JumpInPlace();
+	
 #pragma endregion
 
 #pragma region 매시 Get/Set
@@ -182,6 +194,9 @@ protected:
 	TObjectPtr<class UACInteractableComponent> InteractBoxComponent;
 
 public:
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastPlayAttackMontage();
+	
 	UPROPERTY(meta=(AllowPrivateAccess=true))
 	int32 DamagedFlag;
 
@@ -203,6 +218,22 @@ public:
 	// 돈 쿨타임 
 	FTimerHandle MoneyCoolTimerHandle;
 	bool bMoneyCoolTimerActivated = false;
+	
+	// 속도 쿨타임 
+	FTimerHandle MoveSpeedTimerHandle;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_CharacterState)
+	ECharacterState CharacterState = ECharacterState::None;
+	
+	ECharacterState TempCharacterState = ECharacterState::None;
+
+	
+	/** 몽타주: 기본 공격  */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Member|Attack|Anim", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UAnimMontage> MeleeMontage;
+	
+	UFUNCTION()
+	void OnRep_CharacterState();
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh", meta=(AllowPrivateAccess=true))
@@ -244,6 +275,13 @@ private:
 	UPROPERTY()
 	TObjectPtr<class AACPoliceCharacter> PoliceCharacter;
 	
+	UPROPERTY()
+	TObjectPtr<class AACMafiaCharacter> MafiaCharacter;
+	
+	
+	
+	
 private:
+	float DebugDelta = 1.0f;
 #pragma endregion
 };
