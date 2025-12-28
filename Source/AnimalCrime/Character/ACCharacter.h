@@ -24,6 +24,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 public:
 	/**
 		@brief 현재 입력매핑 컨텍스트를 전부 지우고 새로운 입력매핑 컨텍스트로 바꾸는 함수
@@ -44,6 +45,8 @@ public:
 	//virtual void SettingsClose(const FInputActionValue& Value);
 	virtual void Jump() override;
 	virtual void SettingsClose();
+	
+	
 
 protected:
 
@@ -185,11 +188,16 @@ private:
 public:
 	void SetCharacterState(ECharacterState InCharacterState);
   protected:
-	  ESettingMode SettingMode = ESettingMode::None;
+	ESettingMode SettingMode = ESettingMode::None;
 	
 	FTimerHandle TimerHandle;
 	
 	
 	UPROPERTY(ReplicatedUsing = OnRep_CharacterState, EditAnywhere, BlueprintReadWrite, Category = "State")
 	ECharacterState CharacterState;
+	
+	
+protected:
+	UPROPERTY(Replicated,EditAnywhere)
+	TObjectPtr<class UACDestroyableStatComponent> Stat;
 };

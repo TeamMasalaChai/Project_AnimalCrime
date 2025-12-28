@@ -18,7 +18,11 @@ protected:
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void PostNetInit() override;
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+public:
+	void UpdateCharacterStatusFree();	
+	
 	//!< 상호작용 인터페이스
 protected:
 	virtual bool CanInteract(AACCharacter* ACPlayer) override;
@@ -67,9 +71,7 @@ public:
 public:
 	float GetCurrentHP() const;
 
-protected:
-	UPROPERTY(Replicated,EditAnywhere)
-	TObjectPtr<class UACDestroyableStatComponent> Stat;
+
 
 	float TickDeltaTime = 1.0f;
 };

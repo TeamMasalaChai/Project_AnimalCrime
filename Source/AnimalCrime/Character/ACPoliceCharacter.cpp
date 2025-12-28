@@ -9,6 +9,8 @@
 #include <Kismet/GameplayStatics.h>
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "GameFramework/CharacterMovementComponent.h"
+
 AACPoliceCharacter::AACPoliceCharacter()
 {
 	// 콜리전 세팅
@@ -42,7 +44,7 @@ AACPoliceCharacter::AACPoliceCharacter()
 
 	ShoesMesh->SetSkeletalMesh(nullptr);
 	
-	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+	GetCharacterMovement()->MaxWalkSpeed = 500.0f;  // 경찰
 }
 
 EACCharacterType AACPoliceCharacter::GetCharacterType()

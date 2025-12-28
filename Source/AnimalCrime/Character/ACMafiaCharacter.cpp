@@ -33,7 +33,7 @@ float AACMafiaCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 {
 	float SuperResult = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	
-	// 클라이언트에서 계산 시 데미지가 중첩되는 버그가 발생.
+	// 권한있는 APawn만 계산해야 함.
 	if (HasAuthority() == false)
 	{
 		return 0.0f;
@@ -53,44 +53,29 @@ float AACMafiaCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 	CurrentHp -= 1.0f;
 	Stat->SetCurrentHp(CurrentHp);
 	//AC_LOG(LogHY, Error, TEXT("My HP is %f"), Stat->GetCurrentHp());
+	
+	FTimerDelegate TimerDelegate;
 	if (CurrentHp <= 0)
 	{
 		// 상태 변경
 		CharacterState = ECharacterState::Stun;
-		
 		OnRep_CharacterState();
+		
 		if (CharacterState == ECharacterState::Stun)
 		{
-			GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda(
-				[this]()
-			{
-				CharacterState = ECharacterState::Free;
-				OnRep_CharacterState();
-			}), 10.0, false);
-		}
-		else if (CharacterState == ECharacterState::OnDamage)
-		{
-			GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda(
-				[this]()
-			{
-				CharacterState = ECharacterState::Free;
-				OnRep_CharacterState();
-			}), 10.0, false);	
+			TimerDelegate.BindUObject(this, &AACMafiaCharacter::UpdateCharacterStatusFree);
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 10.0, false);
 		}
 	}
 	else
 	{
 		CharacterState = ECharacterState::OnDamage;
-		
 		OnRep_CharacterState();
+		
 		if (CharacterState == ECharacterState::OnDamage)
 		{
-			GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda(
-				[this]()
-			{
-				CharacterState = ECharacterState::Free;
-				OnRep_CharacterState();
-			}), 10.0, false);	
+			TimerDelegate.BindUObject(this, &AACMafiaCharacter::UpdateCharacterStatusFree);
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 10.0, false);
 		}
 	}
 
@@ -112,6 +97,21 @@ void AACMafiaCharacter::Tick(float DeltaSeconds)
 		AC_LOG(LogHY, Error, TEXT("My HP is %f"), Stat->GetCurrentHp());
 		TickDeltaTime += 1.0f;
 	}*/
+}
+
+void AACMafiaCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// if (UWorld* World = GetWorld())
+	// {
+	// 	World->GetTimerManager().ClearAllTimersForObject(this);
+	// }
+	Super::EndPlay(EndPlayReason);
+}
+
+void AACMafiaCharacter::UpdateCharacterStatusFree()
+{
+	CharacterState = ECharacterState::Free;
+	OnRep_CharacterState();
 }
 
 void AACMafiaCharacter::BeginPlay()

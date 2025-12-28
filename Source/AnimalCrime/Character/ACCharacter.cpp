@@ -187,6 +187,15 @@ void AACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AACCharacter, CharacterState);
 }
 
+void AACCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// if (UWorld* World = GetWorld())
+	// {
+	// 	World->GetTimerManager().ClearAllTimersForObject(this);
+	// }
+	Super::EndPlay(EndPlayReason);
+}
+
 void AACCharacter::ChangeInputMode(EInputMode NewMode)
 {
 	AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
@@ -579,6 +588,12 @@ void AACCharacter::OnRep_CharacterState()
 	//}		
 
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (IsValid(this) == false)
+	{
+		AC_LOG(LogHY, Error, TEXT("this is Invalid"));
+		return;
+	}
+	
 	if (MoveComp == nullptr)
 	{
 		AC_LOG(LogHY, Error, TEXT("MoveComp is nullptr"));
@@ -591,7 +606,7 @@ void AACCharacter::OnRep_CharacterState()
 	{
 	case ECharacterState::Interact:
 		{
-			MoveComp->SetMovementMode(MOVE_None);
+			// MoveComp->SetMovementMode(MOVE_None);
 			break;
 		}
 	case ECharacterState::Stun:
@@ -602,7 +617,7 @@ void AACCharacter::OnRep_CharacterState()
 		}
 	case ECharacterState::Free:
 		{
-			MoveComp->SetMovementMode(MOVE_Walking);
+			// MoveComp->SetMovementMode(MOVE_Walking);
 			if (GetCharacterType() == EACCharacterType::Police)
 			{
 				MoveComp->MaxWalkSpeed = 500.0f;  // 경찰
