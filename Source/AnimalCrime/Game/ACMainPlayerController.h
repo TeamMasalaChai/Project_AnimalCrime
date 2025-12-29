@@ -39,6 +39,7 @@ protected:
 	void HandleAttack(const struct FInputActionValue& Value);
 	void HandleSettingsClose(const struct FInputActionValue& Value);
 	void HandleSpectatorChange(const struct FInputActionValue& Value);
+	void HandleDash(const struct FInputActionValue& Value);
 
 	// ===== 퀵슬롯 관련 (하나의 핸들러로 통합) =====
 	void HandleQuickSlot(const struct FInputActionValue& Value);
@@ -155,6 +156,8 @@ protected:
 	TObjectPtr<class UInputAction> ItemDropAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputAction> MeleeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction> DashAction;
 
 	// ===== 퀵슬롯 관련 (하나만) =====
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")

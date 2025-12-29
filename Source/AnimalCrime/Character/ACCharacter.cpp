@@ -390,6 +390,44 @@ void AACCharacter::SettingsClose()
 	}
 }
 
+void AACCharacter::ServerDash_Implementation()
+{
+	if (GetWorldTimerManager().IsTimerActive(DashTimerHandle) == true)
+	{
+		AC_LOG(LogHY, Error, TEXT("Dash Timer is already active"));
+		return;
+	}
+	
+	FVector ForwardDir = GetActorForwardVector();
+	
+	FVector LaunchVel = ForwardDir * 1000 + FVector(0.f, 0.f, 500.f);
+	LaunchCharacter(LaunchVel, true, false);
+	FTimerDelegate TimerDelegate;
+	bDashCoolDown = false;
+	TimerDelegate.BindUObject(this, &AACCharacter::ResetDashFlag);
+	GetWorld()->GetTimerManager().SetTimer(DashTimerHandle, TimerDelegate,10, false);
+}
+
+void AACCharacter::ResetDashFlag()
+{
+	bDashCoolDown = true;
+}
+
+void AACCharacter::Dash(const FInputActionValue& Value)
+{
+	bool Flag = Value.Get<bool>();
+	AC_LOG(LogHY, Error, TEXT("Try Dash!! %d"), Flag);
+	
+	if (Flag == false)
+	{
+		AC_LOG(LogHY, Error, TEXT("Dash Input False"));
+		return;
+	}
+	
+	// Client가 Server에게 대쉬 요청
+	ServerDash();
+}
+
 void AACCharacter::Jump()
 {
 	// Case 스턴 상태일 경우 

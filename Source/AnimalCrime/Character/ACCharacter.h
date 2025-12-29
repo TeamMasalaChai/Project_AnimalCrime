@@ -46,8 +46,17 @@ public:
 	virtual void Jump() override;
 	virtual void SettingsClose();
 	
-	
 
+	// 클라이언트 Input을 받는 함수
+	void Dash(const FInputActionValue& Value);
+
+	// 서버에 Dash 요청 함수
+	UFUNCTION(Server, Reliable)
+	void ServerDash();
+	
+	// 쿨타임 시 Flag 되돌리는 함수.
+	void ResetDashFlag();
+	
 protected:
 
 	UFUNCTION(Server, Reliable)
@@ -196,6 +205,12 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_CharacterState, EditAnywhere, BlueprintReadWrite, Category = "State")
 	ECharacterState CharacterState;
 	
+
+protected: // Dash 전용 맴버 변수
+	FTimerHandle DashTimerHandle;
+
+	UPROPERTY(Replicated)
+	uint8 bDashCoolDown = true;
 	
 protected:
 	UPROPERTY(Replicated,EditAnywhere)
