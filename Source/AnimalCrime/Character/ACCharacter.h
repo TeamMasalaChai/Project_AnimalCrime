@@ -63,7 +63,11 @@ public:
 
 	// 서버에 Dash 요청 함수
 	UFUNCTION(Server, Reliable)
-	void ServerSprint();
+	void ServerSprintStart();
+	
+	// 서버에 Dash 요청 함수
+	UFUNCTION(Server, Reliable)
+	void ServerSprintEnd();
 	
 	// 쿨타임 시 Flag 되돌리는 함수.
 	void ResetSprint();
@@ -226,10 +230,23 @@ protected: // Dash 전용 맴버 변수
 	
 protected: // Sprint 전용 맴버 변수
 	UPROPERTY(ReplicatedUsing = OnRep_Sprint)
-	uint8 bSprint = false;
+	uint8 bSprint : 1 = false;
 	
 	UFUNCTION()
 	void OnRep_Sprint();
+	
+	
+	UFUNCTION()
+	void GaugeUp();
+	
+	UFUNCTION()
+	void GaugeDown();
+	
+	FTimerHandle SprintGaugeDownTimerHandle;
+	FTimerHandle SprintGaugeUpTimerHandle;
+	
+	UPROPERTY(Replicated)
+	int32 SprintGauge = 10;
 	
 protected:
 	UPROPERTY(Replicated,EditAnywhere)

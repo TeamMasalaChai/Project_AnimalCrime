@@ -415,22 +415,77 @@ void AACCharacter::ResetDashFlag()
 
 void AACCharacter::Sprint(const FInputActionValue& Value)
 {
-	ServerSprint();
-}
-
-void AACCharacter::ServerSprint_Implementation()
-{
-	// bSprint = !bSprint;
-	if (bSprint == false)
+	if (Value.Get<bool>())
 	{
-		bSprint = true;
+		if (SprintGauge > 0)
+		{
+			ServerSprintStart();
+		}
 	}
 	else
 	{
-		bSprint = false;
+		ServerSprintEnd();
 	}
+}
+
+void AACCharacter::ServerSprintStart_Implementation()
+{
+	if (bSprint == true)
+	{
+		return;
+	}
+	
+	// Delete Guage Up 
+	GetWorld()->GetTimerManager().ClearTimer(SprintGaugeUpTimerHandle);
+	
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindUObject(this, &AACCharacter::GaugeDown);
+	
+	GetWorld()->GetTimerManager().SetTimer(SprintGaugeDownTimerHandle, 
+		TimerDelegate, 
+		1, true);
+	
+	
+	
+	bSprint = true;
+	AC_LOG(LogHY, Error, TEXT("ServerSprintStart_Implementation %d"), bSprint);
 	OnRep_Sprint();
 }
+
+void AACCharacter::ServerSprintEnd_Implementation()
+{
+	// if (bSprint == false)
+	// {
+	// 	return;
+	// }
+	// Delete Guage Down 
+	GetWorld()->GetTimerManager().ClearTimer(SprintGaugeDownTimerHandle);
+	
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindUObject(this, &AACCharacter::GaugeUp);
+	
+	GetWorld()->GetTimerManager().SetTimer(SprintGaugeUpTimerHandle, 
+		TimerDelegate, 
+		1, true);
+	
+	
+	bSprint = false;
+	OnRep_Sprint();
+}
+
+// void AACCharacter::ServerSprint_Implementation()
+// {
+// 	// // bSprint = !bSprint;
+// 	// if (bSprint == false)
+// 	// {
+// 	// 	bSprint = true;
+// 	// }
+// 	// else
+// 	// {
+// 	// 	bSprint = false;
+// 	// }
+// 	// OnRep_Sprint();
+// }
 
 void AACCharacter::ResetSprint()
 {
@@ -442,10 +497,35 @@ void AACCharacter::OnRep_Sprint()
 	if (bSprint)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = 1200;
+		AC_LOG(LogHY, Warning, TEXT("Sprint is active %f"), GetCharacterMovement()->MaxWalkSpeed);
 	}
 	else
 	{
 		GetCharacterMovement()->MaxWalkSpeed = 600;
+		AC_LOG(LogHY, Warning, TEXT("Sprint is deactive %f"), GetCharacterMovement()->MaxWalkSpeed);
+	}
+}
+
+void AACCharacter::GaugeUp()
+{
+	SprintGauge += 1;
+	AC_LOG(LogHY, Warning, TEXT("Gauge Up: %d"), SprintGauge);
+	if (SprintGauge > 10)
+	{
+		SprintGauge = 10;
+		// Todo
+	}
+}
+
+void AACCharacter::GaugeDown()
+{
+	SprintGauge -= 1;
+	AC_LOG(LogHY, Warning, TEXT("Gauge Down: %d"), SprintGauge);
+	if (SprintGauge <= 0)
+	{
+		GetWorldTimerManager().ClearTimer(SprintGaugeDownTimerHandle);
+		bSprint = false;
+		OnRep_Sprint();
 	}
 }
 
