@@ -196,6 +196,7 @@ void UACAdvancedFriendsGameInstance::UpdateMap(const EMapType InMapType)
 	//	false
 	//);
 }
+
 void UACAdvancedFriendsGameInstance::BeginLoadingScreen(const FString& MapName)
 {
 	UE_LOG(LogSY, Log, TEXT("BeginLoadingScreen"));

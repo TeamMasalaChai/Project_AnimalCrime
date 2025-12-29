@@ -23,24 +23,29 @@ void AACPlayerControllerBase::Client_CleanupVoiceBeforeTravel_Implementation()
 		return;
 	}
 
-
 	IOnlineVoicePtr Voice = Online::GetVoiceInterface();
-	if (Voice.IsValid() == false)
+	if (Voice.IsValid() == true)
+	{
+		Voice->StopNetworkedVoice(0);
+		Voice->UnregisterLocalTalker(0);
+	}
+	else
 	{
 		AC_LOG(LogSY, Warning, TEXT("Voice is fail"));
-		return;
 	}
-	Voice->StopNetworkedVoice(0);
-	Voice->UnregisterLocalTalker(0);
 
-	FAudioDevice* AudioDevice = World->GetAudioDeviceRaw();
-	if (AudioDevice == nullptr)
+	// AudioDevice 정리
+	if (FAudioDeviceHandle AudioDeviceHandle = World->GetAudioDevice())
 	{
-		AC_LOG(LogSY, Warning, TEXT("AudioDevice is nullptr"));
-		return;
+		// StopAllSounds는 게임 스레드에서 안전
+		AudioDeviceHandle->StopAllSounds(true);
 	}
 
-	AudioDevice->Flush(World);
+	//FTimerHandle CleanupTimer;
+	//GetWorldTimerManager().SetTimer(CleanupTimer, [this]()
+	//	{
+	//		Server_NotifyVoiceCleaned();
+	//	}, 0.1f, false);
 
 	Server_NotifyVoiceCleaned();
 }
