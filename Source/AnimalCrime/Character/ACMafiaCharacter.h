@@ -21,7 +21,8 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
-	void UpdateCharacterStatusFree();	
+	void UpdateCharacterStatusFree();
+	void UpdateCharacterStatusRevive();
 	
 	//!< 상호작용 인터페이스
 protected:

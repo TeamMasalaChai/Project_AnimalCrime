@@ -31,7 +31,7 @@
 AACCitizen::AACCitizen()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	//PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	// AI 설정
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
@@ -170,14 +170,9 @@ void AACCitizen::BeginPlay()
 	
 	//float RandomRate = FMath::RandRange(0.f, 10.f);
 	float RandomRate = 40.0f;
-	GetWorld()->GetTimerManager().SetTimer(InitialSkillBlockTimerHandle,
-		FTimerDelegate::CreateLambda([this]()
-		{
-			if (IsValid(this))
-			{
-				bIsInitialSkillBlocked = false;
-			}
-		}), RandomRate, false);
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindUObject(this, &AACCitizen::UpdateAISkillFlag);
+	GetWorld()->GetTimerManager().SetTimer(InitialSkillBlockTimerHandle, TimerDelegate, RandomRate, false);
 
 	AC_LOG(LogHY, Warning, TEXT("End"));
 }
@@ -353,12 +348,9 @@ void AACCitizen::OnChangeState()
 	
 	if (CharacterState == ECharacterState::OnDamage)
 	{
-		GetWorld()->GetTimerManager().SetTimer(MoveSpeedTimerHandle, FTimerDelegate::CreateLambda(
-			[this]()
-		{
-			CharacterState = ECharacterState::Free;
-			OnRep_CharacterState();
-		}), 10.0, false);
+		FTimerDelegate TimerDelegate;
+		TimerDelegate.BindUObject(this, &AACCitizen::UpdateCharacterStatusFree);
+		GetWorld()->GetTimerManager().SetTimer(MoveSpeedTimerHandle, TimerDelegate, 10.0, false);
 	}
 	else if (CharacterState == ECharacterState::Angry)
 	{
@@ -477,6 +469,11 @@ void AACCitizen::OnUpdateMoney(AActor* Actor)
 			{
 				GetWorldTimerManager().SetTimer(MoneyCoolTimerHandle, FTimerDelegate::CreateLambda([this]
 				{
+					if (IsValid(this) == false)
+					{
+						UE_LOG(LogHY, Error, TEXT("[MoneyCoolTimerHandle] this is Invalid"));	
+						return;
+					}
 					AC_LOG(LogHY, Error, TEXT("끝"));
 				}), 10, false);
 				ACCharacter->MoneyComp->EarnMoney(Result);
@@ -556,6 +553,31 @@ void AACCitizen::AttackHitCheck()
 			BB->SetValueAsObject(TEXT("Target"), nullptr);
 		}
 	}
+}
+
+void AACCitizen::UpdateAISkillFlag()
+{
+	if (IsValid(this) == false)
+	{
+		AC_LOG(LogHY, Error, TEXT("this는 Invalid입니다."));
+		return;
+	}
+	
+	AC_LOG(LogHY, Error, TEXT("Call UpdateAISkillFlag"));
+	
+	bIsInitialSkillBlocked = false;
+}
+
+void AACCitizen::UpdateCharacterStatusFree()
+{
+	if (IsValid(this) == false)
+	{
+		AC_LOG(LogHY, Error, TEXT("this는 Invalid입니다."));
+		return;
+	}
+	
+	CharacterState = ECharacterState::Free;
+	OnRep_CharacterState();
 }
 
 void AACCitizen::ChangeClothes()
@@ -863,6 +885,13 @@ float AACCitizen::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 	OnChangeState();
 
 	return SuperDamage;
+}
+
+void AACCitizen::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	AC_LOG(LogHY, Warning, TEXT("AACCitizen::EndPlay"));
+	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+	Super::EndPlay(EndPlayReason);
 }
 
 bool AACCitizen::CanInteract(AACCharacter* ACPlayer)

@@ -189,10 +189,8 @@ void AACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 void AACCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// if (UWorld* World = GetWorld())
-	// {
-	// 	World->GetTimerManager().ClearAllTimersForObject(this);
-	// }
+	AC_LOG(LogHY, Warning, TEXT("AACCharacter::EndPlay %s"), *GetName());
+	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 	Super::EndPlay(EndPlayReason);
 }
 

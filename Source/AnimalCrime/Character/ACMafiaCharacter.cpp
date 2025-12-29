@@ -63,7 +63,7 @@ float AACMafiaCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 		
 		if (CharacterState == ECharacterState::Stun)
 		{
-			TimerDelegate.BindUObject(this, &AACMafiaCharacter::UpdateCharacterStatusFree);
+			TimerDelegate.BindUObject(this, &AACMafiaCharacter::UpdateCharacterStatusRevive);
 			GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 10.0, false);
 		}
 	}
@@ -101,17 +101,39 @@ void AACMafiaCharacter::Tick(float DeltaSeconds)
 
 void AACMafiaCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// if (UWorld* World = GetWorld())
-	// {
-	// 	World->GetTimerManager().ClearAllTimersForObject(this);
-	// }
+	AC_LOG(LogHY, Warning, TEXT("AACMafiaCharacter::EndPlay"));
+	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+	
 	Super::EndPlay(EndPlayReason);
 }
 
 void AACMafiaCharacter::UpdateCharacterStatusFree()
 {
+	if (IsValid(this) == false)
+	{
+		AC_LOG(LogHY, Error, TEXT("this가 올바르지 않습니다."));
+		return;
+	}
+	
+	AC_LOG(LogHY, Error, TEXT("상태가 변경되었습니다."));
 	CharacterState = ECharacterState::Free;
 	OnRep_CharacterState();
+}
+
+void AACMafiaCharacter::UpdateCharacterStatusRevive()
+{
+	if (IsValid(this) == false)
+	{
+		AC_LOG(LogHY, Error, TEXT("this가 올바르지 않습니다."));
+		return;
+	}
+	AC_LOG(LogHY, Error, TEXT("상태가 변경되었습니다."));
+	CharacterState = ECharacterState::Free;
+	OnRep_CharacterState();
+	if (HasAuthority() == true)
+	{
+		Stat->SetCurrentHp(6);
+	}
 }
 
 void AACMafiaCharacter::BeginPlay()
