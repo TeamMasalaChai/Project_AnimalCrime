@@ -15,6 +15,7 @@
 #include "ACPlayerControllerBase.h"
 #include "MoviePlayer.h"
 #include "Blueprint/UserWidget.h"
+#include "VoipListenerSynthComponent.h"
 
 #pragma region 엔진 제공 함수
 void UACAdvancedFriendsGameInstance::Init()
@@ -26,15 +27,12 @@ void UACAdvancedFriendsGameInstance::Init()
 	GetEngine()->OnTravelFailure().AddUObject(this, &UACAdvancedFriendsGameInstance::HandleTravelFailure);
 
 	// 세션이 Destroy 되었을 때 호출될 델리게이트 등록
-	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
-	if (SessionInterface.IsValid() == true)
-	{
-		OnDestroySessionCompleteHandle = SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(
-			FOnDestroySessionCompleteDelegate::CreateUObject(this, &UACAdvancedFriendsGameInstance::OnDestroySessionComplete));
-	}
-
-	// 월드가 파괴되거나 변경될 때 호출되는 델리게이트 등록
-	//FWorldDelegates::OnWorldCleanup.AddUObject(this, &UACAdvancedFriendsGameInstance::OnWorldCleanup);
+	//IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+	//if (SessionInterface.IsValid() == true)
+	//{
+	//	OnDestroySessionCompleteHandle = SessionInterface->AddOnDestroySessionCompleteDelegate_Handle(
+	//		FOnDestroySessionCompleteDelegate::CreateUObject(this, &UACAdvancedFriendsGameInstance::OnDestroySessionComplete));
+	//}
 
 	// 맵 관련 초기화
 	CurrentMapType = EMapType::None;
@@ -51,19 +49,19 @@ void UACAdvancedFriendsGameInstance::Init()
 
 }
 
-void UACAdvancedFriendsGameInstance::Shutdown()
-{
-	// Init에서 등록한 DestroySession 델리게이트 해제
-	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
-	if (SessionInterface.IsValid() && OnDestroySessionCompleteHandle.IsValid())
-	{
-		SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(OnDestroySessionCompleteHandle);
-	}
-
-	UE_LOG(LogSY, Warning, TEXT("UACMainGameInstance::Shutdown"));
-
-	Super::Shutdown();
-}
+//void UACAdvancedFriendsGameInstance::Shutdown()
+//{
+//	// Init에서 등록한 DestroySession 델리게이트 해제
+//	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(GetWorld());
+//	if (SessionInterface.IsValid() && OnDestroySessionCompleteHandle.IsValid())
+//	{
+//		SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(OnDestroySessionCompleteHandle);
+//	}
+//
+//	UE_LOG(LogSY, Warning, TEXT("UACMainGameInstance::Shutdown"));
+//
+//	Super::Shutdown();
+//}
 
 void UACAdvancedFriendsGameInstance::OnStart()
 {
@@ -102,8 +100,58 @@ void UACAdvancedFriendsGameInstance::UpdateMap(const EMapType InMapType)
 	NumClientsReady = 0;
 	bServerVoiceCleaned = false;
 
-	// Client들에게 먼저 Voice 정리 요청
-	// Client들이 먼저 자기 Voice를 끊어야 Server에 새 패킷이 안 들어옴
+	// ★ Server Voice를 먼저 중지해서 Client들 사이의 Voice 패킷 전달을 차단
+	// 이렇게 해야 Client들이 정리하는 동안 새로운 VoipListenerSynthComponent가 생성되지 않음
+	if (GetWorld()->GetNetMode() != NM_Client)
+	{
+		UE_LOG(LogSY, Log, TEXT("=== Server Voice 먼저 중지 시작 ==="));
+
+		IOnlineVoicePtr Voice = Online::GetVoiceInterface();
+		if (Voice.IsValid())
+		{
+			Voice->RemoveAllRemoteTalkers();
+			Voice->StopNetworkedVoice(0);
+			Voice->UnregisterLocalTalker(0);
+			UE_LOG(LogSY, Log, TEXT("Server Voice 중지 완료"));
+		}
+
+		// Server의 VoipListenerSynthComponent도 먼저 정리
+		for (TObjectIterator<UVoipListenerSynthComponent> It; It; ++It)
+		{
+			UVoipListenerSynthComponent* VoipComp = *It;
+			if (IsValid(VoipComp))
+			{
+				UE_LOG(LogSY, Log, TEXT("Server - Destroying VoipComp: %s"), *VoipComp->GetName());
+				VoipComp->Stop();
+				if (UAudioComponent* AudioComp = VoipComp->GetAudioComponent())
+				{
+					AudioComp->Stop();
+					if (AudioComp->IsRegistered())
+					{
+						AudioComp->UnregisterComponent();
+					}
+					AudioComp->DestroyComponent();
+				}
+				if (VoipComp->IsRegistered())
+				{
+					VoipComp->UnregisterComponent();
+				}
+				VoipComp->DestroyComponent();
+			}
+		}
+
+		// Audio Flush
+		if (FAudioDeviceHandle AudioDeviceHandle = GetWorld()->GetAudioDevice())
+		{
+			AudioDeviceHandle->StopAllSounds(true);
+			AudioDeviceHandle->Flush(GetWorld());
+			UE_LOG(LogSY, Log, TEXT("Server Audio Flush 완료"));
+		}
+
+		UE_LOG(LogSY, Log, TEXT("=== Server Voice 먼저 중지 완료 ==="));
+	}
+
+	// 그 다음 Client들에게 Voice 정리 요청
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
 		AACPlayerControllerBase* PC = Cast<AACPlayerControllerBase>(It->Get());
@@ -113,47 +161,12 @@ void UACAdvancedFriendsGameInstance::UpdateMap(const EMapType InMapType)
 		}
 		PC->Client_CleanupVoiceBeforeTravel();
 	}
-
-	//// Server는  약간 늦게 Voice 정리
-	//if (GetWorld()->GetNetMode() != NM_Client)
-	//{
-	//	// 100ms 후에 Server Voice 정리
-	//	// → Client들의 Voice 송신이 먼저 중단될 시간
-	//	FTimerHandle ServerCleanupTimer;
-	//	GetWorld()->GetTimerManager().SetTimer(ServerCleanupTimer, [this]()
-	//		{
-	//			IOnlineVoicePtr Voice = Online::GetVoiceInterface();
-	//			if (Voice.IsValid())
-	//			{
-	//				// 이제 안전하게 RemoteTalker 제거 가능
-	//				// Client들이 이미 송신 중단했으므로 새 패킷 안 들어옴
-	//				Voice->RemoveAllRemoteTalkers();
-	//				Voice->StopNetworkedVoice(0);
-	//				Voice->UnregisterLocalTalker(0);
-	//				UE_LOG(LogSY, Log, TEXT("Server voice cleaned (delayed)"));
-	//			}
-
-	//			// Audio도 정리
-	//			if (UWorld* World = GetWorld())
-	//			{
-	//				if (FAudioDeviceHandle AudioDeviceHandle = World->GetAudioDevice())
-	//				{
-	//					AudioDeviceHandle->StopAllSounds(true);
-	//					AudioDeviceHandle->Flush(World);
-	//				}
-	//			}
-
-	//			bVoiceInitialized = false;
-	//		}, 0.1f, false);  // 100ms 딜레이
-	//}
 }
 #pragma endregion
 
 void UACAdvancedFriendsGameInstance::HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
 {
 	UE_LOG(LogSY, Warning, TEXT("Network Failure: %s"), *ErrorString);
-
-	bVoiceInitialized = false;
 
 	// 세션 정리
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(World);
@@ -167,8 +180,6 @@ void UACAdvancedFriendsGameInstance::HandleTravelFailure(UWorld* World, ETravelF
 {
 	UE_LOG(LogSY, Warning, TEXT("Travel Failure: %s"), *ErrorString);
 
-	bVoiceInitialized = false;
-
 	// 세션 정리
 	IOnlineSessionPtr SessionInterface = Online::GetSessionInterface(World);
 	if (SessionInterface.IsValid() == true)
@@ -177,10 +188,9 @@ void UACAdvancedFriendsGameInstance::HandleTravelFailure(UWorld* World, ETravelF
 	}
 }
 
-void UACAdvancedFriendsGameInstance::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
-{
-	bVoiceInitialized = false;
-}
+//void UACAdvancedFriendsGameInstance::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
+//{
+//}
 
 void UACAdvancedFriendsGameInstance::CheckServerVoiceCleanup()
 {
@@ -193,30 +203,48 @@ void UACAdvancedFriendsGameInstance::CheckServerVoiceCleanup()
 		return;
 	}
 
-	// Server의 VoIP 컴포넌트 확인
+	// VoipListenerSynthComponent 및 내부 AudioComponent 직접 찾아서 정리 (Transient 패키지 포함)
+	// UE-146893, UE-169798 버그 대응: DestroyComponent()로 강제 파괴
 	bool bServerVoipExists = false;
-	int32 RegisteredCount = 0;
+	int32 FoundCount = 0;
 
-	for (TObjectIterator<UAudioComponent> It; It; ++It)
+	for (TObjectIterator<UVoipListenerSynthComponent> It; It; ++It)
 	{
-		UAudioComponent* AudioComp = *It;
-
-		if (AudioComp->GetWorld() != World)
-			continue;
-
-		FString CompName = AudioComp->GetName();
-		if (CompName.Contains(TEXT("VoipListener")) ||
-			CompName.Contains(TEXT("VoiceCap")))
+		UVoipListenerSynthComponent* VoipComp = *It;
+		if (IsValid(VoipComp))
 		{
-			if (AudioComp->IsRegistered())
+			bServerVoipExists = true;
+			FoundCount++;
+
+			UE_LOG(LogSY, Log, TEXT("Server cleanup - Found VoipComp: %s (IsRegistered: %d)"),
+				*VoipComp->GetName(), VoipComp->IsRegistered());
+
+			// 1. 먼저 Stop 호출
+			VoipComp->Stop();
+
+			// 2. 내부 AudioComponent 강제 파괴
+			if (UAudioComponent* AudioComp = VoipComp->GetAudioComponent())
 			{
-				bServerVoipExists = true;
-				RegisteredCount++;
+				UE_LOG(LogSY, Log, TEXT("Server cleanup - Inner AudioComponent: %s (IsRegistered: %d)"),
+					*AudioComp->GetName(), AudioComp->IsRegistered());
+				AudioComp->Stop();
+				if (AudioComp->IsRegistered())
+				{
+					AudioComp->UnregisterComponent();
+				}
+				AudioComp->DestroyComponent();
 			}
+
+			// 3. VoipListenerSynthComponent 강제 파괴
+			if (VoipComp->IsRegistered())
+			{
+				VoipComp->UnregisterComponent();
+			}
+			VoipComp->DestroyComponent();
 		}
 	}
 
-	// Server 정리 완료 확인
+	// Server 정리 완료 확인 (이번 폴링에서 컴포넌트를 찾지 못하면 완료)
 	if (!bServerVoipExists)
 	{
 		UE_LOG(LogSY, Log, TEXT("✅ Server voice cleanup verified! (Attempts: %d)"),
@@ -228,20 +256,20 @@ void UACAdvancedFriendsGameInstance::CheckServerVoiceCleanup()
 		return;
 	}
 
-	// 아직 정리 중
+	// 아직 컴포넌트가 있음 - 다음 폴링에서 다시 확인
 	ServerCleanupPollingAttempts++;
 
 	if (ServerCleanupPollingAttempts % 10 == 0) // 100ms마다 로그
 	{
-		UE_LOG(LogSY, Log, TEXT("⏳ Server still cleaning... (Attempt %d/%d, Components: %d)"),
-			ServerCleanupPollingAttempts, MaxServerCleanupPollingAttempts, RegisteredCount);
+		UE_LOG(LogSY, Log, TEXT("⏳ Server still cleaning... (Attempt %d/%d, Destroyed: %d)"),
+			ServerCleanupPollingAttempts, MaxServerCleanupPollingAttempts, FoundCount);
 	}
 
 	// 타임아웃 체크
 	if (ServerCleanupPollingAttempts >= MaxServerCleanupPollingAttempts)
 	{
-		UE_LOG(LogSY, Warning, TEXT("⚠️ Server voice cleanup timeout! Proceeding anyway. (Remaining: %d)"),
-			RegisteredCount);
+		UE_LOG(LogSY, Warning, TEXT("⚠️ Server voice cleanup timeout! Proceeding anyway. (Destroyed: %d)"),
+			FoundCount);
 		bServerVoiceCleaned = true;
 		CheckFinalStateBeforeTravel();
 		return;
@@ -264,52 +292,82 @@ void UACAdvancedFriendsGameInstance::CheckFinalStateBeforeTravel()
 		return;
 	}
 
-	// 최종 검증: World에 남은 VoIP 컴포넌트 확인
-	bool bNoVoipComponents = true;
-	int32 RemainingComponents = 0;
+	// 최종 검증: VoipListenerSynthComponent 및 내부 AudioComponent 직접 확인 (Transient 패키지 포함)
+	// DestroyComponent()로 강제 파괴
+	bool bVoipComponentsExist = false;
+	int32 FoundCount = 0;
 
-	for (TObjectIterator<UAudioComponent> It; It; ++It)
+	for (TObjectIterator<UVoipListenerSynthComponent> It; It; ++It)
 	{
-		UAudioComponent* AudioComp = *It;
-
-		if (AudioComp->GetWorld() != World)
-			continue;
-
-		FString CompName = AudioComp->GetName();
-		if (CompName.Contains(TEXT("VoipListener")) ||
-			CompName.Contains(TEXT("VoiceCap")))
+		UVoipListenerSynthComponent* VoipComp = *It;
+		if (IsValid(VoipComp))
 		{
-			if (AudioComp->IsRegistered())
+			bVoipComponentsExist = true;
+			FoundCount++;
+
+			UE_LOG(LogSY, Log, TEXT("Final cleanup - Found VoipComp: %s (IsRegistered: %d)"),
+				*VoipComp->GetName(), VoipComp->IsRegistered());
+
+			// 1. 먼저 Stop 호출
+			VoipComp->Stop();
+
+			// 2. 내부 AudioComponent 강제 파괴
+			if (UAudioComponent* AudioComp = VoipComp->GetAudioComponent())
 			{
-				bNoVoipComponents = false;
-				RemainingComponents++;
+				UE_LOG(LogSY, Log, TEXT("Final cleanup - Inner AudioComponent: %s (IsRegistered: %d)"),
+					*AudioComp->GetName(), AudioComp->IsRegistered());
+				AudioComp->Stop();
+				if (AudioComp->IsRegistered())
+				{
+					AudioComp->UnregisterComponent();
+				}
+				AudioComp->DestroyComponent();
 			}
+
+			// 3. VoipListenerSynthComponent 강제 파괴
+			if (VoipComp->IsRegistered())
+			{
+				VoipComp->UnregisterComponent();
+			}
+			VoipComp->DestroyComponent();
 		}
 	}
 
-	// 모든 조건 확인
-	if (bNoVoipComponents)
-	{
-		UE_LOG(LogSY, Log, TEXT("✅ Final check passed! No VoIP components remaining (Attempts: %d)"),
-			FinalCheckPollingAttempts);
-		DoServerTravel();
-		return;
-	}
-
-	// 아직 컴포넌트가 남아있음
 	FinalCheckPollingAttempts++;
 
-	if (FinalCheckPollingAttempts % 10 == 0) // 100ms마다 로그
+	// 컴포넌트가 발견되었으면 연속 카운트 리셋
+	if (bVoipComponentsExist)
 	{
-		UE_LOG(LogSY, Log, TEXT("⏳ Final check: %d VoIP components still exist (Attempt %d/%d)"),
-			RemainingComponents, FinalCheckPollingAttempts, MaxFinalCheckPollingAttempts);
+		ConsecutiveCleanPolls = 0;
+		UE_LOG(LogSY, Log, TEXT("⏳ Final check - Destroyed %d components (Attempt %d/%d)"),
+			FoundCount, FinalCheckPollingAttempts, MaxFinalCheckPollingAttempts);
+	}
+	else
+	{
+		// 컴포넌트가 없으면 연속 카운트 증가
+		ConsecutiveCleanPolls++;
+
+		// 연속으로 N번 깨끗하면 완료
+		if (ConsecutiveCleanPolls >= RequiredCleanPolls)
+		{
+			UE_LOG(LogSY, Log, TEXT("✅ Final check passed! (Attempts: %d, Clean polls: %d)"),
+				FinalCheckPollingAttempts, ConsecutiveCleanPolls);
+			DoServerTravel();
+			return;
+		}
+
+		if (ConsecutiveCleanPolls % 5 == 0) // 50ms마다 로그
+		{
+			UE_LOG(LogSY, Log, TEXT("⏳ Final check - Clean poll %d/%d (Attempt %d/%d)"),
+				ConsecutiveCleanPolls, RequiredCleanPolls, FinalCheckPollingAttempts, MaxFinalCheckPollingAttempts);
+		}
 	}
 
 	// 타임아웃 체크
 	if (FinalCheckPollingAttempts >= MaxFinalCheckPollingAttempts)
 	{
-		UE_LOG(LogSY, Warning, TEXT("⚠️ Final check timeout! Forcing travel with %d components remaining"),
-			RemainingComponents);
+		UE_LOG(LogSY, Warning, TEXT("⚠️ Final check timeout! (Clean polls: %d/%d)"),
+			ConsecutiveCleanPolls, RequiredCleanPolls);
 		DoServerTravel();
 		return;
 	}
@@ -321,54 +379,9 @@ void UACAdvancedFriendsGameInstance::CheckFinalStateBeforeTravel()
 		ServerPollingInterval, false);
 }
 
-//void UACAdvancedFriendsGameInstance::OnWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources)
-//{
-//	// 현재 작동 중인 월드가 정리될 때 실행됨 (서버/클라이언트 공통)
-//	if (World == GetWorld())
-//	{
-//		UE_LOG(LogSY, Warning, TEXT("World Cleanup Detected - Resetting Voice State"));
-//
-//		// Voice 정리
-//		CleanupVoiceSystem();
-//	}
-//}
-
-//void UACAdvancedFriendsGameInstance::CleanupVoiceSystem()
-//{
-//	if (!bVoiceInitialized)
-//	{
-//		return;
-//	}
-//
-//	IOnlineVoicePtr Voice = Online::GetVoiceInterface();
-//	if (Voice.IsValid())
-//	{
-//		UE_LOG(LogSY, Warning, TEXT("Cleaning up Voice System"));
-//
-//		// 1. 모든 원격 Talker 먼저 제거 (중요!)
-//		Voice->RemoveAllRemoteTalkers();
-//
-//		// 2. 네트워크 보이스 중지
-//		Voice->StopNetworkedVoice(0);
-//
-//		// 3. 로컬 Talker 제거
-//		Voice->UnregisterLocalTalker(0);
-//
-//		bVoiceInitialized = false;
-//
-//		UE_LOG(LogSY, Warning, TEXT("Voice System Cleaned"));
-//	}
-//}
-
 void UACAdvancedFriendsGameInstance::TryStartVoice()
 {
 	UE_LOG(LogSY, Log, TEXT("Try Start Voice"));
-	//만약 이미 보이스를 연결했다면 return.
-	if (bVoiceInitialized == true)
-	{
-		UE_LOG(LogSY, Log, TEXT("Voice가 이미 연결되어있음"));
-		return;
-	}
 
 	IOnlineVoicePtr Voice = Online::GetVoiceInterface();
 	if (Voice.IsValid() == false)
@@ -384,34 +397,9 @@ void UACAdvancedFriendsGameInstance::TryStartVoice()
 		return;
 	}
 
-	// Server의 경우 Remote Talker 등록
-	//if (GetWorld()->GetNetMode() != NM_Client)
-	//{
-	//	UE_LOG(LogSY, Log, TEXT("--- Registering Remote Talkers ---"));
-	//	int32 Count = 0;
-
-	//	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	//	{
-	//		APlayerController* PC = It->Get();
-	//		if (PC && !PC->GetLocalPlayer() && PC->PlayerState)
-	//		{
-	//			FUniqueNetIdRepl UniqueId = PC->PlayerState->GetUniqueId();
-	//			if (UniqueId.IsValid())
-	//			{
-	//				Voice->RegisterRemoteTalker(*UniqueId);
-	//				UE_LOG(LogSY, Log, TEXT("  %s"), *PC->GetName());
-	//				Count++;
-	//			}
-	//		}
-	//	}
-
-	//	UE_LOG(LogSY, Log, TEXT("  Total: %d"), Count);
-	//}
-
-	//보이스 연결
+	// 보이스 연결 (중복 호출되어도 OnlineSubsystem이 처리)
 	Voice->RegisterLocalTalker(0);
 	Voice->StartNetworkedVoice(0);
-	bVoiceInitialized = true;
 	UE_LOG(LogSY, Log, TEXT("Voice initialized"));
 }
 
@@ -425,38 +413,15 @@ void UACAdvancedFriendsGameInstance::OnClientVoiceCleanupFinished()
 	{
 		UE_LOG(LogSY, Log, TEXT("=== ✅ All clients finished cleanup ==="));
 
-		// Step 2: 이제 Server Voice 정리 시작!
-		// Client들이 이미 송신을 중단했으므로 안전하게 RemoteTalker 제거 가능
-
+		// Server Voice는 이미 UpdateMap에서 먼저 정리했으므로 바로 최종 확인으로 이동
 		if (GetWorld()->GetNetMode() != NM_Client)
 		{
-			UE_LOG(LogSY, Log, TEXT("--- Server: Starting voice cleanup ---"));
-
-			IOnlineVoicePtr Voice = Online::GetVoiceInterface();
-			if (Voice.IsValid())
-			{
-				Voice->RemoveAllRemoteTalkers();
-				Voice->StopNetworkedVoice(0);
-				Voice->UnregisterLocalTalker(0);
-				UE_LOG(LogSY, Log, TEXT("Server voice cleanup requested"));
-			}
-
-			// Audio 정리
-			if (UWorld* World = GetWorld())
-			{
-				if (FAudioDeviceHandle AudioDeviceHandle = World->GetAudioDevice())
-				{
-					AudioDeviceHandle->StopAllSounds(true);
-					AudioDeviceHandle->Flush(World);
-					UE_LOG(LogSY, Log, TEXT("Server audio flush requested"));
-				}
-			}
-
-			bVoiceInitialized = false;
-
-			// Step 3: Server Voice 정리 완료 확인 시작
+			// 최종 VoipListenerSynthComponent 확인 시작
 			ServerCleanupPollingAttempts = 0;
-			CheckServerVoiceCleanup();
+			FinalCheckPollingAttempts = 0;
+			ConsecutiveCleanPolls = 0;
+			bServerVoiceCleaned = true;
+			CheckFinalStateBeforeTravel();
 		}
 		else
 		{
@@ -470,44 +435,51 @@ void UACAdvancedFriendsGameInstance::OnClientVoiceCleanupFinished()
 void UACAdvancedFriendsGameInstance::DoServerTravel()
 {
 	UE_LOG(LogSY, Log, TEXT("DoServerTravel!!"));
-	bVoiceInitialized = false;
 
 	UWorld* World = GetWorld();
 	if (World)
 	{
-		// 최종 안전 체크: 남은 VoIP 컴포넌트 강제 정리
+		// 최종 안전 체크: VoipListenerSynthComponent 및 내부 AudioComponent 강제 파괴 (Transient 패키지 포함)
 		int32 ForcedRemovalCount = 0;
-		TArray<UAudioComponent*> ComponentsToRemove;
 
-		for (TObjectIterator<UAudioComponent> It; It; ++It)
+		for (TObjectIterator<UVoipListenerSynthComponent> It; It; ++It)
 		{
-			UAudioComponent* AudioComp = *It;
-
-			if (AudioComp->GetWorld() != World)
-				continue;
-
-			FString CompName = AudioComp->GetName();
-			if (CompName.Contains(TEXT("VoipListener")) ||
-				CompName.Contains(TEXT("VoiceCap")))
+			UVoipListenerSynthComponent* VoipComp = *It;
+			if (IsValid(VoipComp))
 			{
-				if (AudioComp->IsRegistered())
-				{
-					UE_LOG(LogSY, Warning, TEXT("⚠️ Found lingering component: %s"), *CompName);
-					ComponentsToRemove.Add(AudioComp);
-				}
-			}
-		}
+				ForcedRemovalCount++;
 
-		// 강제 제거
-		for (UAudioComponent* Comp : ComponentsToRemove)
-		{
-			Comp->UnregisterComponent();
-			ForcedRemovalCount++;
+				UE_LOG(LogSY, Warning, TEXT("⚠️ DoServerTravel - Found VoipComp: %s (IsRegistered: %d)"),
+					*VoipComp->GetName(), VoipComp->IsRegistered());
+
+				// 1. 먼저 Stop 호출
+				VoipComp->Stop();
+
+				// 2. 내부 AudioComponent 강제 파괴
+				if (UAudioComponent* AudioComp = VoipComp->GetAudioComponent())
+				{
+					UE_LOG(LogSY, Warning, TEXT("⚠️ DoServerTravel - Inner AudioComponent: %s (IsRegistered: %d)"),
+						*AudioComp->GetName(), AudioComp->IsRegistered());
+					AudioComp->Stop();
+					if (AudioComp->IsRegistered())
+					{
+						AudioComp->UnregisterComponent();
+					}
+					AudioComp->DestroyComponent();
+				}
+
+				// 3. VoipListenerSynthComponent 강제 파괴
+				if (VoipComp->IsRegistered())
+				{
+					VoipComp->UnregisterComponent();
+				}
+				VoipComp->DestroyComponent();
+			}
 		}
 
 		if (ForcedRemovalCount > 0)
 		{
-			UE_LOG(LogSY, Warning, TEXT("🔧 Force removed %d VoIP components"), ForcedRemovalCount);
+			UE_LOG(LogSY, Warning, TEXT("🔧 DoServerTravel - Force destroyed %d VoIP components"), ForcedRemovalCount);
 
 			// Audio Flush
 			if (FAudioDeviceHandle AudioDeviceHandle = World->GetAudioDevice())

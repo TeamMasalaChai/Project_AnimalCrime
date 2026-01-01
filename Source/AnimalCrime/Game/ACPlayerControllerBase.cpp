@@ -3,6 +3,7 @@
 #include "ACAdvancedFriendsGameInstance.h"
 #include "AudioDevice.h"
 #include "AnimalCrime.h"
+#include "VoipListenerSynthComponent.h"
 
 void AACPlayerControllerBase::Client_CleanupVoiceBeforeTravel_Implementation()
 {
@@ -36,6 +37,45 @@ void AACPlayerControllerBase::Client_CleanupVoiceBeforeTravel_Implementation()
 		AC_LOG(LogSY, Warning, TEXT("Voice is fail"));
 	}
 
+	// VoipListenerSynthComponent 직접 정리 (Transient 패키지 포함)
+	// 내부 AudioComponent도 함께 정리해야 함 (UE-146893, UE-169798 버그 대응)
+	// IsRegistered() 여부와 관계없이 모두 DestroyComponent()로 강제 파괴
+	int32 TotalVoipCount = 0;
+	for (TObjectIterator<UVoipListenerSynthComponent> It; It; ++It)
+	{
+		UVoipListenerSynthComponent* VoipComp = *It;
+		if (IsValid(VoipComp))
+		{
+			TotalVoipCount++;
+			AC_LOG(LogSY, Log, TEXT("Client cleanup - Found VoipComp: %s (IsRegistered: %d)"),
+				*VoipComp->GetName(), VoipComp->IsRegistered());
+
+			// 1. 먼저 Stop 호출
+			VoipComp->Stop();
+
+			// 2. 내부 AudioComponent 강제 파괴
+			if (UAudioComponent* AudioComp = VoipComp->GetAudioComponent())
+			{
+				AC_LOG(LogSY, Log, TEXT("Client cleanup - Inner AudioComponent: %s (IsRegistered: %d)"),
+					*AudioComp->GetName(), AudioComp->IsRegistered());
+				AudioComp->Stop();
+				if (AudioComp->IsRegistered())
+				{
+					AudioComp->UnregisterComponent();
+				}
+				AudioComp->DestroyComponent();
+			}
+
+			// 3. VoipListenerSynthComponent 강제 파괴
+			if (VoipComp->IsRegistered())
+			{
+				VoipComp->UnregisterComponent();
+			}
+			VoipComp->DestroyComponent();
+		}
+	}
+	AC_LOG(LogSY, Log, TEXT("Client cleanup - Total VoipComponents destroyed: %d"), TotalVoipCount);
+
 	// AudioDevice 정리
 	if (FAudioDeviceHandle AudioDeviceHandle = World->GetAudioDevice())
 	{
@@ -47,16 +87,8 @@ void AACPlayerControllerBase::Client_CleanupVoiceBeforeTravel_Implementation()
 
 	// Polling 시작
 	ClientPollingAttempts = 0;
+	ConsecutiveCleanPolls = 0;
 	CheckClientVoiceCleanupComplete();
-
-	// 약간의 딜레이를 주고 서버에 알림
-	//FTimerHandle CleanupTimer;
-	//GetWorldTimerManager().SetTimer(CleanupTimer, [this]()
-	//	{
-	//		Server_NotifyVoiceCleaned();
-	//	}, 0.15f, false);  // 150ms 대기
-
-	//Server_NotifyVoiceCleaned();
 }
 
 void AACPlayerControllerBase::Server_NotifyVoiceCleaned_Implementation()
@@ -81,53 +113,79 @@ void AACPlayerControllerBase::CheckClientVoiceCleanupComplete()
         return;
     }
 
-    // VoIP 컴포넌트 존재 여부 확인
+    // VoipListenerSynthComponent 및 내부 AudioComponent 직접 확인 (Transient 패키지 포함)
+    // 새로 생성되는 컴포넌트도 계속 잡아서 DestroyComponent()로 강제 파괴
     bool bVoipComponentsExist = false;
-    int32 RegisteredCount = 0;
+    int32 FoundCount = 0;
 
-    for (TObjectIterator<UAudioComponent> It; It; ++It)
+    for (TObjectIterator<UVoipListenerSynthComponent> It; It; ++It)
     {
-        UAudioComponent* AudioComp = *It;
-
-        // 이 World의 컴포넌트만 체크
-        if (AudioComp->GetWorld() != World)
-            continue;
-
-        // VoIP 관련 컴포넌트인지 확인
-        FString CompName = AudioComp->GetName();
-        if (CompName.Contains(TEXT("VoipListener")) ||
-            CompName.Contains(TEXT("VoiceCap")))
+        UVoipListenerSynthComponent* VoipComp = *It;
+        if (IsValid(VoipComp))
         {
-            if (AudioComp->IsRegistered())
+            bVoipComponentsExist = true;
+            FoundCount++;
+
+            AC_LOG(LogSY, Log, TEXT("Polling - Found VoipComp: %s (IsRegistered: %d)"),
+                *VoipComp->GetName(), VoipComp->IsRegistered());
+
+            // 1. 먼저 Stop 호출
+            VoipComp->Stop();
+
+            // 2. 내부 AudioComponent 강제 파괴
+            if (UAudioComponent* AudioComp = VoipComp->GetAudioComponent())
             {
-                bVoipComponentsExist = true;
-                RegisteredCount++;
-                AC_LOG(LogSY, Log, TEXT("Polling: VoIP component still registered: %s"), *CompName);
+                AC_LOG(LogSY, Log, TEXT("Polling - Inner AudioComponent: %s (IsRegistered: %d)"),
+                    *AudioComp->GetName(), AudioComp->IsRegistered());
+                AudioComp->Stop();
+                if (AudioComp->IsRegistered())
+                {
+                    AudioComp->UnregisterComponent();
+                }
+                AudioComp->DestroyComponent();
             }
+
+            // 3. VoipListenerSynthComponent 강제 파괴
+            if (VoipComp->IsRegistered())
+            {
+                VoipComp->UnregisterComponent();
+            }
+            VoipComp->DestroyComponent();
         }
     }
 
-    // 정리 완료 확인
-    if (!bVoipComponentsExist)
-    {
-        // ✅ 정리 완료!
-        AC_LOG(LogSY, Log, TEXT("✅ Client voice cleanup verified! (Attempts: %d)"),
-            ClientPollingAttempts);
-        Server_NotifyVoiceCleaned();
-        return;
-    }
-
-    // 아직 정리 중
     ClientPollingAttempts++;
 
-    AC_LOG(LogSY, Log, TEXT("⏳ Still cleaning... (Attempt %d/%d, Components: %d)"),
-        ClientPollingAttempts, MaxClientPollingAttempts, RegisteredCount);
+    // 컴포넌트가 발견되었으면 연속 카운트 리셋
+    if (bVoipComponentsExist)
+    {
+        ConsecutiveCleanPolls = 0;
+        AC_LOG(LogSY, Log, TEXT("⏳ Polling - Destroyed %d components (Attempt %d/%d)"),
+            FoundCount, ClientPollingAttempts, MaxClientPollingAttempts);
+    }
+    else
+    {
+        // 컴포넌트가 없으면 연속 카운트 증가
+        ConsecutiveCleanPolls++;
+
+        // 연속으로 N번 깨끗하면 완료
+        if (ConsecutiveCleanPolls >= RequiredCleanPolls)
+        {
+            AC_LOG(LogSY, Log, TEXT("✅ Client voice cleanup verified! (Attempts: %d, Clean polls: %d)"),
+                ClientPollingAttempts, ConsecutiveCleanPolls);
+            Server_NotifyVoiceCleaned();
+            return;
+        }
+
+        AC_LOG(LogSY, Log, TEXT("⏳ Polling - Clean poll %d/%d (Attempt %d/%d)"),
+            ConsecutiveCleanPolls, RequiredCleanPolls, ClientPollingAttempts, MaxClientPollingAttempts);
+    }
 
     // 타임아웃 체크
     if (ClientPollingAttempts >= MaxClientPollingAttempts)
     {
-        AC_LOG(LogSY, Warning, TEXT("⚠️ Client voice cleanup timeout! Proceeding anyway. (Remaining components: %d)"),
-            RegisteredCount);
+        AC_LOG(LogSY, Warning, TEXT("⚠️ Client voice cleanup timeout! (Clean polls: %d/%d)"),
+            ConsecutiveCleanPolls, RequiredCleanPolls);
         Server_NotifyVoiceCleaned();
         return;
     }

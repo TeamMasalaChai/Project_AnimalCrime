@@ -25,7 +25,7 @@ class ANIMALCRIME_API UACAdvancedFriendsGameInstance : public UAdvancedFriendsGa
 #pragma region 엔진 제공 함수
 public:
 	virtual void Init() override;
-	virtual void Shutdown() override;
+	//virtual void Shutdown() override;
 	virtual void OnStart() override;
 #pragma endregion
 
@@ -85,8 +85,8 @@ private:
 		@param SessionName    - 삭제된 세션의 이름
 		@param bWasSuccessful - 세션 삭제 성공 여부 (true = 성공, false = 실패)
 	**/
-	UFUNCTION()
-	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+	//UFUNCTION()
+	//void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 
 	void CheckServerVoiceCleanup();
 	void CheckFinalStateBeforeTravel();
@@ -111,19 +111,16 @@ public:
 	TMap<FUniqueNetIdRepl, EPlayerRole> SavedPlayerRoles;
 
 private:
-	//UPROPERTY(EditDefaultsOnly, Category = "Loading")
-	//TSubclassOf<UUserWidget> BlackScreenClass;
-
-	bool bVoiceInitialized = false;
-
 	int32 NumClientsReady = 0;
 
 	int32 ServerCleanupPollingAttempts = 0;
 	int32 FinalCheckPollingAttempts = 0;
+	int32 ConsecutiveCleanPolls = 0; // 연속으로 컴포넌트가 없었던 횟수
 	bool bServerVoiceCleaned = false;
 
-	static constexpr int32 MaxServerCleanupPollingAttempts = 30; // 최대 300ms
-	static constexpr int32 MaxFinalCheckPollingAttempts = 30; // 최대 300ms
+	static constexpr int32 MaxServerCleanupPollingAttempts = 100; // 최대 1초
+	static constexpr int32 MaxFinalCheckPollingAttempts = 100; // 최대 1초
+	static constexpr int32 RequiredCleanPolls = 20; // 연속 20번(200ms) 깨끗해야 완료
 	static constexpr float ServerPollingInterval = 0.01f; // 10ms
 };
 
