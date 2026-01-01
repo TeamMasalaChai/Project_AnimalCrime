@@ -39,8 +39,8 @@ public:
 private:
 	void UpdateMap(EMapType InMapType);
 
-	void BeginLoadingScreen(const FString& MapName);
-	void OnSeamlessTravelStart(UWorld* CurrentWorld, const FString& LevelName);
+	//void BeginLoadingScreen(const FString& MapName);
+	//void OnSeamlessTravelStart(UWorld* CurrentWorld, const FString& LevelName);
 
 #pragma endregion
 
@@ -88,19 +88,9 @@ private:
 	UFUNCTION()
 	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 
-	/**
-		@brief 월드(레벨)가 파괴되거나 전환될 때 호출되는 콜백 함수
-		@param World             - 현재 정리 중인 UWorld 객체
-		@param bSessionEnded     - 게임 세션이 종료되었는지를 나타내는 플래그. true이면 플레이 세션이 종료된 상태, false면 단순 레벨 전환
-		@param bCleanupResources - 월드 관련 리소스를 정리할지 여부를 나타내는 플래그. true이면 월드에 연결된 컴포넌트, Audio, VoIP 등 리소스를 강제로 정리해야함.
-	**/
-	//UFUNCTION()
-	//void OnWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);
+	void CheckServerVoiceCleanup();
+	void CheckFinalStateBeforeTravel();
 
-	/**
-		@brief Voice 정리
-	**/
-	//void CleanupVoiceSystem();
 private:
 	FDelegateHandle OnDestroySessionCompleteHandle;
 
@@ -121,11 +111,19 @@ public:
 	TMap<FUniqueNetIdRepl, EPlayerRole> SavedPlayerRoles;
 
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "Loading")
-	TSubclassOf<UUserWidget> BlackScreenClass;
+	//UPROPERTY(EditDefaultsOnly, Category = "Loading")
+	//TSubclassOf<UUserWidget> BlackScreenClass;
 
 	bool bVoiceInitialized = false;
 
 	int32 NumClientsReady = 0;
+
+	int32 ServerCleanupPollingAttempts = 0;
+	int32 FinalCheckPollingAttempts = 0;
+	bool bServerVoiceCleaned = false;
+
+	static constexpr int32 MaxServerCleanupPollingAttempts = 30; // 최대 300ms
+	static constexpr int32 MaxFinalCheckPollingAttempts = 30; // 최대 300ms
+	static constexpr float ServerPollingInterval = 0.01f; // 10ms
 };
 
