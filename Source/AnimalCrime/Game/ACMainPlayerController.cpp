@@ -91,6 +91,18 @@ AACMainPlayerController::AACMainPlayerController()
 	{
 		MeleeAction = MeleeActionRef.Object;
 	}
+	
+	static ConstructorHelpers::FObjectFinder<UInputAction> DashActionRef(TEXT("/Game/Project/Input/Actions/IA_Dash.IA_Dash"));
+	if (DashActionRef.Succeeded())
+	{
+		DashAction = DashActionRef.Object;
+	}
+	
+	static ConstructorHelpers::FObjectFinder<UInputAction> SprintActionRef(TEXT("/Game/Project/Input/Actions/IA_Sprint.IA_Sprint"));
+	if (SprintActionRef.Succeeded())
+	{
+		SprintAction = SprintActionRef.Object;
+	}
 
 	// ===== 퀵슬롯 Input Action 로드 (하나만) =====
 	static ConstructorHelpers::FObjectFinder<UInputAction> QuickSlotActionRef(TEXT("/Game/Project/Input/Actions/IA_QuickSlot.IA_QuickSlot"));
@@ -240,6 +252,20 @@ void AACMainPlayerController::SetupInputComponent()
 	{
 		EnhancedInputComponent->BindAction(MeleeAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleAttack);
 	}
+	
+	// 캐릭터 스킬 - Dash
+	if (DashAction)
+	{
+		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleDash);
+	}
+	// 캐릭터 스킬 - Sprint
+	if (SprintAction)
+	{
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleSprintStart);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AACMainPlayerController::HandleSprintEnd);
+		// EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Canceled, this, &AACMainPlayerController::HandleSprintEnd);
+	}
+	
 	if (SettingsCloseAction)
 	{
 		EnhancedInputComponent->BindAction(SettingsCloseAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleSettingsClose);
@@ -387,6 +413,42 @@ void AACMainPlayerController::HandleSpectatorChange(const FInputActionValue& Val
 
 	//관전 대상 변경
 	ServerSwitchToNextSpectateTarget();
+}
+
+void AACMainPlayerController::HandleDash(const struct FInputActionValue& Value)
+{
+	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
+	if (ControlledCharacter == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("ControlledCharacter is nullptr"));
+		return;
+	}
+
+	ControlledCharacter->Dash(Value);
+}
+
+void AACMainPlayerController::HandleSprintStart(const struct FInputActionValue& Value)
+{
+	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
+	if (ControlledCharacter == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("ControlledCharacter is nullptr"));
+		return;
+	}
+	AC_LOG(LogHY, Error, TEXT("Start Hi"));
+	ControlledCharacter->Sprint(Value);
+}
+
+void AACMainPlayerController::HandleSprintEnd(const struct FInputActionValue& Value)
+{
+	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
+	if (ControlledCharacter == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("ControlledCharacter is nullptr"));
+		return;
+	}
+	AC_LOG(LogHY, Error, TEXT("End Hi"));
+	ControlledCharacter->Sprint(Value);
 }
 
 void AACMainPlayerController::HandleQuickSlot(const FInputActionValue& Value)
