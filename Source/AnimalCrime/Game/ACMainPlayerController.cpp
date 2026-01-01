@@ -4,6 +4,7 @@
 #include "ACTitlePlayerController.h"
 #include "UI/Shop/ACShopWidget.h"
 #include "AnimalCrime.h"
+#include "ACAdvancedFriendsGameInstance.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
@@ -168,6 +169,13 @@ void AACMainPlayerController::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("IsLocalController false"));
 		return;
+	}
+
+	// 보이스 연결
+	UACAdvancedFriendsGameInstance* GI = GetGameInstance<UACAdvancedFriendsGameInstance>();
+	if (GI)
+	{
+		GI->TryStartVoice();
 	}
 	ACHUDWidget = CreateWidget<UACHUDWidget>(this, ACHUDWidgetClass);
 	if (ACHUDWidget == nullptr)
