@@ -181,7 +181,8 @@ void AACMainPlayerController::BeginPlay()
 	}
 
 	// 거리 기반 Voice 타이머 시작
-	StartProximityVoiceTimer();
+	//StartProximityVoiceTimer();
+
 	ACHUDWidget = CreateWidget<UACHUDWidget>(this, ACHUDWidgetClass);
 	if (ACHUDWidget == nullptr)
 	{
