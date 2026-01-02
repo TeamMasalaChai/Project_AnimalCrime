@@ -100,11 +100,6 @@ AACCitizen::AACCitizen()
 	BottomMeshComp->SetIsReplicated(true);
 	
 	ShoesMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Shoes"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> ShoesMeshRef(TEXT("/Game/Creative_Characters_FREE/Skeleton_Meshes/SK_Shoe_Slippers_005.SK_Shoe_Slippers_005"));
-	if (ShoesMeshRef.Succeeded() == true)
-	{
-		ShoesMeshComp->SetSkeletalMesh(ShoesMeshRef.Object);
-	}
 	ShoesMeshComp->SetRelativeLocation(FVector(0.f, 0.f, -90.f));
 	ShoesMeshComp->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 	ShoesMeshComp->SetupAttachment(RootComponent);
@@ -113,11 +108,6 @@ AACCitizen::AACCitizen()
 	ShoesMeshComp->SetIsReplicated(true);
 
 	FaceAccMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FaceAcc"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> FaceAccMeshRef(TEXT("/Game/Creative_Characters_FREE/Skeleton_Meshes/SK_Moustache_002.SK_Moustache_002"));
-	if (FaceAccMeshRef.Succeeded() == true)
-	{
-		FaceAccMeshComp->SetSkeletalMesh(FaceAccMeshRef.Object);
-	}
 	FaceAccMeshComp->SetRelativeLocation(FVector(0.f, 0.f, -90.f));
 	FaceAccMeshComp->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 	FaceAccMeshComp->SetupAttachment(RootComponent);
@@ -125,6 +115,14 @@ AACCitizen::AACCitizen()
 	FaceAccMeshComp->SetReceivesDecals(false);
 	FaceAccMeshComp->SetIsReplicated(true);
 	
+	
+	// 최적화 하기.
+	HeadMeshComp->PrimaryComponentTick.bCanEverTick = false;
+	FaceMeshComp->PrimaryComponentTick.bCanEverTick = false;
+	TopMeshComp->PrimaryComponentTick.bCanEverTick = false;
+	BottomMeshComp->PrimaryComponentTick.bCanEverTick = false;
+	ShoesMeshComp->PrimaryComponentTick.bCanEverTick = false;
+	FaceAccMeshComp->PrimaryComponentTick.bCanEverTick = false;
 	
 	// 애니메이션 몽타주
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> MeleeMontageRef(TEXT("/Game/Project/Character/AM_AIMelee.AM_AIMelee"));
@@ -174,6 +172,17 @@ void AACCitizen::BeginPlay()
 	TimerDelegate.BindUObject(this, &AACCitizen::UpdateAISkillFlag);
 	GetWorld()->GetTimerManager().SetTimer(InitialSkillBlockTimerHandle, TimerDelegate, RandomRate, false);
 
+	// 최적화
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		// 1. URO 활성화 스위치
+		MeshComp->bEnableUpdateRateOptimizations = true;
+	
+		// 2. 가시성 기반 최적화 (매우 중요)
+		// 화면에 안 보이면 애니메이션 업데이트를 하지 않거나 몽타주만 재생하도록 설정
+		MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	}
+	
 	AC_LOG(LogHY, Warning, TEXT("End"));
 }
 
