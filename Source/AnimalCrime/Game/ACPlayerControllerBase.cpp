@@ -53,7 +53,7 @@ void AACPlayerControllerBase::Client_CleanupVoiceBeforeTravel_Implementation()
 		}
 		AC_LOG(LogSY, Log, TEXT("Cleaned %d VOIPTalkers"), CleanedCount);
 	}
-
+	
 	IOnlineVoicePtr Voice = Online::GetVoiceInterface();
 	if (Voice.IsValid() == true)
 	{
@@ -117,6 +117,12 @@ void AACPlayerControllerBase::Client_CleanupVoiceBeforeTravel_Implementation()
 		AudioDeviceHandle->Flush(World);
 	}
 
+	FAudioCommandFence Fence;
+	Fence.BeginFence();
+	Fence.Wait();
+
+	//Server_NotifyVoiceCleaned();
+
 	// 약간의 지연을 준 뒤 Polling 시작
 	ClientPollingAttempts = 0;
 	ConsecutiveCleanPolls = 0;
@@ -125,9 +131,11 @@ void AACPlayerControllerBase::Client_CleanupVoiceBeforeTravel_Implementation()
 		StartPollTimer,
 		this,
 		&AACPlayerControllerBase::CheckClientVoiceCleanupComplete,
-		0.1f,
+		1.0f,
 		false
 	);
+
+	AC_LOG(LogSY, Log, TEXT("Server_NotifyVoiceCleaned"));
 }
 
 void AACPlayerControllerBase::Server_NotifyVoiceCleaned_Implementation()
