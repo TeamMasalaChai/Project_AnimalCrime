@@ -16,6 +16,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Component/ACInteractableComponent.h"
 #include "Component/ACMoneyComponent.h"
+#include "Components/WidgetComponent.h"
+#include "UI/Interaction/ACInteractionInfoWidget.h"
+#include "Interaction/ACInteractionData.h"
 #include "Game/ACPlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -136,6 +139,22 @@ AACCitizen::AACCitizen()
 	// 인터랙션 컴포넌트
 	InteractBoxComponent = CreateDefaultSubobject<UACInteractableComponent>(TEXT("InteractBoxComponent"));
 	InteractBoxComponent->SetupAttachment(RootComponent);
+
+	// 상호작용 위젯 컴포넌트
+	InteractionWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionWidget"));
+	InteractionWidgetComponent->SetupAttachment(RootComponent);
+	InteractionWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	InteractionWidgetComponent->SetDrawSize(FVector2D(300.0f, 100.0f));
+	InteractionWidgetComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 100.0f)); // 머리 위
+	InteractionWidgetComponent->SetVisibility(false); // 기본 숨김
+
+	// 상호작용 위젯 클래스 설정
+	static ConstructorHelpers::FClassFinder<UACInteractionInfoWidget> InteractionWidgetRef(
+		TEXT("/Game/Project/UI/Interaction/WBP_InteractionInfo.WBP_InteractionInfo_C"));
+	if (InteractionWidgetRef.Succeeded())
+	{
+		InteractionInfoWidgetClass = InteractionWidgetRef.Class;
+	}
 	
 	MoneyComp = CreateDefaultSubobject<UACMoneyComponent>(TEXT("MoneyComponent"));
 	
@@ -920,5 +939,49 @@ void AACCitizen::OnInteract(AACCharacter* ACPlayer)
 float AACCitizen::GetRequiredHoldTime() const
 {
 	return 5.0f;
+}
+
+EACInteractorType AACCitizen::GetInteractorType() const
+{
+	return EACInteractorType::Citizen;
+}
+
+UWidgetComponent* AACCitizen::GetInteractionWidget() const
+{
+	return InteractionWidgetComponent;
+}
+
+void AACCitizen::ShowInteractionHints(const TArray<UACInteractionData*>& Interactions)
+{
+	if (!InteractionWidgetComponent) return;
+
+	// 위젯 생성 (최초 1회)
+	if (!InteractionWidgetComponent->GetWidget() && InteractionInfoWidgetClass)
+	{
+		InteractionWidgetComponent->SetWidgetClass(InteractionInfoWidgetClass);
+	}
+
+	UACInteractionInfoWidget* HintWidget = Cast<UACInteractionInfoWidget>(
+		InteractionWidgetComponent->GetWidget());
+	if (!HintWidget)
+	{
+		return;
+	}
+
+	HintWidget->UpdateInteractions(Interactions);
+	HintWidget->ShowWidget();
+	InteractionWidgetComponent->SetVisibility(true);
+}
+
+void AACCitizen::HideInteractionHints()
+{
+	if (!InteractionWidgetComponent) return;
+
+	UACInteractionInfoWidget* HintWidget = Cast<UACInteractionInfoWidget>(
+		InteractionWidgetComponent->GetWidget());
+	if (HintWidget)
+		HintWidget->HideWidget();
+
+	InteractionWidgetComponent->SetVisibility(false);
 }
 

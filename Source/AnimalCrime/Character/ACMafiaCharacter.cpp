@@ -238,7 +238,12 @@ void AACMafiaCharacter::OnInteract(AACCharacter* ACPlayer)
 		}
 
 		GM->ImprisonCharacter(this);  // GameMode에 캡슐화 함수 사용
-	}	
+	}
+}
+
+EACInteractorType AACMafiaCharacter::GetInteractorType() const
+{
+	return EACInteractorType::Mafia;
 }
 
 void AACMafiaCharacter::ServerFireHitscan_Implementation()

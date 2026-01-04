@@ -4,6 +4,9 @@
 #include "Prison/ACPrisonBase.h"
 #include "Character/ACCharacter.h"
 #include "Component/ACInteractableComponent.h"
+#include "Components/WidgetComponent.h"
+#include "UI/Interaction/ACInteractionInfoWidget.h"
+#include "Interaction/ACInteractionData.h"
 #include "Net/UnrealNetwork.h"
 #include "AnimalCrime.h"
 #include "Components/BoxComponent.h"
@@ -20,6 +23,22 @@ AACPrisonBase::AACPrisonBase()
 	InteractBoxComponent->SetupAttachment(RootComponent);
 	// todo: 정확한 좌표 모르겠음.
 	InteractBoxComponent->SetOffset(FVector(180, 0.f, 30.f));
+
+	// 상호작용 위젯 컴포넌트
+	InteractionWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionWidget"));
+	InteractionWidgetComponent->SetupAttachment(RootComponent);
+	InteractionWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	InteractionWidgetComponent->SetDrawSize(FVector2D(300.0f, 100.0f));
+	InteractionWidgetComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 80.0f)); // 오브젝트 위
+	InteractionWidgetComponent->SetVisibility(false); // 기본 숨김
+
+	// 상호작용 위젯 클래스 설정
+	static ConstructorHelpers::FClassFinder<UACInteractionInfoWidget> InteractionWidgetRef(
+		TEXT("/Game/Project/UI/Interaction/WBP_InteractionInfo.WBP_InteractionInfo_C"));
+	if (InteractionWidgetRef.Succeeded())
+	{
+		InteractionInfoWidgetClass = InteractionWidgetRef.Class;
+	}
 
 	// 감옥 내부 영역 박스 생성
 	PrisonAreaBox = CreateDefaultSubobject<UBoxComponent>(TEXT("PrisonAreaBox"));
@@ -147,6 +166,47 @@ void AACPrisonBase::CloseDoor()
 float AACPrisonBase::GetRequiredHoldTime() const
 {
 	return 10.0f;
+}
+
+EACInteractorType AACPrisonBase::GetInteractorType() const
+{
+	return EACInteractorType::PrisonDoor;
+}
+
+UWidgetComponent* AACPrisonBase::GetInteractionWidget() const
+{
+	return InteractionWidgetComponent;
+}
+
+void AACPrisonBase::ShowInteractionHints(const TArray<UACInteractionData*>& Interactions)
+{
+	if (!InteractionWidgetComponent) return;
+
+	// 위젯 생성 (최초 1회)
+	if (!InteractionWidgetComponent->GetWidget() && InteractionInfoWidgetClass)
+	{
+		InteractionWidgetComponent->SetWidgetClass(InteractionInfoWidgetClass);
+	}
+
+	UACInteractionInfoWidget* HintWidget = Cast<UACInteractionInfoWidget>(
+		InteractionWidgetComponent->GetWidget());
+	if (!HintWidget) return;
+
+	HintWidget->UpdateInteractions(Interactions);
+	HintWidget->ShowWidget();
+	InteractionWidgetComponent->SetVisibility(true);
+}
+
+void AACPrisonBase::HideInteractionHints()
+{
+	if (!InteractionWidgetComponent) return;
+
+	UACInteractionInfoWidget* HintWidget = Cast<UACInteractionInfoWidget>(
+		InteractionWidgetComponent->GetWidget());
+	if (HintWidget)
+		HintWidget->HideWidget();
+
+	InteractionWidgetComponent->SetVisibility(false);
 }
 
 bool AACPrisonBase::IsEmpty() const

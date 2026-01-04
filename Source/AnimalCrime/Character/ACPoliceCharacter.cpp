@@ -120,3 +120,8 @@ void AACPoliceCharacter::OnInteract(AACCharacter* ACPlayer)
 	//ShowInteractDebug(ACPlayer, GetName());
 }
 
+EACInteractorType AACPoliceCharacter::GetInteractorType() const
+{
+	return EACInteractorType::Police;
+}
+

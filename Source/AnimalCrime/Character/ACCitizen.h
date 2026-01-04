@@ -74,6 +74,12 @@ protected:
 	virtual bool CanInteract(class AACCharacter* ACPlayer) override;
 	virtual void OnInteract(class AACCharacter* ACPlayer) override;
 	virtual float GetRequiredHoldTime() const override;
+	virtual EACInteractorType GetInteractorType() const override;
+
+	//=== NEW: Widget interface overrides ===
+	virtual class UWidgetComponent* GetInteractionWidget() const override;
+	virtual void ShowInteractionHints(const TArray<class UACInteractionData*>& Interactions) override;
+	virtual void HideInteractionHints() override;
 #pragma endregion
 
 public: // 임시
@@ -199,6 +205,13 @@ protected:
 	//!< 상호작용 컴포넌트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
 	TObjectPtr<class UACInteractableComponent> InteractBoxComponent;
+
+	//!< 상호작용 위젯
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interact")
+	TObjectPtr<class UWidgetComponent> InteractionWidgetComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
+	TSubclassOf<class UACInteractionInfoWidget> InteractionInfoWidgetClass;
 
 public:
 	UFUNCTION(NetMulticast, Unreliable)
