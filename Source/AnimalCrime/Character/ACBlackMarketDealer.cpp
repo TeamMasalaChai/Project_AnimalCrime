@@ -26,13 +26,7 @@ bool AACBlackMarketDealer::CanInteract(AACCharacter* ACPlayer)
 	{
 		return false;
 	}
-	if (ACPlayer->GetCharacterType() != EACCharacterType::Mafia)
-	{
-		AC_LOG(LogSW, Log, TEXT("Sorry Only For MAFIA!!!!!"));
-		return false;
-	}
 
-	AC_LOG(LogSW, Log, TEXT("Bomb - Mafia Contacted!!"));
 	return true;
 }
 
@@ -40,8 +34,16 @@ void AACBlackMarketDealer::OnInteract(AACCharacter* ACPlayer)
 {
 	//ShowInteractDebug(ACPlayer, GetName());
 
-	if (BlackMarketComponent)
+	if (ACPlayer->GetCharacterType() == EACCharacterType::Police)
 	{
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("시민 신분증!"));
+	}
+	else if (ACPlayer->GetCharacterType() == EACCharacterType::Mafia)
+	{
+		if (BlackMarketComponent == nullptr)
+		{
+			return;
+		}
 		BlackMarketComponent->OpenBlackMarket(ACPlayer);
 	}
 }
