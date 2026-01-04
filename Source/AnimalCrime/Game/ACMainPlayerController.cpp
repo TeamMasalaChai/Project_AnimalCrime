@@ -360,13 +360,21 @@ void AACMainPlayerController::HandleStopJumping(const FInputActionValue& Value)
 
 void AACMainPlayerController::HandleInteractStart(const FInputActionValue& Value)
 {
+	// 1. float 값 추출 (E=1.0, R=2.0, T=3.0)
+	float InputFloat = Value.Get<float>();
+	//UE_LOG(LogSW, Log, TEXT("Interact [%f] Key Input!!"), InputFloat);
+
+	// 2. 정수 변환
+	int32 InputIndex = FMath::RoundToInt(InputFloat);
+	//UE_LOG(LogSW, Log, TEXT("Interact [%d] Key Input!!"), InputIndex);
+
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
 	if (ControlledCharacter == nullptr)
-	{
 		return;
-	}
 
-	ControlledCharacter->InteractStarted();
+	// 3. 인덱스 전달
+	ControlledCharacter->InteractStarted(InputIndex -1);
+
 }
 
 void AACMainPlayerController::HandleInteractHold(const FInputActionValue& Value)

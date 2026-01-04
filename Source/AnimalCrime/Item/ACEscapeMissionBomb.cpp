@@ -2,10 +2,13 @@
 #include "ACEscapeMissionBomb.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Character/ACMafiaCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "Component/ACInteractableComponent.h"
 #include "Game/ACMainGameState.h"
+#include "UI/Interaction/ACInteractionInfoWidget.h"
+#include "Interaction/ACInteractionData.h"
 
 #include "AnimalCrime.h"
 
@@ -44,6 +47,22 @@ AACEscapeMissionBomb::AACEscapeMissionBomb()
 	InteractBoxComponent = CreateDefaultSubobject<UACInteractableComponent>(TEXT("InteractBoxComponent"));
 	InteractBoxComponent->SetupAttachment(RootComponent);
 	InteractBoxComponent->SetMargin(FVector(20.f));
+
+	// 상호작용 위젯 컴포넌트
+	InteractionWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionWidget"));
+	InteractionWidgetComponent->SetupAttachment(RootComponent);
+	InteractionWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	InteractionWidgetComponent->SetDrawSize(FVector2D(300.0f, 100.0f));
+	InteractionWidgetComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 80.0f)); // 오브젝트 위
+	InteractionWidgetComponent->SetVisibility(false); // 기본 숨김
+
+	// 상호작용 위젯 클래스 설정
+	static ConstructorHelpers::FClassFinder<UACInteractionInfoWidget> InteractionWidgetRef(
+		TEXT("/Game/Project/UI/Interaction/WBP_InteractionInfo.WBP_InteractionInfo_C"));
+	if (InteractionWidgetRef.Succeeded())
+	{
+		InteractionInfoWidgetClass = InteractionWidgetRef.Class;
+	}
 
 	// 네트워크 복제 설정. 서버에 이 액터가 생성되면 클라이언트로 복제됨, 삭제도 동기화
 	bReplicates = true;
@@ -191,5 +210,46 @@ void AACEscapeMissionBomb::OnInteract(AACCharacter* ACPlayer)
 float AACEscapeMissionBomb::GetRequiredHoldTime() const
 {
 	return 3.0f;
+}
+
+EACInteractorType AACEscapeMissionBomb::GetInteractorType() const
+{
+	return EACInteractorType::Bomb;
+}
+
+UWidgetComponent* AACEscapeMissionBomb::GetInteractionWidget() const
+{
+	return InteractionWidgetComponent;
+}
+
+void AACEscapeMissionBomb::ShowInteractionHints(const TArray<UACInteractionData*>& Interactions)
+{
+	if (!InteractionWidgetComponent) return;
+
+	// 위젯 생성 (최초 1회)
+	if (!InteractionWidgetComponent->GetWidget() && InteractionInfoWidgetClass)
+	{
+		InteractionWidgetComponent->SetWidgetClass(InteractionInfoWidgetClass);
+	}
+
+	UACInteractionInfoWidget* HintWidget = Cast<UACInteractionInfoWidget>(
+		InteractionWidgetComponent->GetWidget());
+	if (!HintWidget) return;
+
+	HintWidget->UpdateInteractions(Interactions);
+	HintWidget->ShowWidget();
+	InteractionWidgetComponent->SetVisibility(true);
+}
+
+void AACEscapeMissionBomb::HideInteractionHints()
+{
+	if (!InteractionWidgetComponent) return;
+
+	UACInteractionInfoWidget* HintWidget = Cast<UACInteractionInfoWidget>(
+		InteractionWidgetComponent->GetWidget());
+	if (HintWidget)
+		HintWidget->HideWidget();
+
+	InteractionWidgetComponent->SetVisibility(false);
 }
 
