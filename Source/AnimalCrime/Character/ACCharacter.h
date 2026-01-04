@@ -37,7 +37,7 @@ public:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 
-	virtual void InteractStarted();
+	virtual void InteractStarted(int32 InputIndex = 0);  // 기본값 0 (E 키)
 	virtual void InteractHolding(const float DeltaTime);
 	virtual void InteractReleased();
 
@@ -250,6 +250,12 @@ public:
 protected:
 	virtual bool CanInteract(AACCharacter* ACPlayer) override;
 	virtual void OnInteract(AACCharacter* ACPlayer) override;
+	virtual EACInteractorType GetInteractorType() const override;
+
+	//=== NEW: Widget interface overrides ===
+	virtual class UWidgetComponent* GetInteractionWidget() const override;
+	virtual void ShowInteractionHints(const TArray<class UACInteractionData*>& Interactions) override;
+	virtual void HideInteractionHints() override;
 
 private:
 	/**
@@ -257,6 +263,18 @@ private:
 		@retval  - NearInteractables가 Sort되었으면 true, 아니면 false 반환
 	**/
 	bool SortNearInteractables();
+
+ /**
+     @brief NearInteractables에서 가장 가까운 유효한 액터를 Focus로 설정
+     @details Overlap 이벤트 발생 시(Add/RemoveInteractable) 호출됨
+ **/
+	void UpdateFocus();
+
+ /**
+     @brief FocusedInteractable에 대한 상호작용 데이터를 DB에서 조회하고 필터링
+     @details InitiatorType과 TargetType으로 DB 조회 후 CharacterState로 필터링
+ **/
+	void QueryInteractionsForFocus();
 
  /**
      @brief 홀드 상호작용 관련 멤버변수를 모두 초기화
@@ -276,8 +294,21 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
 	TObjectPtr<class UACInteractableComponent> InteractBoxComponent;
 
+	//=== NEW: Interaction Widget ===
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interact")
+	TObjectPtr<class UWidgetComponent> InteractionWidgetComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
+	TSubclassOf<class UACInteractionInfoWidget> InteractionInfoWidgetClass;
+
 private:
 	TArray<AActor*> NearInteractables;
+
+	//=== NEW: Focus System ===
+	UPROPERTY()
+	AActor* FocusedInteractable = nullptr;
+
+	TArray<class UACInteractionData*> FocusedInteractions;
 
 	AActor* CurrentHoldTarget;
 	float CurrentHoldTime = 0.f;
