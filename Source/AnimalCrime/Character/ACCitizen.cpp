@@ -914,10 +914,7 @@ void AACCitizen::OnInteract(AACCharacter* ACPlayer)
 
 	//ShowInteractDebug(ACPlayer, GetName());
 
-
 	AC_LOG(LogSW, Log, TEXT("시민 신분증!"));
-	// todo: 임시 로그
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("시민 신분증!"));
 }
 
 float AACCitizen::GetRequiredHoldTime() const
