@@ -154,6 +154,10 @@ void UACAdvancedFriendsGameInstance::UpdateMap(const EMapType InMapType)
 		UE_LOG(LogSY, Log, TEXT("=== Server Voice 먼저 중지 완료 ==="));
 	}
 
+	FAudioCommandFence Fence;
+	Fence.BeginFence();
+	Fence.Wait();
+
 	// 그 다음 Client들에게 Voice 정리 요청
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
