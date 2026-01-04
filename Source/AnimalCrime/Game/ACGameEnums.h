@@ -54,7 +54,7 @@ UENUM(BlueprintType)
 enum class ECharacterState : uint8
 {
 	None,
-	Free,		
+	Free,
 	OnDamage,
 	Interact,
 	Escape,
@@ -62,4 +62,34 @@ enum class ECharacterState : uint8
 	Stun,
 	Prison,
 	MAX_COUNT
+};
+
+// 캐릭터 타입 (상호작용 주체)
+UENUM(BlueprintType)
+enum class EACCharacterType : uint8
+{
+	Police			UMETA(DisplayName = "Police"),
+	Mafia			UMETA(DisplayName = "Mafia"),
+	Citizen			UMETA(DisplayName = "Citizen"),
+	BlackMarketDealer UMETA(DisplayName = "BlackMarketDealer"),
+	Total
+};
+
+// 상호작용 대상 타입
+UENUM(BlueprintType)
+enum class EACInteractorType : uint8
+{
+	//None				UMETA(DisplayName = "None"),
+	Police				UMETA(DisplayName = "Police"),
+	Mafia				UMETA(DisplayName = "Mafia"),
+	Citizen				UMETA(DisplayName = "Citizen"),				// 시민 NPC
+	//Character			UMETA(DisplayName = "Character"),			// 다른 캐릭터 (플레이어 등)
+	BlackMarketDealer	UMETA(DisplayName = "BlackMarketDealer"),	// 블랙마켓 딜러
+	CCTVArea			UMETA(DisplayName = "CCTVArea"),			// CCTV
+	ShopArea			UMETA(DisplayName = "ShopArea"),			// 상점
+	PrisonDoor			UMETA(DisplayName = "PrisonDoor"),			// 감옥문
+	Bomb				UMETA(DisplayName = "Bomb"),				// 탈출 임무 폭탄
+	//BombInstallArea		UMETA(DisplayName = "BombInstallArea"),		// 폭탄 설치 구역
+	//EscapeArea			UMETA(DisplayName = "EscapeArea"),			// 탈출 구역
+	Total
 };
