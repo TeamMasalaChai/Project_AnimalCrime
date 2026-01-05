@@ -2,6 +2,7 @@
 #include "Character/ACLobbyCharacter.h"
 #include "Game/ACLobbyPlayerController.h"
 #include "Game/ACPlayerState.h"
+#include "Game/ACLobbyGameState.h"
 #include "EnhancedInputComponent.h"
 #include "UI/GameStart/ACLobbyHeadInfo.h"
 #include "Utils/ACBillboardComponent.h"
@@ -37,6 +38,8 @@ void AACLobbyCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateHeadInfoName();
+
+	UpdateHeadInfoIcon();
 }
 
 void AACLobbyCharacter::PossessedBy(AController* NewController)
@@ -44,6 +47,7 @@ void AACLobbyCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	UpdateHeadInfoName();
+
 }
 
 void AACLobbyCharacter::OnRep_PlayerState()
@@ -51,6 +55,7 @@ void AACLobbyCharacter::OnRep_PlayerState()
 	Super::OnRep_PlayerState();
 
 	UpdateHeadInfoName();
+
 }
 
 void AACLobbyCharacter::SetSteamFriendsList()
@@ -120,4 +125,45 @@ void AACLobbyCharacter::UpdateHeadInfoName()
 	}
 	AC_LOG(LogSY, Warning, TEXT("SetSteamNameText 호출 완료"));
 	HeadInfoWidget->SetSteamNameText(PlayerName);
+}
+
+void AACLobbyCharacter::UpdateHeadInfoIcon()
+{
+	if (HeadInfo == nullptr)
+	{
+		return;
+	}
+
+	UACLobbyHeadInfo* HeadInfoWidget = Cast<UACLobbyHeadInfo>(HeadInfo->GetWidget());
+	if (HeadInfoWidget == nullptr)
+	{
+		return;
+	}
+
+	AACPlayerState* PS = GetPlayerState<AACPlayerState>();
+	if (PS == nullptr)
+	{
+		return;
+	}
+
+	AACLobbyGameState* GS = GetWorld()->GetGameState<AACLobbyGameState>();
+	if (GS == nullptr)
+	{
+		return;
+	}
+
+	// 호스트 확인
+	if (GS->IsHostPlayer(PS) == true)
+	{
+		HeadInfoWidget->SetReadyIcon(ELobbyPlayerState::Host);
+	}
+	// Ready 상태 확인 (ReadyPlayerArray에 포함되어 있는지)
+	else if (GS->IsPlayerReady(PS) == true)
+	{
+		HeadInfoWidget->SetReadyIcon(ELobbyPlayerState::Ready);
+	}
+	else
+	{
+		HeadInfoWidget->SetReadyIcon(ELobbyPlayerState::UnReady);
+	}
 }

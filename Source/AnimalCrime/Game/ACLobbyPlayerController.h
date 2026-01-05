@@ -61,6 +61,9 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void ClientPlayFadeIn();
 
+protected:
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastUpdatePlayerHeadIcon(APlayerState* PS);
 public:
  /**
      @brief 게임시작 FadeIn 애니메이션 종료시 호출되는 함수

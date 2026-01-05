@@ -26,6 +26,7 @@ public:
 
 public:
 	void UpdateHeadInfoName();
+	void UpdateHeadInfoIcon();
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Widget)
