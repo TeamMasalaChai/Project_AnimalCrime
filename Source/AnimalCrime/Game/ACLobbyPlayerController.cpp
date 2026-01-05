@@ -172,6 +172,9 @@ void AACLobbyPlayerController::ServerReadyToggle_Implementation()
 	}
 
 	GS->SetReadyPlayer(GetPlayerState<APlayerState>(), bIsReady);
+
+	// 모든 클라이언트에서 해당 플레이어의 HeadInfo 아이콘 업데이트
+	MulticastUpdatePlayerHeadIcon(GetPlayerState<APlayerState>());
 }
 
 void AACLobbyPlayerController::BeginPlay()
@@ -450,6 +453,21 @@ void AACLobbyPlayerController::ClientPlayFadeIn_Implementation()
 	{
 		FadeInScreen->OnFadeInFinished.AddDynamic(this, &AACLobbyPlayerController::OnGameStartFadeInFinished);
 	}
+}
+
+void AACLobbyPlayerController::MulticastUpdatePlayerHeadIcon_Implementation(APlayerState* PS)
+{
+	if (PS == nullptr)
+	{
+		return;
+	}
+
+	AACLobbyCharacter* LobbyChar = Cast<AACLobbyCharacter>(PS->GetPawn());
+	if (LobbyChar == nullptr)
+	{
+		return;
+	}
+	LobbyChar->UpdateHeadInfoIcon();
 }
 
 void AACLobbyPlayerController::OnGameStartFadeInFinished()

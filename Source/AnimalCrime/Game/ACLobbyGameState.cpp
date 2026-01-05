@@ -102,6 +102,16 @@ bool AACLobbyGameState::IsHostPlayer(APlayerState* PS)
 	return Controller->IsLocalController() == true && Controller->HasAuthority() == true;
 }
 
+bool AACLobbyGameState::IsPlayerReady(const APlayerState* PlayerState) const
+{
+	if (PlayerState == nullptr)
+	{
+		return false;
+	}
+
+	return ReadyPlayerArray.Contains(PlayerState);
+}
+
 void AACLobbyGameState::OnRep_PlayerCount()
 {
 	ReadyPlayerCount = ReadyPlayerArray.Num();
