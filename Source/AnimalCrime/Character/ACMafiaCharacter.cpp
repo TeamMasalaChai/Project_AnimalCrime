@@ -228,8 +228,6 @@ void AACMafiaCharacter::OnInteract(AACCharacter* ACPlayer)
 	if (this->CharacterState == ECharacterState::Free)
 	{
 		AC_LOG(LogSW, Log, TEXT("마피아 신분증!"));
-		// todo: 임시 로그
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Yellow, TEXT("마피아 신분증!"));
 	}
 
 	// 경찰과 상호작용(투옥)
@@ -243,7 +241,12 @@ void AACMafiaCharacter::OnInteract(AACCharacter* ACPlayer)
 		}
 
 		GM->ImprisonCharacter(this);  // GameMode에 캡슐화 함수 사용
-	}	
+	}
+}
+
+EACInteractorType AACMafiaCharacter::GetInteractorType() const
+{
+	return EACInteractorType::Mafia;
 }
 
 void AACMafiaCharacter::ServerFireHitscan_Implementation()
@@ -265,11 +268,11 @@ void AACMafiaCharacter::ServerItemDrop_Implementation()
 {
 	if (HandBomb != nullptr)
 	{
-		//참조 해제
-		HandBomb->AttachedCharacter = nullptr;
-
 		//캐릭터에서 폭탄 분리
 		HandBomb->DetachFromCharacter();
+
+		//참조 해제
+		HandBomb->AttachedCharacter = nullptr;
 
 		// Impulse 적용은 서버가 직접 해야 하므로 여기서 처리
 		//UStaticMeshComponent* MeshComp = HandBomb->GetBombMeshComp();

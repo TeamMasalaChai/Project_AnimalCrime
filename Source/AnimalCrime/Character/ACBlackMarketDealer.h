@@ -19,6 +19,7 @@ public:
 protected:
 	virtual bool CanInteract(class AACCharacter* ACPlayer) override;
 	virtual void OnInteract(class AACCharacter* ACPlayer) override;
+	virtual EACInteractorType GetInteractorType() const override;
 
 protected:
 	

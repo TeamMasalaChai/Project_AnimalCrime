@@ -193,7 +193,7 @@ void AACMainPlayerController::BeginPlay()
 	}
 
 	// 거리 기반 Voice 타이머 시작
-	//StartProximityVoiceTimer();
+	StartProximityVoiceTimer();
 
 	ACHUDWidget = CreateWidget<UACHUDWidget>(this, ACHUDWidgetClass);
 	if (ACHUDWidget == nullptr)
@@ -377,13 +377,21 @@ void AACMainPlayerController::HandleStopJumping(const FInputActionValue& Value)
 
 void AACMainPlayerController::HandleInteractStart(const FInputActionValue& Value)
 {
+	// 1. float 값 추출 (E=1.0, R=2.0, T=3.0)
+	float InputFloat = Value.Get<float>();
+	//UE_LOG(LogSW, Log, TEXT("Interact [%f] Key Input!!"), InputFloat);
+
+	// 2. 정수 변환
+	int32 InputIndex = FMath::RoundToInt(InputFloat);
+	//UE_LOG(LogSW, Log, TEXT("Interact [%d] Key Input!!"), InputIndex);
+
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
 	if (ControlledCharacter == nullptr)
-	{
 		return;
-	}
 
-	ControlledCharacter->InteractStarted();
+	// 3. 인덱스 전달
+	ControlledCharacter->InteractStarted(InputIndex -1);
+
 }
 
 void AACMainPlayerController::HandleInteractHold(const FInputActionValue& Value)
@@ -1038,9 +1046,16 @@ void AACMainPlayerController::StopProximityVoiceTimer()
 
 void AACMainPlayerController::UpdateProximityVoice()
 {
+	// 월드 유효성 검사 (맵 이동 중 크래시 방지)
+	UWorld* World = GetWorld();
+	if (World == nullptr || World->bIsTearingDown)
+	{
+		return;
+	}
+
 	// 내 폰 가져오기
 	APawn* MyPawn = GetPawn();
-	if (MyPawn == nullptr)
+	if (MyPawn == nullptr || !IsValid(MyPawn))
 	{
 		return;
 	}
@@ -1053,8 +1068,8 @@ void AACMainPlayerController::UpdateProximityVoice()
 	}
 
 	// GameState 가져오기
-	AGameStateBase* GameState = GetWorld()->GetGameState();
-	if (GameState == nullptr)
+	AGameStateBase* GameState = World->GetGameState();
+	if (GameState == nullptr || !IsValid(GameState))
 	{
 		return;
 	}
@@ -1072,7 +1087,7 @@ void AACMainPlayerController::UpdateProximityVoice()
 
 		// 상대방 폰 가져오기
 		APawn* OtherPawn = PS->GetPawn();
-		if (OtherPawn == nullptr)
+		if (OtherPawn == nullptr || !IsValid(OtherPawn))
 		{
 			continue;
 		}

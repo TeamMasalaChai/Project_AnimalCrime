@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "Game/ACGameEnums.h"
 #include "ACInteractInterface.generated.h"
 
 // This class does not need to be modified.
@@ -11,21 +12,6 @@ UINTERFACE(MinimalAPI)
 class UACInteractInterface : public UInterface
 {
 	GENERATED_BODY()
-};
-
-
-/**
-    @enum  EACCharacterType
-    @brief 캐릭터의 타입 체크에 사용되는 열거형
-**/
-UENUM(BlueprintType)
-enum class EACCharacterType : uint8
-{
-	Police,
-	Mafia,
-	Citizen,
-	BlackMarketDealer,
-	Total
 };
 
 /**
@@ -64,6 +50,30 @@ public:
  **/
 	//todo: TPair<FString, float>으로 반환값 바꿔서 상호작용 여러개여도 연동 가능하도록 수정
 	virtual float GetRequiredHoldTime() const;
+
+ /**
+     @brief  이 액터의 상호작용 타입을 반환
+     @details 중앙 데이터베이스에서 임무를 찾기 위해 사용
+     @retval  - 이 액터의 EACInteractorType
+ **/
+	virtual EACInteractorType GetInteractorType() const = 0;
+
+ /**
+     @brief 이 액터의 상호작용 힌트 위젯 컴포넌트를 반환
+     @retval  - 위젯 컴포넌트 또는 nullptr
+ **/
+	virtual class UWidgetComponent* GetInteractionWidget() const { return nullptr; }
+
+ /**
+     @brief 상호작용 힌트를 표시
+     @param Interactions - 표시할 상호작용 데이터 배열 (이미 필터링됨)
+ **/
+	virtual void ShowInteractionHints(const TArray<class UACInteractionData*>& Interactions) {}
+
+ /**
+     @brief 상호작용 힌트를 숨김
+ **/
+	virtual void HideInteractionHints() {}
 
 protected:
 /**

@@ -40,6 +40,13 @@ protected:
 	**/
 	virtual void OnInteract(class AACCharacter* ACPlayer) override;
 
+	virtual EACInteractorType GetInteractorType() const override;
+
+	//=== 위젯 인터페이스 ===
+	virtual class UWidgetComponent* GetInteractionWidget() const override;
+	virtual void ShowInteractionHints(const TArray<class UACInteractionData*>& Interactions) override;
+	virtual void HideInteractionHints() override;
+
 	/**
 	  @brief 콜리전 범위를 벗어났을 때 CCTV UI 자동으로 닫기
 	  @param OverlappedComponent - InteractBoxComponent
@@ -59,6 +66,13 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
 	TObjectPtr<class UACInteractableComponent> InteractBoxComponent;
+
+	//!< 상호작용 위젯
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interact")
+	TObjectPtr<class UWidgetComponent> InteractionWidgetComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
+	TSubclassOf<class UACInteractionInfoWidget> InteractionInfoWidgetClass;
 
 	// 상점 UI 위젯 클래스(블루프린트에서 설정)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop")

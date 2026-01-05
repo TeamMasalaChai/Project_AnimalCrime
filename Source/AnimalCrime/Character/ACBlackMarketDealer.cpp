@@ -46,3 +46,8 @@ void AACBlackMarketDealer::OnInteract(AACCharacter* ACPlayer)
 	}
 }
 
+EACInteractorType AACBlackMarketDealer::GetInteractorType() const
+{
+	return EACInteractorType::BlackMarketDealer;
+}
+

@@ -32,6 +32,12 @@ protected: //!< 상호작용 인터페이스 구현
 	virtual bool CanInteract(class AACCharacter* ACPlayer) override;
 	virtual void OnInteract(class AACCharacter* ACPlayer) override;
 	virtual float GetRequiredHoldTime() const override;
+	virtual EACInteractorType GetInteractorType() const override;
+
+	//=== 위젯 인터페이스 ===
+	virtual class UWidgetComponent* GetInteractionWidget() const override;
+	virtual void ShowInteractionHints(const TArray<class UACInteractionData*>& Interactions) override;
+	virtual void HideInteractionHints() override;
 
 public:
 	/**
@@ -111,6 +117,13 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
 	TObjectPtr<class UACInteractableComponent> InteractBoxComponent;
+
+	//!< 상호작용 위젯
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interact")
+	TObjectPtr<class UWidgetComponent> InteractionWidgetComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
+	TSubclassOf<class UACInteractionInfoWidget> InteractionInfoWidgetClass;
 
 	//!< 문 상태
 protected:
