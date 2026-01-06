@@ -49,6 +49,12 @@ protected:
 
 	// ===== 핸드폰 관련 =====
 	void HandlePhone(const struct FInputActionValue& Value);
+	
+	// ======스킬 체크 전 상태 체크 함수========
+	bool CanUseSkill() const;
+public:
+	
+	
 public:
 	/**
 		@brief 입력 모드 변경 (기본 입력 ↔ 설정 메뉴 입력)
