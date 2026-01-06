@@ -40,6 +40,7 @@
 #include "Objects/MoneyData.h"
 
 #include "Game/ACPlayerState.h"
+#include "Skill/ACSkillData.h"
 
 #include "Sound/SoundBase.h"
 #include "UI/ACHUDWidget.h"
@@ -221,42 +222,57 @@ AACCharacter::AACCharacter()
 	{
 		BatSwingSound = BatSwingSoundRef.Object;
 	}
+	
+	static ConstructorHelpers::FObjectFinder<UACSkillData> SkillDataAssetRef(TEXT("/Script/AnimalCrime.ACSkillData'/Game/Project/Character/DA_SkillData.DA_SkillData'"));
+	if (SkillDataAssetRef.Succeeded())
+	{
+		SkillDataAsset = SkillDataAssetRef.Object;
+	}
+}
+
+#pragma region 엔진 제공 함수
+
+void AACCharacter::PostInitializeComponents()
+{
+	AC_LOG(LogHY, Error, TEXT("Begin"));
+	Super::PostInitializeComponents();
+	
+	// 캐릭터 스킬
+	SprintMoveSpeedData			= SkillDataAsset->SprintMoveSpeed;
+	OriginMafiaMoveSpeedData	= SkillDataAsset->OriginMafiaMoveSpeed;
+	OriginPoliceMoveSpeedData	= SkillDataAsset->OriginPoliceMoveSpeed;
+	SprintGaugeData				= SkillDataAsset->SprintGauge;
+	DashForwardImpulseData		= SkillDataAsset->DashForwardImpulse;
+	DashUpwardImpulseData		= SkillDataAsset->DashUpwardImpulse;
+	DashCoolTimeData			= SkillDataAsset->DashCoolTime;
+	
+	AC_LOG(LogHY, Error, TEXT("End"));
 }
 
 void AACCharacter::BeginPlay()
 {
+	AC_LOG(LogHY, Error, TEXT("Begin"));
 	Super::BeginPlay();
 
-
+	
 	CharacterState = ECharacterState::Free;
 
 	// @Todo 변경 필요. Mafia와 Police 구분이 안감.
 	// Police와 Mafia는 각자의 BeginPlay에서 초기화
 	// ※ 얘도 확인 했으면 지워주세요
 	//MoneyComp->InitMoneyComponent(EMoneyType::MoneyMafiaType);
-	
-	if (CrosshairTimelineClass)
-	{
-		FActorSpawnParameters Params;
-		Params.Owner = this;
-		Params.SpawnCollisionHandlingOverride =
-			ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-		CrosshairTimelineActor = GetWorld()->SpawnActor<AActor>(CrosshairTimelineClass, FTransform::Identity, Params);
-
-		if (CrosshairTimelineActor)
-		{
-			CrosshairTimelineActor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
-		}
-	}
-	
+	AC_LOG(LogHY, Error, TEXT("End"));
 }
 
 void AACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	// 캐릭터 상태
 	DOREPLIFETIME(AACCharacter, CharacterState);
+	
+	// Skeletal Mesh
 	DOREPLIFETIME(AACCharacter, HeadMeshReal);
 	DOREPLIFETIME(AACCharacter, FaceMeshReal);
 	DOREPLIFETIME(AACCharacter, TopMeshReal);
@@ -264,7 +280,7 @@ void AACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AACCharacter, ShoesMeshReal);
 	DOREPLIFETIME(AACCharacter, FaceAccMeshReal);
 	
-	// 삭제되어야함.
+	// 나중에 총 객체 내부로 변경해야 함.
 	DOREPLIFETIME(AACCharacter, BulletCount);
 }
 
@@ -274,6 +290,8 @@ void AACCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 	Super::EndPlay(EndPlayReason);
 }
+
+#pragma endregion
 
 void AACCharacter::ChangeInputMode(EInputMode NewMode)
 {
@@ -466,28 +484,58 @@ void AACCharacter::SettingsClose()
 	}
 }
 
+#pragma region 캐릭터 스킬 - Dash(1)
+
+void AACCharacter::Dash(const FInputActionValue& Value)
+{
+	bool bDashFlag = Value.Get<bool>();
+	AC_LOG(LogHY, Log, TEXT("PlayerController -> AACCharacter | Input: %d"), bDashFlag);
+	
+	// Case: 심각한 에러 - 나와서는 안되는 값.
+	if (bDashFlag == false)
+	{
+		AC_LOG(LogHY, Error, TEXT("Dash Input False"));
+		return;
+	}
+
+	// Server에게 Dash Skill 사용 요청
+	ServerDash();
+}
+
 void AACCharacter::ServerDash_Implementation()
 {
+	// DashTimerHandle이 살아있는 경우는 실행 불가.
 	if (GetWorldTimerManager().IsTimerActive(DashTimerHandle) == true)
 	{
 		AC_LOG(LogHY, Error, TEXT("Dash Timer is already active"));
 		return;
 	}
-
-	FVector ForwardDir = GetActorForwardVector();
-
-	FVector LaunchVel = ForwardDir * 1000 + FVector(0.f, 0.f, 500.f);
-	LaunchCharacter(LaunchVel, true, false);
-	FTimerDelegate TimerDelegate;
+	
 	bDashCoolDown = false;
+	
+	AC_LOG(LogHY, Error, TEXT("Excute [Server Dash]"));
+
+	// 캐릭터가 바라보는 방향 획득
+	FVector ForwardDir = GetActorForwardVector();
+	
+	// 날아가는 힘 계산
+	FVector LaunchVelocity = ForwardDir * DashForwardImpulseData + FVector(0.f, 0.f, DashUpwardImpulseData);
+	LaunchCharacter(LaunchVelocity, true, false);
+	
+	// Dash 사용 쿨타임 적용.
+	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindUObject(this, &AACCharacter::ResetDashFlag);
-	GetWorld()->GetTimerManager().SetTimer(DashTimerHandle, TimerDelegate, 10, false);
+	GetWorld()->GetTimerManager().SetTimer(DashTimerHandle, TimerDelegate, DashCoolTimeData, false);
 }
 
 void AACCharacter::ResetDashFlag()
 {
 	bDashCoolDown = true;
 }
+
+#pragma endregion
+
+#pragma region 캐릭터 스킬 - Sprint(2)
 
 void AACCharacter::Sprint(const FInputActionValue& Value)
 {
@@ -508,6 +556,7 @@ void AACCharacter::ServerSprintStart_Implementation()
 {
 	if (bSprint == true)
 	{
+		AC_LOG(LogHY, Error, TEXT("Sprint Timer is already active"));
 		return;
 	}
 
@@ -517,78 +566,60 @@ void AACCharacter::ServerSprintStart_Implementation()
 	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindUObject(this, &AACCharacter::GaugeDown);
 
-	GetWorld()->GetTimerManager().SetTimer(SprintGaugeDownTimerHandle,
-		TimerDelegate,
-		1, true);
-
+	GetWorld()->GetTimerManager().SetTimer(SprintGaugeDownTimerHandle, TimerDelegate, 1, true);
 
 	bSprint = true;
-	// AC_LOG(LogHY, Error, TEXT("ServerSprintStart_Implementation %d"), bSprint);
 	OnRep_Sprint();
 }
 
 void AACCharacter::ServerSprintEnd_Implementation()
 {
-	// if (bSprint == false)
-	// {
-	// 	return;
-	// }
-	// Delete Guage Down 
+	if (bSprint == false)
+	{
+		AC_LOG(LogHY, Error, TEXT("Sprint Timer is already deactive"));
+		// return은 필요 없음.
+	}
+	
+	// 게이지 Down에 대한 Timer 종료
 	GetWorld()->GetTimerManager().ClearTimer(SprintGaugeDownTimerHandle);
 
+	// 게이지 Up에 대한 Timer 시작
 	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindUObject(this, &AACCharacter::GaugeUp);
-
-	GetWorld()->GetTimerManager().SetTimer(SprintGaugeUpTimerHandle,
-		TimerDelegate,
-		1, true);
-
+	GetWorld()->GetTimerManager().SetTimer(SprintGaugeUpTimerHandle, TimerDelegate, 1, true);
 
 	bSprint = false;
 	OnRep_Sprint();
-}
-
-// void AACCharacter::ServerSprint_Implementation()
-// {
-// 	// // bSprint = !bSprint;
-// 	// if (bSprint == false)
-// 	// {
-// 	// 	bSprint = true;
-// 	// }
-// 	// else
-// 	// {
-// 	// 	bSprint = false;
-// 	// }
-// 	// OnRep_Sprint();
-// }
-
-void AACCharacter::ResetSprint()
-{
-	bSprint = false;
 }
 
 void AACCharacter::OnRep_Sprint()
 {
 	if (bSprint)
 	{
-		GetCharacterMovement()->MaxWalkSpeed = 1200;
+		GetCharacterMovement()->MaxWalkSpeed = SprintMoveSpeedData;
 		// AC_LOG(LogHY, Warning, TEXT("Sprint is active %f"), GetCharacterMovement()->MaxWalkSpeed);
 	}
 	else
 	{
-		GetCharacterMovement()->MaxWalkSpeed = 600;
-		// AC_LOG(LogHY, Warning, TEXT("Sprint is deactive %f"), GetCharacterMovement()->MaxWalkSpeed);
+		if (GetCharacterType() == EACCharacterType::Mafia)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = OriginMafiaMoveSpeedData;
+		}
+		else if (GetCharacterType() == EACCharacterType::Police)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = OriginPoliceMoveSpeedData;
+		}
 	}
 }
 
 void AACCharacter::GaugeUp()
 {
+	// 1씩 증가
 	SprintGauge += 1;
 	// AC_LOG(LogHY, Warning, TEXT("Gauge Up: %d"), SprintGauge);
-	if (SprintGauge > 10)
+	if (SprintGauge > SprintGaugeData)
 	{
-		SprintGauge = 10;
-		// Todo
+		SprintGauge = SprintGaugeData;
 	}
 }
 
@@ -604,31 +635,13 @@ void AACCharacter::GaugeDown()
 	}
 }
 
-void AACCharacter::Dash(const FInputActionValue& Value)
-{
-	bool Flag = Value.Get<bool>();
-	AC_LOG(LogHY, Error, TEXT("Try Dash!! %d"), Flag);
-
-	if (Flag == false)
-	{
-		AC_LOG(LogHY, Error, TEXT("Dash Input False"));
-		return;
-	}
-
-	// Client가 Server에게 대쉬 요청
-	ServerDash();
-}
+#pragma endregion
 
 void AACCharacter::Jump()
 {
-	// Case 스턴 상태일 경우 
-	if (CharacterState == ECharacterState::Stun)
-	{
-		return;
-	}
-
-	// Case 감옥 상태일 경우 
-	if (CharacterState == ECharacterState::Prison)
+	// Case: 스턴 및 감옥 상태일 경우 Jump 불가 
+	if (CharacterState == ECharacterState::Stun ||
+		CharacterState == ECharacterState::Prison)
 	{
 		return;
 	}
@@ -707,57 +720,14 @@ void AACCharacter::PerformAttackTrace()
 		return;
 	}
 
+	// Todo: 멀티캐스트에서 변경하기
 	MulticastPlayAttackMontage();
 }
 
 void AACCharacter::AttackHitCheck()
 {
-	// // 캡슐 크기
-	// float CapsuleRadius = 30.0f;
-	// float CapsuleHalfHeight = 60.0f;
-	//
-	// // 트레이스 길이
-	// float TraceDistance = 200.0f;
-	//
-	// // 시작 위치 = 캐릭터 위치
-	// FVector Start = GetActorLocation();
-	//                
-	// // 끝 위치 = 캐릭터 앞 방향 * 거리
-	// FVector Forward = GetActorForwardVector();
-	// FVector End = Start + Forward * TraceDistance;
-	//
-	// // 충돌 파라미터 설정
-	// FCollisionQueryParams Params;
-	// Params.AddIgnoredActor(this);   // 자기 자신 무시
-	// Params.bTraceComplex = false;
-	// Params.bReturnPhysicalMaterial = false;
-	//
-	// FHitResult Hit;
-	//
-	// // bool bHit = GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_GameTraceChannel2 | ECC_GameTraceChannel4, FCollisionShape::MakeCapsule(CapsuleRadius, CapsuleHalfHeight), Params);
-	//
-	// FCollisionObjectQueryParams ObjectParams;
-	// ObjectParams.AddObjectTypesToQuery(ECC_GameTraceChannel1);
-	// ObjectParams.AddObjectTypesToQuery(ECC_GameTraceChannel5);
-	//
-	// bool bHit = GetWorld()->SweepSingleByObjectType(
-	// 	Hit,
-	// 	Start,
-	// 	End,
-	// 	FQuat::Identity,
-	// 	ObjectParams,
-	// 	FCollisionShape::MakeCapsule(CapsuleRadius, CapsuleHalfHeight),
-	// 	Params
-	// );
-	//
-	// // 디버그: 캡슐 그리기
-	// DrawDebugCapsule(GetWorld(), (Start + End) * 0.5f, CapsuleHalfHeight, CapsuleRadius, FRotationMatrix::MakeFromZ(End - Start).ToQuat(), bHit ? FColor::Red : FColor::Green, false, 1.0f);
-	//
-	// if (bHit)
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *Hit.GetActor()->GetName());
-	// 	UGameplayStatics::ApplyDamage(Hit.GetActor(),30.0f, GetController(),this, nullptr);
-	// }
+	// Empty Class
+	// 자식 클래스에서 구현
 }
 
 void AACCharacter::FireHitscan()
@@ -786,8 +756,6 @@ void AACCharacter::FireHitscan()
 	}
 	
 	ServerShoot();
-	//
-	
 }
 
 void AACCharacter::SetCarryState(bool bPlay)
@@ -1134,6 +1102,11 @@ void AACCharacter::OnRep_CharacterState()
 	//}
 }
 
+ECharacterState AACCharacter::GetCharacterState() const
+{
+	return CharacterState;
+}
+
 void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 {
 	CharacterState = InCharacterState;
@@ -1172,22 +1145,6 @@ float AACCharacter::GetHoldProgress() const
 	}
 
 	return FMath::Clamp(CurrentHoldTime / RequiredHoldTime, 0.f, 1.f);
-}
-
-void AACCharacter::PlayCrosshairSpread()
-{
-	if (CrosshairTimelineActor)
-	{
-		CrosshairTimelineActor->CallFunctionByNameWithArguments(TEXT("Timeline"),*GLog, nullptr, true);
-	}
-}
-
-void AACCharacter::ReverseCrosshairSpread()
-{
-	if (CrosshairTimelineActor)
-	{
-		CrosshairTimelineActor->CallFunctionByNameWithArguments(TEXT("Timeline"), *GLog, nullptr, true);
-	}
 }
 
 void AACCharacter::MulticastPlayAttackMontage_Implementation()
@@ -1257,6 +1214,8 @@ EACCharacterType AACCharacter::GetCharacterType()
 	return EACCharacterType::Citizen;
 }
 
+#pragma region Update SkeletalMeshComponent
+
 void AACCharacter::OnRep_HeadMesh() const
 {
 	if (HeadMesh)
@@ -1317,6 +1276,7 @@ void AACCharacter::OnRep_FaceAccMesh() const
 	}
 }
 
+#pragma endregion
 
 
 // #####################################################################################
@@ -1376,7 +1336,6 @@ void AACCharacter::ServerShoot_Implementation()
 		UE_LOG(LogTemp, Log, TEXT("Hit: %s"), *Hit.GetActor()->GetName());
 		UGameplayStatics::ApplyDamage(Hit.GetActor(),30.0f, GetController(),this, nullptr);
 	}
-	PlayCrosshairSpread();
 }
 
 int32 AACCharacter::GetBulletCount() const
