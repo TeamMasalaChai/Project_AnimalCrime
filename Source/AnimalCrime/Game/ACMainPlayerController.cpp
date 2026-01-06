@@ -478,41 +478,61 @@ void AACMainPlayerController::HandleSpectatorChange(const FInputActionValue& Val
 	ServerSwitchToNextSpectateTarget();
 }
 
-void AACMainPlayerController::HandleDash(const struct FInputActionValue& Value)
+#pragma region 캐릭터 스킬 Handler
+
+void AACMainPlayerController::HandleDash(const FInputActionValue& Value)
 {
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
+	if (CanUseSkill() == false)
 	{
+		AC_LOG(LogHY, Error, TEXT("CanUseSkill is false"));
+		return;
+	}
+	
+	AACCharacter* CharacterPawn = GetPawn<AACCharacter>();
+	if (CharacterPawn == nullptr)
+	{
+		// 사실 무조건 통과함. - CanUseSkill 에서 확인
 		AC_LOG(LogHY, Error, TEXT("ControlledCharacter is nullptr"));
 		return;
 	}
-
-	ControlledCharacter->Dash(Value);
+	
+	// Player에게 Dash 요청
+	CharacterPawn->Dash(Value);
 }
 
 void AACMainPlayerController::HandleSprintStart(const struct FInputActionValue& Value)
 {
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
+	if (CanUseSkill() == false)
+	{
+		AC_LOG(LogHY, Error, TEXT("CanUseSkill is false"));
+		return;
+	}
+	
+	AACCharacter* CharacterPawn = GetPawn<AACCharacter>();
+	if (CharacterPawn == nullptr)
 	{
 		AC_LOG(LogHY, Error, TEXT("ControlledCharacter is nullptr"));
 		return;
 	}
-	AC_LOG(LogHY, Error, TEXT("Start Hi"));
-	ControlledCharacter->Sprint(Value);
+
+	// Player에게 Sprint 요청
+	AC_LOG(LogHY, Error, TEXT("PlayerController-Press Sprint Key"));
+	CharacterPawn->Sprint(Value);
 }
 
 void AACMainPlayerController::HandleSprintEnd(const struct FInputActionValue& Value)
 {
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
+	AACCharacter* CharacterPawn = GetPawn<AACCharacter>();
+	if (CharacterPawn == nullptr)
 	{
 		AC_LOG(LogHY, Error, TEXT("ControlledCharacter is nullptr"));
 		return;
 	}
-	AC_LOG(LogHY, Error, TEXT("End Hi"));
-	ControlledCharacter->Sprint(Value);
+	AC_LOG(LogHY, Error, TEXT("PlayerController-Release Sprint Key"));
+	CharacterPawn->Sprint(Value);
 }
+
+#pragma endregion
 
 void AACMainPlayerController::HandleQuickSlot(const FInputActionValue& Value)
 {
@@ -571,6 +591,28 @@ void AACMainPlayerController::HandlePhone(const FInputActionValue& Value)
 		// 휠 아래로 = 핸드폰 닫기
 		ClosePhone();
 	}
+}
+
+bool AACMainPlayerController::CanUseSkill() const
+{
+	AACCharacter* CharacterPawn = GetPawn<AACCharacter>();
+	if (CharacterPawn == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("CharacterPawn is nullptr"));
+		return false;
+	}
+	
+	ECharacterState CharacterState = CharacterPawn->GetCharacterState();
+	// 캐릭터의 상태가 None, Stun, Prison 상태일 경우 불가
+	if (CharacterState == ECharacterState::None || 
+		CharacterState == ECharacterState::Stun ||
+		CharacterState == ECharacterState::Prison)
+	{
+		AC_LOG(LogHY, Error, TEXT("CharacterState is %s"), *UEnum::GetValueAsString(CharacterState));
+		return false;
+	}
+	
+	return true;
 }
 
 void AACMainPlayerController::ChangeInputMode(EInputMode NewMode)

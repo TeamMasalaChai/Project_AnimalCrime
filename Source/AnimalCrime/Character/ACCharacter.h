@@ -24,6 +24,7 @@ public:
 	virtual EACCharacterType GetCharacterType();
 
 protected:
+	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -48,9 +49,12 @@ public:
 	//virtual void SettingsClose(const FInputActionValue& Value);
 	virtual void Jump() override;
 	virtual void SettingsClose();
-
-
-	// 클라이언트 Input을 받는 함수
+	
+public:
+	/**
+	 * @brief PlayerController로 부터 Dash 키가 눌렸는지 Input을 받는 함수
+	 * @param Value 장치로 부터 얻은 Input 값
+	 */
 	void Dash(const FInputActionValue& Value);
 
 	// 서버에 Dash 요청 함수
@@ -71,9 +75,6 @@ public:
 	// 서버에 Dash 요청 함수
 	UFUNCTION(Server, Reliable)
 	void ServerSprintEnd();
-
-	// 쿨타임 시 Flag 되돌리는 함수.
-	void ResetSprint();
 
 protected:
 
@@ -379,20 +380,6 @@ private:
 	**/
 	float GetHoldProgress() const;
 
-public:
-	UPROPERTY(EditDefaultsOnly, Category = "Crosshair")
-	TSubclassOf<AActor> CrosshairTimelineClass;
-
-	UPROPERTY()
-	TObjectPtr<class AActor> CrosshairTimelineActor;
-	
-	UFUNCTION()
-	void PlayCrosshairSpread();
-
-	UFUNCTION()
-	void ReverseCrosshairSpread();
-
-
 //!< 상호작용 멤버변수
 protected:
 	/**
@@ -447,6 +434,7 @@ protected:
 	UFUNCTION()
 	void OnRep_CharacterState();
 public:
+	ECharacterState GetCharacterState() const;
 	void SetCharacterState(ECharacterState InCharacterState);
 protected:
 	ESettingMode SettingMode = ESettingMode::None;
@@ -525,8 +513,10 @@ public:
 	void AddBullets(int32 InBulletCount);
 	void ClearBullets();
 	void SpendBullets(int32 InBulletCount);
+	
 	UFUNCTION()
 	void OnRep_BulletCount();
+	
 protected:
 	UPROPERTY(ReplicatedUsing= OnRep_BulletCount, EditAnywhere, BlueprintReadWrite, Category = "Bullet")
 	int32 BulletCount = 0;
@@ -549,4 +539,33 @@ public:
 	//!< 무전기 그룹, 양쪽 다 같은 무전기 그룹에 있으면 거리에 상관없이 음성이 들림.
 	UPROPERTY(ReplicatedUsing = OnRep_VoiceGroup, BlueprintReadWrite, Category = "VOIP")
 	EVoiceGroup VoiceGroup = EVoiceGroup::None;
+	
+	
+protected:	// 캐릭터 스킬의 맴버 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	TObjectPtr<class UACSkillData> SkillDataAsset;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float SprintMoveSpeedData;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float OriginMafiaMoveSpeedData;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float OriginPoliceMoveSpeedData;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float SprintGaugeData;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float SprintGaugeUpData;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DashForwardImpulseData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DashUpwardImpulseData;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DashCoolTimeData;
 };

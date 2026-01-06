@@ -22,7 +22,7 @@ public class AnimalCrime : ModuleRules
         });
 
         // 기본 UI 모듈은 항상 포함
-        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore", "AnimGraphRuntime" });
 
         // 에디터 전용 모듈은 에디터 빌드에서만 포함
         if (Target.bBuildEditor)
