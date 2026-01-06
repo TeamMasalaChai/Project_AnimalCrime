@@ -78,8 +78,8 @@ public:
 	void AddContraband() { ++constrband; }
 	void SubtractContraband() { --constrband; }
 
-protected:
-	virtual float GetRequiredHoldTime() const override;
+//protected:
+//	virtual float GetRequiredHoldTime() const override;
 
 public:
 	//!<아이템
@@ -93,6 +93,10 @@ public:
 protected:
 	FTimerHandle TaxTimerHandle;
 	float TaxTimeRate = 60.0f;
+
+	// ===== 사운드 추가 =====
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundBase> HitSound;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mission")

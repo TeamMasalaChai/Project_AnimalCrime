@@ -1075,3 +1075,7 @@ void AACMainPlayerController::ClosePhone()
 		SetShowMouseCursor(false);
 	}
 }
+void AACMainPlayerController::UpdateAmmoUI(int32 Ammo)
+{
+	ACHUDWidget->HandleAmmoChanged(Ammo);
+}

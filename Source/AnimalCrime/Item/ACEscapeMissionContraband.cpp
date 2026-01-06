@@ -87,21 +87,21 @@ void AACEscapeMissionContraband::BeginPlay()
 	}
 }
 
-bool AACEscapeMissionContraband::CanInteract(AACCharacter* ACPlayer)
-{
-	if (ACPlayer == nullptr)
-	{
-		return false;
-	}
-	if (ACPlayer->GetCharacterType() != EACCharacterType::Mafia)
-	{
-		return false;
-	}
+//bool AACEscapeMissionContraband::CanInteract(AACCharacter* ACPlayer)
+//{
+//	if (ACPlayer == nullptr)
+//	{
+//		return false;
+//	}
+//	if (ACPlayer->GetCharacterType() != EACCharacterType::Mafia)
+//	{
+//		return false;
+//	}
+//
+//	return true;
+//}
 
-	return true;
-}
-
-void AACEscapeMissionContraband::OnInteract(AACCharacter* ACPlayer)
+void AACEscapeMissionContraband::OnInteract(AACCharacter* ACPlayer, EInteractionKey InKey)
 {
 	AC_LOG(LogSY, Log, TEXT("get item"));
 
@@ -136,10 +136,10 @@ void AACEscapeMissionContraband::OnInteract(AACCharacter* ACPlayer)
 	Destroy();
 }
 
-float AACEscapeMissionContraband::GetRequiredHoldTime() const
-{
-	return 0.0f;
-}
+//float AACEscapeMissionContraband::GetRequiredHoldTime() const
+//{
+//	return 0.0f;
+//}
 
 EACInteractorType AACEscapeMissionContraband::GetInteractorType() const
 {

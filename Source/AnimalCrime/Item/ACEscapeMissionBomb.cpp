@@ -196,11 +196,11 @@ void AACEscapeMissionBomb::OnInteract(AACCharacter* ACPlayer, EInteractionKey In
 	AttachToCharacter();
 }
 
-// 폭탄 - 5초 홀드
-float AACEscapeMissionBomb::GetRequiredHoldTime() const
-{
-	return 0.0f;
-}
+//// 폭탄 - 5초 홀드
+//float AACEscapeMissionBomb::GetRequiredHoldTime() const
+//{
+//	return 0.0f;
+//}
 
 EACInteractorType AACEscapeMissionBomb::GetInteractorType() const
 {
