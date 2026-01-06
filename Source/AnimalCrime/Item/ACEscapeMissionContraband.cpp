@@ -9,6 +9,7 @@
 #include "Interaction/ACInteractionData.h"
 #include "Character/ACMafiaCharacter.h"
 #include "UI/Common/ACNotificationText.h"
+#include "Game/ACMainPlayerController.h"
 #include "AnimalCrime.h"
 
 AACEscapeMissionContraband::AACEscapeMissionContraband()
@@ -53,20 +54,6 @@ AACEscapeMissionContraband::AACEscapeMissionContraband()
 	{
 		InteractionInfoWidgetClass = InteractionWidgetRef.Class;
 	}
-
-	static ConstructorHelpers::FClassFinder<UACNotificationText> NotificationTextRef(
-		TEXT("/Game/Project/UI/Common/WBP_NotificationText.WBP_NotificationText_C"));
-	if (NotificationTextRef.Succeeded())
-	{
-		NotificationWidgetClass = NotificationTextRef.Class;
-		UE_LOG(LogTemp, Warning, TEXT("NotificationWidgetClass loaded successfully"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to load NotificationWidgetClass"));
-	}
-	// 네트워크 복제 설정. 서버에 이 액터가 생성되면 클라이언트로 복제됨, 삭제도 동기화
-	bReplicates = true;
 }
 
 void AACEscapeMissionContraband::BeginPlay()
@@ -78,13 +65,6 @@ void AACEscapeMissionContraband::BeginPlay()
 
 	// BoxExtent 설정 (약간 여유 포함)
 	InteractBoxComponent->SetMargin(FVector(50.f));
-
-	// 클라이언트에서 위젯 클래스 로드 (복제된 액터는 생성자가 실행되지 않음)
-	if (!NotificationWidgetClass)
-	{
-		NotificationWidgetClass = LoadClass<UACNotificationText>(nullptr,
-			TEXT("/Game/Project/UI/Common/WBP_NotificationText.WBP_NotificationText_C"));
-	}
 }
 
 //bool AACEscapeMissionContraband::CanInteract(AACCharacter* ACPlayer)
@@ -116,20 +96,14 @@ void AACEscapeMissionContraband::OnInteract(AACCharacter* ACPlayer, EInteraction
 
 	if (ACPlayerMafia->IsLocallyControlled())
 	{
-		if (NotificationWidgetClass == nullptr)
+		AACMainPlayerController* PC = Cast<AACMainPlayerController>(ACPlayer->GetController());
+
+		if(PC == nullptr)
 		{
-			AC_LOG(LogSY, Log, TEXT("NotificationWidgetClass is nullptr"));
+			AC_LOG(LogSY, Log, TEXT("PC is nullptr"));
 			return;
 		}
-		UACNotificationText* ACNotificationText = CreateWidget<UACNotificationText>(GetWorld(), NotificationWidgetClass);
-
-		if (ACNotificationText == nullptr)
-		{
-			return;
-		}
-		ACNotificationText->AddToViewport();
-
-		ACNotificationText->SetNotificationText(FText::FromString(TEXT("밀수품을 획득했다")));
+		PC->ShowNotification(FText::FromString(TEXT("밀수품을 획득했다")));
 	}
 
 	AC_LOG(LogSY, Log, TEXT("item Destroy"));

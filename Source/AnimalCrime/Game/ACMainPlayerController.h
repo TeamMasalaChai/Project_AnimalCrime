@@ -115,7 +115,7 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<class UUserWidget> CurrentPhoneWidget;
-	
+
 
 
 	// ===== 게임 시작시 역할 UI=====
@@ -152,15 +152,22 @@ public:
 	**/
 	UFUNCTION(Client, Reliable)
 	void ClientNotifySpectateTargetRemoved(APawn* RemovedPawn);
-	
+
+ /**
+     @brief 알림 메시지 표시용 함수
+	 @param Text - 함림 텍스트
+ **/
+	UFUNCTION(BlueprintCallable)
+	void ShowNotification(const FText& Text);
+
 	UFUNCTION()
 	void ZoomIn();
-	
+
 	UFUNCTION()
 	void ZoomOut();
-	
+
 	UPROPERTY()
-	uint8 bZoomFlag:1 = false;
+	uint8 bZoomFlag : 1 = false;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
@@ -193,7 +200,7 @@ protected:
 	// ===== 총기 관련 테스트 =========
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputAction> ZoomAction;
-	
+
 	// ===== 퀵슬롯 관련 (하나만) =====
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputAction> QuickSlotAction;
@@ -259,6 +266,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Role")
 	TObjectPtr<class UACRoleScreen> RoleScreen;
 
+protected:
+	//!< UI 매니저 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	class UACUIManagerComponent* UIManager;
 
 protected:
 	//!< 관전자 Index

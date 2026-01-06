@@ -50,7 +50,4 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
 	TSubclassOf<class UACInteractionInfoWidget> InteractionInfoWidgetClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-	TSubclassOf<class UACNotificationText> NotificationWidgetClass;
 };

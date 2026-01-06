@@ -25,6 +25,7 @@
 #include "OnlineSubsystem.h"
 #include "GameFramework/GameStateBase.h"
 #include "UI/Ammo/ACAmmoWidget.h"
+#include "Game/ACUIManagerComponent.h"
 
 AACMainPlayerController::AACMainPlayerController()
 {
@@ -161,6 +162,9 @@ AACMainPlayerController::AACMainPlayerController()
 	{
 		PhoneWidgetClass = PhoneWidgetRef.Class;
 	}
+
+	// UI 매니저 컴포넌트 생성
+	UIManager = CreateDefaultSubobject<UACUIManagerComponent>(TEXT("UIManager"));
 }
 
 void AACMainPlayerController::PostInitializeComponents()
@@ -394,7 +398,7 @@ void AACMainPlayerController::HandleInteractStart(const FInputActionValue& Value
 		return;
 
 	// 3. 인덱스 전달
-	ControlledCharacter->InteractStarted(InputIndex -1);
+	ControlledCharacter->InteractStarted(InputIndex - 1);
 
 }
 
@@ -1078,4 +1082,18 @@ void AACMainPlayerController::ClosePhone()
 void AACMainPlayerController::UpdateAmmoUI(int32 Ammo)
 {
 	ACHUDWidget->HandleAmmoChanged(Ammo);
+}
+
+void AACMainPlayerController::ShowNotification(const FText& Text)
+{
+	if (IsLocalController() == false)
+	{
+		return;
+	}
+
+	if (UIManager == nullptr)
+	{
+		AC_LOG(LogSY, Error, TEXT("UIManager is nullptr"));
+	}
+	UIManager->ShowNotification(Text);
 }

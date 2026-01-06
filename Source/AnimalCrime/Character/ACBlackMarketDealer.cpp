@@ -4,6 +4,7 @@
 #include "Components/BoxComponent.h"
 #include "EscapeQuest/ACBlackMarketComponent.h"
 #include "Component/ACInteractableComponent.h"
+#include "Game/ACMainPlayerController.h"
 #include "AnimalCrime.h"
 
 AACBlackMarketDealer::AACBlackMarketDealer()
@@ -32,6 +33,25 @@ void AACBlackMarketDealer::OnInteract(AACCharacter* ACPlayer, EInteractionKey In
 		{
 			return;
 		}
+		AACMafiaCharacter* MafiaChar = Cast<AACMafiaCharacter>(ACPlayer);
+		if (MafiaChar == nullptr)
+		{
+			return;
+		}
+
+		AACMainPlayerController* PC = Cast<AACMainPlayerController>(ACPlayer->GetController());
+		if (PC == nullptr)
+		{
+			AC_LOG(LogSY, Log, TEXT("PC is nullptr"));
+			return;
+		}
+
+		if (MafiaChar->GetContraband() <= 0)
+		{
+			PC->ShowNotification(FText::FromString(TEXT("거래할 밀수품이 없습니다.")));
+			return;
+		}
+		PC->ShowNotification(FText::FromString(TEXT("폭탄을 획득했습니다.\n 은행에 폭탄을 설치하세요.")));
 		BlackMarketComponent->OpenBlackMarket(ACPlayer);
 	}
 }
