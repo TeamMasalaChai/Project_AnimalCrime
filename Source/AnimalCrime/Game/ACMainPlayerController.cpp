@@ -185,13 +185,6 @@ void AACMainPlayerController::BeginPlay()
 		return;
 	}
 
-	// 보이스 연결
-	UACAdvancedFriendsGameInstance* GI = GetGameInstance<UACAdvancedFriendsGameInstance>();
-	if (GI)
-	{
-		GI->TryStartVoice();
-	}
-
 	ACHUDWidget = CreateWidget<UACHUDWidget>(this, ACHUDWidgetClass);
 	if (ACHUDWidget == nullptr)
 	{

@@ -185,14 +185,6 @@ void AACLobbyPlayerController::BeginPlay()
 		return;
 	}
 
-	//보이스 연결
-	UACAdvancedFriendsGameInstance* GI = GetGameInstance<UACAdvancedFriendsGameInstance>();
-	if (GI == nullptr)
-	{
-		return;
-	}
-	GI->TryStartVoice();
-
 	//UI 연동
 	LobbyScreen = CreateWidget<UACLobbyScreen>(this, LobbyScreenClass);
 	if (LobbyScreen == nullptr)

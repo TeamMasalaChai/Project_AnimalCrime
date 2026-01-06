@@ -38,6 +38,7 @@
 #include "Objects/MoneyData.h"
 
 #include "Game/ACPlayerState.h"
+#include "Game/ACAdvancedFriendsGameInstance.h"
 
 #include "Sound/SoundBase.h"
 #include "Net/VoiceConfig.h"
@@ -179,11 +180,11 @@ AACCharacter::AACCharacter()
 	// 상호작용 위젯 클래스 설정
 	static ConstructorHelpers::FClassFinder<UACInteractionInfoWidget> InteractionWidgetRef(
 		TEXT("/Game/Project/UI/Interaction/WBP_InteractionInfo.WBP_InteractionInfo_C"));
-		if (InteractionWidgetRef.Succeeded())
-		{
-			InteractionInfoWidgetClass = InteractionWidgetRef.Class;
-		}
-		
+	if (InteractionWidgetRef.Succeeded())
+	{
+		InteractionInfoWidgetClass = InteractionWidgetRef.Class;
+	}
+
 	// 애니메이션 몽타주
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> MeleeMontageRef(
 		TEXT("/Game/Project/Character/AM_Melee.AM_Melee"));
@@ -228,17 +229,22 @@ void AACCharacter::BeginPlay()
 
 	CharacterState = ECharacterState::Free;
 
-	// @Todo 변경 필요. Mafia와 Police 구분이 안감.
-	// Police와 Mafia는 각자의 BeginPlay에서 초기화
-	// ※ 얘도 확인 했으면 지워주세요
-	//MoneyComp->InitMoneyComponent(EMoneyType::MoneyMafiaType);
-
-	// VOIPTalker 초기화 (다른 플레이어 캐릭터에만 적용)
-	if (IsLocallyControlled())
+	if (IsLocallyControlled() == true)
 	{
+		// 로컬 플레이어: 딜레이 후 Voice 시작
+		FTimerHandle VoiceStartTimer;
+		GetWorldTimerManager().SetTimer(VoiceStartTimer, [this]()
+			{
+				UACAdvancedFriendsGameInstance* GI = GetGameInstance<UACAdvancedFriendsGameInstance>();
+				if (GI == nullptr)
+				{
+					return;
+				}
+				GI->TryStartVoice();
+			}, 0.5f, false);
 		return;
 	}
-
+	// 원격 플레이어: VOIPTalker 등록
 	TryRegisterVOIPTalker();
 
 }
