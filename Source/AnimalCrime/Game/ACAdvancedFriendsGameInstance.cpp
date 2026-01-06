@@ -24,7 +24,7 @@ void UACAdvancedFriendsGameInstance::Init()
 	CurrentMapType = EMapType::None;
 
 	LobbyMapName = TEXT("LobbyMap");
-	GameMapName = TEXT("henaMap");
+	GameMapName = TEXT("CityMap");
 
 	// PIE(에디터 플레이) 환경에서도 SeamlessTravel 허용
 	UE_LOG(LogTemp, Warning, TEXT("UACMainGameInstance::Init"));
@@ -199,7 +199,7 @@ void UACAdvancedFriendsGameInstance::DoServerTravel()
 		GetWorld()->ServerTravel("LobbyMap", true);
 		break;
 	case EMapType::Game:
-		GetWorld()->ServerTravel("DemoMap", true);
+		GetWorld()->ServerTravel("CityMap", true);
 		break;
 	}
 }
