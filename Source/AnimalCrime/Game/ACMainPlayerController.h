@@ -135,6 +135,15 @@ public:
 	**/
 	UFUNCTION(Client, Reliable)
 	void ClientNotifySpectateTargetRemoved(APawn* RemovedPawn);
+	
+	UFUNCTION()
+	void ZoomIn();
+	
+	UFUNCTION()
+	void ZoomOut();
+	
+	UPROPERTY()
+	uint8 bZoomFlag:1 = false;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
@@ -164,6 +173,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputAction> SprintAction;
 
+	// ===== 총기 관련 테스트 =========
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction> ZoomAction;
+	
 	// ===== 퀵슬롯 관련 (하나만) =====
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputAction> QuickSlotAction;
@@ -263,4 +276,8 @@ protected:
 	//!< 현재 음소거 상태인 플레이어 목록 (최적화용)
 	TSet<FUniqueNetIdRepl> MutedPlayers;
 #pragma endregion
+	
+	
+public:
+	void UpdateAmmoUI(int32 Ammo);
 };

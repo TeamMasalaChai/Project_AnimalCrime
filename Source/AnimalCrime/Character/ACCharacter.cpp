@@ -19,6 +19,7 @@
 #include "Component/ACInteractableComponent.h"
 #include "ACCharacterAnimInstance.h"
 #include "AnimalCrime.h"
+#include "NetworkMessage.h"
 
 #include "Component/ACShopComponent.h"
 #include "UI/Shop/ACShopWidget.h"
@@ -34,6 +35,7 @@
 #include "Game/ACPlayerState.h"
 
 #include "Sound/SoundBase.h"
+#include "UI/ACHUDWidget.h"
 
 AACCharacter::AACCharacter()
 {
@@ -156,7 +158,7 @@ AACCharacter::AACCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
-
+	
 	
 	GunSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("GunSpringArm"));
 	GunSpringArm->SetupAttachment(RootComponent);
@@ -198,7 +200,6 @@ AACCharacter::AACCharacter()
 	}
 }
 
-
 void AACCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -210,6 +211,22 @@ void AACCharacter::BeginPlay()
 	// Police와 Mafia는 각자의 BeginPlay에서 초기화
 	// ※ 얘도 확인 했으면 지워주세요
 	//MoneyComp->InitMoneyComponent(EMoneyType::MoneyMafiaType);
+	
+	if (CrosshairTimelineClass)
+	{
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.SpawnCollisionHandlingOverride =
+			ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		CrosshairTimelineActor = GetWorld()->SpawnActor<AActor>(CrosshairTimelineClass, FTransform::Identity, Params);
+
+		if (CrosshairTimelineActor)
+		{
+			CrosshairTimelineActor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+		}
+	}
+	
 }
 
 void AACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -919,6 +936,22 @@ float AACCharacter::GetHoldProgress() const
 	}
 
 	return FMath::Clamp(CurrentHoldTime / RequiredHoldTime, 0.f, 1.f);
+}
+
+void AACCharacter::PlayCrosshairSpread()
+{
+	if (CrosshairTimelineActor)
+	{
+		CrosshairTimelineActor->CallFunctionByNameWithArguments(TEXT("Timeline"),*GLog, nullptr, true);
+	}
+}
+
+void AACCharacter::ReverseCrosshairSpread()
+{
+	if (CrosshairTimelineActor)
+	{
+		CrosshairTimelineActor->CallFunctionByNameWithArguments(TEXT("Timeline"), *GLog, nullptr, true);
+	}
 }
 
 void AACCharacter::MulticastPlayAttackMontage_Implementation()

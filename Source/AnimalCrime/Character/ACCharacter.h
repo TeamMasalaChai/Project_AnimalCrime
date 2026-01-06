@@ -214,7 +214,7 @@ protected:
 	TObjectPtr<class USpringArmComponent> CameraBoom;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCameraComponent> FollowCamera;
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USpringArmComponent> GunSpringArm;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
@@ -299,7 +299,18 @@ private:
 	**/
 	float GetHoldProgress() const;
 
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "Crosshair")
+	TSubclassOf<AActor> CrosshairTimelineClass;
 
+	UPROPERTY()
+	TObjectPtr<class AActor> CrosshairTimelineActor;
+	
+	UFUNCTION()
+	void PlayCrosshairSpread();
+
+	UFUNCTION()
+	void ReverseCrosshairSpread();
 	//!< 상호작용 멤버변수
 public:
 protected:
