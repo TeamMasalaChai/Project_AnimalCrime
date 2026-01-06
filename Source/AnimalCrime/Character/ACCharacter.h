@@ -239,6 +239,8 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastPlayAttackMontage();
 
+	void FireHitscan();
+	
  /**
      @brief 캐릭터의 Carry 상태를 설정하는 진입 함수.
 		호출한 주체가 서버인지 클라이언트인지에 따라 내부적으로 Server RPC 또는 Multicast RPC를 호출하여 모든 플레이어에게 애니메이션이 동기화되도록 처리한다.
@@ -368,4 +370,21 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TObjectPtr<USoundBase> BatSwingSound;
+
+	
+	// 나중에 사라져야하는 코드들.
+	
+public:
+	UFUNCTION(Server, Reliable)
+	void ServerShoot();
+public:
+	int32 GetBulletCount() const;
+	void AddBullets(int32 InBulletCount);
+	void ClearBullets();
+	void SpendBullets(int32 InBulletCount);
+	UFUNCTION()
+	void OnRep_BulletCount();
+protected:
+	UPROPERTY(ReplicatedUsing= OnRep_BulletCount, EditAnywhere, BlueprintReadWrite, Category = "Bullet")
+	int32 BulletCount = 0;
 };
