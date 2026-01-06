@@ -331,6 +331,9 @@ void AACCharacter::InteractStarted(int32 InputIndex)
 
 		ServerFreezeCharacter(CurrentHoldTarget, true);
 
+		// 서버에 홀드 상호작용 시작 알림 (몽타주 + 회전)
+		ServerStartHoldInteraction(CurrentHoldTarget, InteractionData);
+
 		AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
 		if (PC)
 			PC->ShowInteractProgress(InteractionData->InteractionName.ToString());
@@ -339,31 +342,24 @@ void AACCharacter::InteractStarted(int32 InputIndex)
 
 void AACCharacter::InteractHolding(const float DeltaTime)
 {
-	if (bIsHoldingInteract == false)
+	if (!bIsHoldingInteract)
 	{
-		//ResetHoldInteract();
-		return;
-	}
-	//todo: isvalid?
-	if (CurrentHoldTarget == nullptr)
-	{
-		InteractReleased();
-		return;
-	}
-	if (NearInteractables.Contains(CurrentHoldTarget) == false)
-	{
-		InteractReleased();
 		return;
 	}
 
+	// 유효성 체크
+	if (!CurrentHoldTarget || !NearInteractables.Contains(CurrentHoldTarget))
+	{
+		ResetHoldInteract();
+		return;
+	}
 
 	// 시간 누적
 	CurrentHoldTime += DeltaTime;
-	//AC_LOG(LogSW, Log, TEXT("%s Holding at %f"), *CurrentHoldTarget->GetName(), CurrentHoldTime);
 
 	// UI 업데이트
 	AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
-	if (PC != nullptr)
+	if (PC)
 	{
 		PC->UpdateInteractProgress(GetHoldProgress());
 	}
@@ -372,25 +368,12 @@ void AACCharacter::InteractHolding(const float DeltaTime)
 	if (CurrentHoldTime >= RequiredHoldTime)
 	{
 		ServerInteract(CurrentHoldTarget, CurrentHoldKey);
-		InteractReleased();
+		ResetHoldInteract();
 	}
 }
 
 void AACCharacter::InteractReleased()
 {
-	if (bIsHoldingInteract == false)
-	{
-		return;
-	}
-
-	// UI 표시
-	AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
-	if (PC != nullptr)
-	{
-		//UE_LOG(LogSW, Log, TEXT("Hide start"));
-		PC->HideInteractProgress();
-	}
-
 	ResetHoldInteract();
 }
 
@@ -647,7 +630,7 @@ void AACCharacter::ServerInteract_Implementation(AActor* Target, EInteractionKey
 	//        return;                                                                                       
 	//    }                                                                                                 
 	//}                                                                                                     
-
+		
 	//// DB에서 상호작용 가능 여부 체크                                                                         
 	//UACInteractionSubsystem* InteractionSys = GetGameInstance()->GetSubsystem<UACInteractionSubsystem>(); 
 	//UACInteractionDatabase* DB = InteractionSys ? InteractionSys->GetInteractionDatabase() : nullptr;     
@@ -1093,17 +1076,26 @@ void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 
 void AACCharacter::ResetHoldInteract()
 {
-	if (CurrentHoldTarget == nullptr)
+	if (!bIsHoldingInteract)
 	{
 		return;
 	}
 
-	// Server RPC로 대상 움직임 재개 (ACharacter 사용 - 시민도 포함)
-	ServerFreezeCharacter(CurrentHoldTarget, false);
+	// 로컬 UI 정리
+	AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
+	if (PC)
+	{
+		PC->HideInteractProgress();
+	}
 
-	// todo: 임시로 홀드 상호작용 리셋 시 다시 콜리전 오버랩 시작해야함
-	RemoveInteractable(CurrentHoldTarget);
-	UpdateFocus();
+	// 타겟이 있으면 정리
+	if (CurrentHoldTarget)
+	{
+		ServerStopHoldInteraction(CurrentHoldTarget);
+		ServerFreezeCharacter(CurrentHoldTarget, false);
+		RemoveInteractable(CurrentHoldTarget);
+		UpdateFocus();
+	}
 
 	bIsHoldingInteract = false;
 	CurrentHoldTarget = nullptr;
@@ -1252,72 +1244,77 @@ void AACCharacter::ServerFreezeCharacter_Implementation(AActor* Target, bool bFr
 	}
 }
 
-// === 상호작용 회전/몽타주 RPC ===
-void AACCharacter::StartFaceToFace(AActor* TargetActor)
+// === 홀드 상호작용 RPC 구현 ===
+void AACCharacter::ServerStartHoldInteraction_Implementation(AActor* TargetActor, UACInteractionData* InteractionData)
 {
-	if (!TargetActor) return;
+	if (!TargetActor || !InteractionData)
+		return;
 
-	// 1. 목표 회전값 계산 (위치가 고정되어 있으므로 한 번만 계산하면 됨)
-	FVector Direction = (TargetActor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-	DesiredLookAtRotation = Direction.Rotation();
-	DesiredLookAtRotation.Pitch = 0.f;
-
-	// 2. 원래 상태 저장
-	bPrevUseControllerRotationYaw = bUseControllerRotationYaw;
-	bUseControllerRotationYaw = false;
-
-	if (UCharacterMovementComponent* CMC = GetCharacterMovement())
-	{
-		bPrevUseControllerDesiredRotation = CMC->bUseControllerDesiredRotation;
-		CMC->bUseControllerDesiredRotation = true;
-	}
-
-	// 3. 타이머 시작 (0.015초마다 갱신 = 약 60프레임)
-	GetWorld()->GetTimerManager().SetTimer(
-		RotateTimerHandle,
-		this,
-		&AACCharacter::UpdateFaceToFace,
-		0.015f,
-		true // 반복 실행
+	// Multicast로 몽타주 재생
+	MulticastStartHoldInteraction(
+		TargetActor,
+		InteractionData->InitiatorMontage,
+		InteractionData->TargetMontage,
+		false,
+		0.f
 	);
 }
 
-void AACCharacter::StopFaceToFace()
+void AACCharacter::ServerStopHoldInteraction_Implementation(AActor* TargetActor)
 {
-	// 타이머 종료
-	GetWorld()->GetTimerManager().ClearTimer(RotateTimerHandle);
+	MulticastStopHoldInteraction(TargetActor);
+}
 
-	// 원래 상태 복원
-	bUseControllerRotationYaw = bPrevUseControllerRotationYaw;
-	if (UCharacterMovementComponent* CMC = GetCharacterMovement())
+void AACCharacter::MulticastStartHoldInteraction_Implementation(
+	AActor* TargetActor,
+	UAnimMontage* InitiatorMontage,
+	UAnimMontage* TargetMontage,
+	bool bFaceToFace,
+	float RotationSpeed)
+{
+	// 1. Initiator 몽타주 재생
+	if (InitiatorMontage)
 	{
-		CMC->bUseControllerDesiredRotation = bPrevUseControllerDesiredRotation;
+		if (UAnimInstance* AnimInst = GetMesh()->GetAnimInstance())
+		{
+			AnimInst->Montage_Play(InitiatorMontage);
+			CurrentInteractionMontage = InitiatorMontage;
+		}
+	}
+
+	// 2. Target 몽타주 재생 (ACharacter* 공통 - 시민도 플레이어도)
+	ACharacter* TargetChar = Cast<ACharacter>(TargetActor);
+	if (TargetMontage && TargetChar)
+	{
+		if (UAnimInstance* TargetAnimInst = TargetChar->GetMesh()->GetAnimInstance())
+		{
+			TargetAnimInst->Montage_Play(TargetMontage);
+			TargetInteractionMontage = TargetMontage;
+		}
 	}
 }
 
-void AACCharacter::UpdateFaceToFace()
+void AACCharacter::MulticastStopHoldInteraction_Implementation(AActor* TargetActor)
 {
-	// 목표 각도에 도달했는지 확인 (오차범위 1도)
-	FRotator CurrentRot = Controller ? Controller->GetControlRotation() : GetActorRotation();
-	if (CurrentRot.Equals(DesiredLookAtRotation, 1.0f))
+	// 1. Initiator 몽타주 정지
+	if (CurrentInteractionMontage)
 	{
-		return;
+		if (UAnimInstance* AnimInst = GetMesh()->GetAnimInstance())
+		{
+			AnimInst->Montage_Stop(0.25f, CurrentInteractionMontage);
+		}
+		CurrentInteractionMontage = nullptr;
 	}
 
-	// 부드럽게 보간 (Interp)
-	float InterpSpeed = 5.0f; // 회전 속도 조절
-
-	if (Controller)
+	// 2. Target 몽타주 정지
+	ACharacter* TargetChar = Cast<ACharacter>(TargetActor);
+	if (TargetInteractionMontage && TargetChar)
 	{
-		// 플레이어: 컨트롤러 회전
-		FRotator NewRot = FMath::RInterpTo(Controller->GetControlRotation(), DesiredLookAtRotation, 0.015f, InterpSpeed);
-		Controller->SetControlRotation(NewRot);
-	}
-	else
-	{
-		// NPC: 액터 자체 회전
-		FRotator NewRot = FMath::RInterpTo(GetActorRotation(), DesiredLookAtRotation, 0.015f, InterpSpeed);
-		SetActorRotation(NewRot);
+		if (UAnimInstance* TargetAnimInst = TargetChar->GetMesh()->GetAnimInstance())
+		{
+			TargetAnimInst->Montage_Stop(0.25f, TargetInteractionMontage);
+		}
+		TargetInteractionMontage = nullptr;
 	}
 }
 

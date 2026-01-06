@@ -84,6 +84,25 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerFreezeCharacter(AActor* Target, bool bFreeze);
 
+	// === 홀드 상호작용 RPC ===
+	UFUNCTION(Server, Reliable)
+	void ServerStartHoldInteraction(AActor* TargetActor, class UACInteractionData* InteractionData);
+
+	UFUNCTION(Server, Reliable)
+	void ServerStopHoldInteraction(AActor* TargetActor);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastStartHoldInteraction(
+		AActor* TargetActor,
+		UAnimMontage* InitiatorMontage,
+		UAnimMontage* TargetMontage,
+		bool bFaceToFace,
+		float RotationSpeed
+	);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastStopHoldInteraction(AActor* TargetActor);
+
 public:
 
 	UFUNCTION(BlueprintCallable)
@@ -330,21 +349,13 @@ private:
 	float RequiredHoldTime = 0.f;
 	bool bIsHoldingInteract = false;
 
-	// === 상호작용 시 타겟 회전 (Timer 방식) ===
-	FTimerHandle RotateTimerHandle;
-	FRotator DesiredLookAtRotation;
-
-	void StartFaceToFace(AActor* TargetActor);
-	void StopFaceToFace();
-	void UpdateFaceToFace();
-
-	// 기존 회전 설정 저장용
-	bool bPrevUseControllerRotationYaw = false;
-	bool bPrevUseControllerDesiredRotation = false;
-
 	// 현재 상호작용 몽타주 저장
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentInteractionMontage;
+
+	// 타겟의 상호작용 몽타주 저장
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> TargetInteractionMontage;
 
 	// ===== 상점 관련 =====
 protected:
