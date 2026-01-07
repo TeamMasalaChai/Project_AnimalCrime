@@ -485,6 +485,7 @@ void AACCharacter::InteractStarted(int32 InputIndex)
 	RequiredHoldTime = InteractionData->HoldDuration;
 	const EInteractionKey Key = static_cast<EInteractionKey>(InputIndex);
 
+
 	// 즉시 상호작용
 	if (RequiredHoldTime <= KINDA_SMALL_NUMBER)
 	{
@@ -519,6 +520,13 @@ void AACCharacter::InteractHolding(const float DeltaTime)
 	// 유효성 체크
 	if (!CurrentHoldTarget || !NearInteractables.Contains(CurrentHoldTarget))
 	{
+		ResetHoldInteract();
+		return;
+	}
+
+	if (CharacterState == ECharacterState::OnDamage)
+	{
+		//todo: 상대 OnDamage로 풀어주기
 		ResetHoldInteract();
 		return;
 	}
@@ -775,34 +783,12 @@ void AACCharacter::ServerInteract_Implementation(AActor* Target, EInteractionKey
 	}
 
 	IACInteractInterface* Interactable = Cast<IACInteractInterface>(Target);
-	//if (Interactable == nullptr)
-	//{                                                                                                     
-	//    AC_LOG(LogSW, Log, TEXT("%s has No Interface!!"), *Target->GetName());                            
-	//    return;                                                                                           
-	//}                                                                                                     
-
-	//// 상호작용 가능한지 서버에서 확실하게 체크
-	//EACInteractorType TargetType = Interactable->GetInteractorType();                                     
-
-	//// PrisonDoor 예외: 문이 열려있으면 리턴                                                                  
-	//if (TargetType == EACInteractorType::PrisonDoor)                                                      
-	//{                                                                                                     
-	//    AACPrisonBase* Prison = Cast<AACPrisonBase>(Target);                                              
-	//    if (Prison && Prison->IsDoorOpen())                                                               
-	//    {                                                                                                 
-	//        AC_LOG(LogSW, Log, TEXT("Prison door is already open!"));                                     
-	//        return;                                                                                       
-	//    }                                                                                                 
-	//}                                                                                                     
-		
-	//// DB에서 상호작용 가능 여부 체크                                                                         
-	//UACInteractionSubsystem* InteractionSys = GetGameInstance()->GetSubsystem<UACInteractionSubsystem>(); 
-	//UACInteractionDatabase* DB = InteractionSys ? InteractionSys->GetInteractionDatabase() : nullptr;     
-	//if (!DB || DB->GetInteractions(GetCharacterType(), TargetType).Num() == 0)                            
-	//{                                                                                                     
-	//    AC_LOG(LogSW, Log, TEXT("%s Cant Interact with %s!!"), *Target->GetName(), *GetName());           
-	//    return;                                                                                           
-	//
+	if (Interactable == nullptr)
+	{                                                                                                     
+	    AC_LOG(LogSW, Log, TEXT("%s has No Interface!!"), *Target->GetName());                            
+	    return;                                                                                           
+	}                                                                                                                                                                                                                                                 
+	
 
 	Interactable->OnInteract(this, InKey);
 	AC_LOG(LogSW, Log, TEXT("%s Interacted with %s!!"), *Target->GetName(), *GetName());
@@ -950,6 +936,12 @@ void AACCharacter::UpdateFocus()
 		return;
 	}
 
+	// 홀드 상호작용 중에는 포커스 갱신을 막음 (상태 변경으로 인해 UI가 사라지는 것 방지)
+	if (bIsHoldingInteract)
+	{
+		return;
+	}
+
 	AActor* PreviousFocus = FocusedInteractable;
 	FocusedInteractable = nullptr;
 	//FocusedInteractions.Empty();
@@ -1002,7 +994,7 @@ void AACCharacter::UpdateFocus()
 		break;
 	}
 
-	// 3. Focus 변경 시 위젯 업데이트
+	// 3. Focus 변경 시 이전 위젯 숨김
 	if (FocusedInteractable != PreviousFocus)
 	{
 		// 이전 Focus 위젯 숨김
@@ -1012,80 +1004,106 @@ void AACCharacter::UpdateFocus()
 			if (PrevInteractable)
 				PrevInteractable->HideInteractionHints();
 		}
-
-		// 새 Focus - 이미 가져온 DB로 상호작용 조회 및 위젯 표시
-		if (FocusedInteractable && FocusedInterface && DB)
-		{
-			FocusedInteractions.Empty();
-			TArray<UACInteractionData*> AllInteractions = DB->GetInteractions(CharacterType, FocusedTargetType);
-
-			for (UACInteractionData* InteractionData : AllInteractions)
-			{
-				if (!InteractionData) continue;
-
-				// 캐릭터 상호작용인 경우만 상태 체크
-				//if (InteractionData->bIsCharacterInteraction)
-				//{
-				//	AACCharacter* TargetChar = Cast<AACCharacter>(FocusedInteractable);
-				//	if (TargetChar)
-				//	{
-				//		if (InteractionData->InteractableState != TargetChar->CharacterState)
-				//			continue; // 상태 불일치 - 필터링
-				//	}
-				//}
-
-				FocusedInteractions.Add(InteractionData);
-			}
-
-			FocusedInterface->ShowInteractionHints(FocusedInteractions);
-		}
 	}
-}
 
-void AACCharacter::QueryInteractionsForFocus()
-{
-	FocusedInteractions.Empty();
+	// 4. 현재 Focus 위젯 업데이트 (Focus가 같아도 상태 변경으로 인해 목록이 바뀔 수 있음)
+	if (FocusedInteractable && FocusedInterface && DB)
+	{
+		// FocusedInteractions 초기화 (최대 키 개수만큼, nullptr로 채움)
+		const int32 MaxKeys = static_cast<int32>(EInteractionKey::Total);
+		FocusedInteractions.Init(nullptr, MaxKeys);
 
-	// 1. Subsystem 가져오기
-	UACInteractionSubsystem* InteractionSys =
-		GetGameInstance()->GetSubsystem<UACInteractionSubsystem>();
-	if (!InteractionSys) return;
+		TArray<UACInteractionData*> AllInteractions = DB->GetInteractions(CharacterType, FocusedTargetType);
 
-	UACInteractionDatabase* DB = InteractionSys->GetInteractionDatabase();
-	if (!DB) return;
-
-	// 2. 타입 정보 가져오기
-	EACCharacterType InitiatorType = GetCharacterType();
-	IACInteractInterface* Interactable = Cast<IACInteractInterface>(FocusedInteractable);
-	if (!Interactable) return;
-
-	EACInteractorType TargetType = Interactable->GetInteractorType();
-
-	// 3. DB 조회
-	TArray<UACInteractionData*> AllInteractions = DB->GetInteractions(InitiatorType, TargetType);
-	AC_LOG(LogSW, Log, TEXT("Interaction Count: %d"), AllInteractions.Num())
-
-		// 4. 캐릭터 상태로 필터링 (bIsCharacterInteraction 사용)
 		for (UACInteractionData* InteractionData : AllInteractions)
 		{
 			if (!InteractionData) continue;
 
-			// 캐릭터 상호작용인 경우만 상태 체크
-			//if (InteractionData->bIsCharacterInteraction)
-			//{
-			//	AACCharacter* TargetChar = Cast<AACCharacter>(FocusedInteractable);
-			//	if (TargetChar)
-			//	{
-			//		if (InteractionData->InteractableState != TargetChar->CharacterState)
-			//			continue; // 상태 불일치 - 필터링
-			//	}
-			//}
+			// 1) 주체(나) 상태 체크
+			if (InteractionData->InteractorState.IsEmpty() == false)
+			{
+				if (InteractionData->InteractorState.Contains(CharacterState) == false)
+				{
+					// 내 상태가 조건에 없다면 스킵
+					continue;
+				}
+			}
 
-			FocusedInteractions.Add(InteractionData);
+			// 2) 대상 상태 체크 (대상이 캐릭터인 경우만)
+			if (InteractionData->bIsCharacterInteraction == true)
+			{
+				if (InteractionData->TargetState.IsEmpty() == false)
+				{
+					AACCharacter* TargetChar = Cast<AACCharacter>(FocusedInteractable);
+					if (TargetChar != nullptr)
+					{
+						if (InteractionData->TargetState.Contains(TargetChar->CharacterState) == false)
+						{
+							// 대상 상태가 조건에 없다면 스킵
+							continue;
+						}
+					}
+				}
+			}
+
+			// 키 매핑 (Enum 값을 바로 인덱스로 사용)
+			int32 KeyIndex = static_cast<int32>(InteractionData->AssignedKey);
+
+			if (KeyIndex >= 0 && KeyIndex < MaxKeys)
+			{
+				FocusedInteractions[KeyIndex] = InteractionData;
+			}
 		}
 
-	// 5. 위젯에 상호작용 정보 전달
-	Interactable->ShowInteractionHints(FocusedInteractions);
+		FocusedInterface->ShowInteractionHints(FocusedInteractions);
+	}
+	
+}
+
+void AACCharacter::QueryInteractionsForFocus()
+{
+	//FocusedInteractions.Empty();
+
+	//// 1. Subsystem 가져오기
+	//UACInteractionSubsystem* InteractionSys =
+	//	GetGameInstance()->GetSubsystem<UACInteractionSubsystem>();
+	//if (!InteractionSys) return;
+
+	//UACInteractionDatabase* DB = InteractionSys->GetInteractionDatabase();
+	//if (!DB) return;
+
+	//// 2. 타입 정보 가져오기
+	//EACCharacterType InitiatorType = GetCharacterType();
+	//IACInteractInterface* Interactable = Cast<IACInteractInterface>(FocusedInteractable);
+	//if (!Interactable) return;
+
+	//EACInteractorType TargetType = Interactable->GetInteractorType();
+
+	//// 3. DB 조회
+	//TArray<UACInteractionData*> AllInteractions = DB->GetInteractions(InitiatorType, TargetType);
+	//AC_LOG(LogSW, Log, TEXT("Interaction Count: %d"), AllInteractions.Num())
+
+	//	// 4. 캐릭터 상태로 필터링 (bIsCharacterInteraction 사용)
+	//	for (UACInteractionData* InteractionData : AllInteractions)
+	//	{
+	//		if (!InteractionData) continue;
+
+	//		// 캐릭터 상호작용인 경우만 상태 체크
+	//		//if (InteractionData->bIsCharacterInteraction)
+	//		//{
+	//		//	AACCharacter* TargetChar = Cast<AACCharacter>(FocusedInteractable);
+	//		//	if (TargetChar)
+	//		//	{
+	//		//		if (InteractionData->InteractableState != TargetChar->CharacterState)
+	//		//			continue; // 상태 불일치 - 필터링
+	//		//	}
+	//		//}
+
+	//		FocusedInteractions.Add(InteractionData);
+	//	}
+
+	//// 5. 위젯에 상호작용 정보 전달
+	//Interactable->ShowInteractionHints(FocusedInteractions);
 }
 
 void AACCharacter::AddInteractable(AActor* Interactor)
@@ -1158,6 +1176,7 @@ void AACCharacter::OnRep_CharacterState()
 	}
 
 	AC_LOG(LogHY, Error, TEXT("CharacterType:%d name:%s"), CharacterState, *GetName());
+	AC_LOG(LogSW, Error, TEXT("CharacterType:%d name:%s"), CharacterState, *GetName());
 
 	switch (CharacterState)
 	{
@@ -1193,24 +1212,25 @@ void AACCharacter::OnRep_CharacterState()
 	}
 	}
 
+	// todo: 시민은 처리 안해주고있음
 	//// Focus된 캐릭터의 상태가 변경되면 상호작용 재계산
-	//if (GetWorld())
-	//{
-	//	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	//	{
-	//		AACMainPlayerController* PC = Cast<AACMainPlayerController>(*It);
-	//		if (!PC) continue;
+	if (GetWorld())
+	{
+		// 1. 내 상태가 변경된 경우 (내가 로컬 플레이어)
+		UpdateFocus();
 
-	//		AACCharacter* LocalChar = PC->GetPawn<AACCharacter>();
-	//		if (!LocalChar) continue;
-
-	//		// 로컬 플레이어가 이 캐릭터를 Focus 중이면 상호작용 재계산
-	//		if (LocalChar->FocusedInteractable == this)
-	//		{
-	//			LocalChar->QueryInteractionsForFocus();
-	//		}
-	//	}
-	//}
+		// 2. 타인의 상태가 변경된 경우 (로컬 플레이어가 나를 보고 있는지 확인)
+		APlayerController* LocalPC = GetWorld()->GetFirstPlayerController();
+		if (LocalPC && LocalPC->IsLocalController())
+		{
+			AACCharacter* LocalChar = Cast<AACCharacter>(LocalPC->GetPawn());
+			if (LocalChar && LocalChar != this && LocalChar->FocusedInteractable == this)
+			{
+				// 로컬 플레이어가 나를 보고 있다면, 로컬 플레이어의 UI 갱신
+				LocalChar->UpdateFocus();
+			}
+		}
+	}
 }
 
 ECharacterState AACCharacter::GetCharacterState() const
@@ -1248,13 +1268,14 @@ void AACCharacter::ResetHoldInteract()
 		ServerStopHoldInteraction(CurrentHoldTarget);
 		ServerFreezeCharacter(CurrentHoldTarget, false);
 		RemoveInteractable(CurrentHoldTarget);
-		UpdateFocus();
 	}
 
 	bIsHoldingInteract = false;
 	CurrentHoldTarget = nullptr;
 	CurrentHoldTime = 0.f;
 	RequiredHoldTime = 0.f;
+
+	UpdateFocus();
 }
 
 float AACCharacter::GetHoldProgress() const
@@ -1351,7 +1372,7 @@ void AACCharacter::ServerFreezeCharacter_Implementation(AActor* Target, bool bFr
 			return;
 		}
 
-		if (Interactable->GetInteractorType() == EACInteractorType::Citizen)
+		if (Interactable->GetInteractorType() == EACInteractorType::Citizen || Interactable->GetInteractorType() == EACInteractorType::BlackMarketDealer)
 		{
 			ACharacter* Char = Cast<ACharacter>(Target);
 			if (Char == nullptr)
@@ -1400,7 +1421,7 @@ void AACCharacter::ServerFreezeCharacter_Implementation(AActor* Target, bool bFr
 			return;
 		}
 
-		if (Interactable->GetInteractorType() == EACInteractorType::Citizen)
+		if (Interactable->GetInteractorType() == EACInteractorType::Citizen || Interactable->GetInteractorType() == EACInteractorType::BlackMarketDealer)
 		{
 			ACharacter* Char = Cast<ACharacter>(Target);
 			if (Char == nullptr)
@@ -1434,9 +1455,7 @@ void AACCharacter::ServerStartHoldInteraction_Implementation(AActor* TargetActor
 	MulticastStartHoldInteraction(
 		TargetActor,
 		InteractionData->InitiatorMontage,
-		InteractionData->TargetMontage,
-		false,
-		0.f
+		InteractionData->TargetMontage
 	);
 }
 
@@ -1448,9 +1467,7 @@ void AACCharacter::ServerStopHoldInteraction_Implementation(AActor* TargetActor)
 void AACCharacter::MulticastStartHoldInteraction_Implementation(
 	AActor* TargetActor,
 	UAnimMontage* InitiatorMontage,
-	UAnimMontage* TargetMontage,
-	bool bFaceToFace,
-	float RotationSpeed)
+	UAnimMontage* TargetMontage)
 {
 	// 1. Initiator 몽타주 재생
 	if (InitiatorMontage)

@@ -98,9 +98,7 @@ protected:
 	void MulticastStartHoldInteraction(
 		AActor* TargetActor,
 		UAnimMontage* InitiatorMontage,
-		UAnimMontage* TargetMontage,
-		bool bFaceToFace,
-		float RotationSpeed
+		UAnimMontage* TargetMontage
 	);
 
 	UFUNCTION(NetMulticast, Reliable)
