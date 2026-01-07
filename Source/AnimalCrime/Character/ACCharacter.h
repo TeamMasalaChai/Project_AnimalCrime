@@ -10,6 +10,8 @@
 #include "Net/VoiceConfig.h"
 #include "ACCharacter.generated.h"
 
+class AACMainPlayerController;
+
 UCLASS()
 class ANIMALCRIME_API AACCharacter : public ACharacter, public IACInteractInterface
 {
@@ -75,6 +77,8 @@ public:
 	// 서버에 Dash 요청 함수
 	UFUNCTION(Server, Reliable)
 	void ServerSprintEnd();
+	
+	AACMainPlayerController* GetMainPlayerController() const;
 
 protected:
 
@@ -115,11 +119,6 @@ public:
 
 
 public:
-	// TObjectPtr<class USkeletalMeshComponent> GetHeadMesh() const { return HeadMesh; }
-	// TObjectPtr<class USkeletalMeshComponent> GetFaceAccMesh() const { return FaceAccMesh; }
-	// TObjectPtr<class USkeletalMeshComponent> GetTopMesh() const { return TopMesh; }
-	// TObjectPtr<class USkeletalMeshComponent> GetBottomMesh() const { return BottomMesh; }
-	// TObjectPtr<class USkeletalMeshComponent> GetShoesMesh() const { return ShoesMesh; }
 	TObjectPtr<class USkeletalMeshComponent> GetHeadMesh() const { return HeadMesh; }
 	TObjectPtr<class USkeletalMeshComponent> GetFaceAccMesh() const { return FaceAccMesh; }
 	TObjectPtr<class USkeletalMeshComponent> GetTopMesh() const { return TopMesh; }
@@ -251,6 +250,7 @@ protected:
 
 public:
 	virtual void AttackHitCheck();
+	bool IsHoldingGun();
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastPlayAttackMontage();
@@ -443,6 +443,11 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_CharacterState, EditAnywhere, BlueprintReadWrite, Category = "State")
 	ECharacterState CharacterState;
 
+	
+	void SetFreeState();
+	void SetStunState() const;
+	void SetPrisonState();
+	void SetPrisonEscapeState();
 
 protected: // Dash 전용 맴버 변수
 	FTimerHandle DashTimerHandle;
@@ -566,4 +571,16 @@ protected:	// 캐릭터 스킬의 맴버 변수
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float DashCoolTimeData;
+
+	// 나중에 추가
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float OriginZVelocity = 500.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float StunWalkSpeed = 10.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float StunZVelocity = 0.0f;
+
+	
+	FTimerHandle EscapeTimerHandle;
 };

@@ -4,8 +4,10 @@
 #include "ACCitizenAIController.h"
 
 #include "AnimalCrime.h"
+#include "NavigationSystem.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Character/ACCitizen.h"
 
 
 #pragma region 생성자
@@ -121,4 +123,28 @@ void AACCitizenAIController::StopAI()
 	}
 	
 	LocalBrainComp->StopLogic(TEXT("AI Stopped by StopAI function"));
+}
+
+bool AACCitizenAIController::GetNextPosition(FVector& InOutPosition) const
+{
+	APawn* PossessedPawn = GetPawn();
+	if (PossessedPawn == nullptr)
+	{
+		return false;
+	}
+	
+	const AACCitizen* CitizenPawn = Cast<AACCitizen>(PossessedPawn);
+	if (CitizenPawn == nullptr)
+	{
+		return false;
+	}
+	
+	// Citizen의 함수를 통해 가져옴.
+	InOutPosition = CitizenPawn->GetNextPosition();
+	if (InOutPosition == FVector::Zero())
+	{
+		
+	}
+	
+	return true;
 }

@@ -33,10 +33,9 @@ public:
 	void StopAI();
 #pragma endregion
 	
-#pragma region AI 작동 로직
+#pragma region AI Task 로직
 public:
-	void RunAI();
-	void StopAI();
+	bool GetNextPosition(FVector& InOutPosition) const;
 #pragma endregion
 	
 #pragma region 맴버 변수

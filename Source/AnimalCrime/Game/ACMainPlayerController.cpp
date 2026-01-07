@@ -866,26 +866,41 @@ void AACMainPlayerController::ZoomIn()
 	bZoomFlag = true;
 	AC_LOG(LogHY, Error, TEXT("ZoomIn %d"), bZoomFlag);
 	
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
+	AACCharacter* CharacterPawn = GetPawn<AACCharacter>();
+	if (CharacterPawn == nullptr)
 	{
-		AC_LOG(LogHY, Log, TEXT("ControlledCharacter is nullptr"));
+		AC_LOG(LogHY, Log, TEXT("CharacterPawn is nullptr"));
 		return;
 	}
 	
-	UCameraComponent* FollowCamera = ControlledCharacter->GetFollowCamera();
-	UCameraComponent* GunCamera = ControlledCharacter->GetGunCamera();
-
-	if (FollowCamera && GunCamera)
+	if (CharacterPawn->IsHoldingGun() == false)
 	{
-		FollowCamera->Deactivate();
-		GunCamera->Activate();
-		USkeletalMeshComponent* Mesh = ControlledCharacter->GetMesh();
-		if (Mesh)
-		{
-			Mesh->SetOwnerNoSee(true);
-		}
+		AC_LOG(LogHY, Log, TEXT("No Gun In Hand"));
+		return;
 	}
+	
+	UCameraComponent* FollowCamera = CharacterPawn->GetFollowCamera();
+	if (FollowCamera == nullptr)
+	{
+		AC_LOG(LogHY, Log, TEXT("FollowCamera is nullptr"));
+		return;
+	}
+	UCameraComponent* GunCamera = CharacterPawn->GetGunCamera();
+	if (GunCamera == nullptr)
+	{
+		AC_LOG(LogHY, Log, TEXT("GunCamera is nullptr"));
+		return;
+	}
+
+	// 기존 카메라 대신 총의 위치 카메라로 변경.
+	FollowCamera->Deactivate();
+	GunCamera->Activate();
+	USkeletalMeshComponent* Mesh = CharacterPawn->GetMesh();
+	if (Mesh)
+	{
+		Mesh->SetOwnerNoSee(true);
+	}
+	
 	ACHUDWidget->ZoomInState();
 }
 

@@ -33,6 +33,7 @@
 #include "Game/ACMainPlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Component/ACDestroyableStatComponent.h"
 #include "Component/ACMoneyComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Engine/TextureRenderTarget2D.h"
@@ -665,6 +666,11 @@ void AACCharacter::Sprint(const FInputActionValue& Value)
 	}
 }
 
+AACMainPlayerController* AACCharacter::GetMainPlayerController() const
+{
+	return Cast<AACMainPlayerController>(GetController());
+}
+
 void AACCharacter::ServerSprintStart_Implementation()
 {
 	if (bSprint == true)
@@ -827,22 +833,31 @@ void AACCharacter::AttackHitCheck()
 	// 자식 클래스에서 구현
 }
 
-void AACCharacter::FireHitscan()
+bool AACCharacter::IsHoldingGun()
 {
 	UACItemData* EquippedWeapon = ShopComponent->EquippedWeapon;
 	if (EquippedWeapon == nullptr)
 	{
 		AC_LOG(LogHY, Log, TEXT("EquippedWeapon is nullptr"));
-		return;
+		return false;
 	}
 	if (EquippedWeapon->ItemType != EItemType::Weapon)
 	{
 		AC_LOG(LogTemp, Log, TEXT(">>> Weapon Equipped: %s"), *EquippedWeapon->ItemName.ToString());
-		return;
+		return false;
 	}
 	if (EquippedWeapon->ItemName.ToString() != TEXT("Pistol_001"))
-    {
+	{
 		AC_LOG(LogTemp, Log, TEXT(">>>	 Weapon Equipped: %s"), *EquippedWeapon->ItemName.ToString());
+		return false;
+	}
+	return true;
+}
+
+void AACCharacter::FireHitscan()
+{
+	if (IsHoldingGun() == false)
+	{
 		return;
 	}
 	
@@ -1157,18 +1172,13 @@ bool AACCharacter::SortNearInteractables()
 
 void AACCharacter::OnRep_CharacterState()
 {
-	//if (IsValid(this) == false)
-	//{
-	//	return;
-	//}		
-
-	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
 	if (IsValid(this) == false)
 	{
 		AC_LOG(LogHY, Error, TEXT("this is Invalid"));
 		return;
 	}
-
+	
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
 	if (MoveComp == nullptr)
 	{
 		AC_LOG(LogHY, Error, TEXT("MoveComp is nullptr"));
@@ -1186,25 +1196,22 @@ void AACCharacter::OnRep_CharacterState()
 		MoveComp->JumpZVelocity = 0.f;
 		break;
 	}
-	case ECharacterState::Stun:
-	{
-		MoveComp->MaxWalkSpeed = 10.f;
-		MoveComp->JumpZVelocity = 0.f;
-		break;
-	}
 	case ECharacterState::Free:
 	{
-		if (GetCharacterType() == EACCharacterType::Police)
-		{
-			MoveComp->MaxWalkSpeed = 500.0f; // 경찰
-		}
-		else
-		{
-			MoveComp->MaxWalkSpeed = 300.0f; // 마피아
-		}
-		MoveComp->JumpZVelocity = 500.0f;
+		SetFreeState();
 		break;
 	}
+	case ECharacterState::Stun:
+	{
+		SetStunState();
+		break;
+	}
+	case ECharacterState::Prison:
+	{
+		SetPrisonState();
+		break;
+	}
+		
 	case ECharacterState::OnDamage:
 	{
 		MoveComp->MaxWalkSpeed = 600.0f;
@@ -1233,6 +1240,8 @@ void AACCharacter::OnRep_CharacterState()
 	}
 }
 
+
+
 ECharacterState AACCharacter::GetCharacterState() const
 {
 	return CharacterState;
@@ -1240,12 +1249,81 @@ ECharacterState AACCharacter::GetCharacterState() const
 
 void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 {
+	// 감옥 상태의 경우 특별하기 때문에 예외처리.
+	if (CharacterState == ECharacterState::Prison)
+	{
+		if (InCharacterState != ECharacterState::PrisonEscape)
+		{
+			return;
+		}
+	}
+	
 	CharacterState = InCharacterState;
 
 	if (HasAuthority())
 	{
 		OnRep_CharacterState();
 	}
+}
+
+void AACCharacter::SetFreeState()
+{
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (MoveComp == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("MoveComp is nullptr"));
+		return;
+	}
+	
+	// Case: Police
+	if (GetCharacterType() == EACCharacterType::Police)
+	{
+		MoveComp->MaxWalkSpeed = OriginPoliceMoveSpeedData;
+	}
+	// Case: Mafia
+	else
+	{
+		MoveComp->MaxWalkSpeed = OriginMafiaMoveSpeedData;
+	}
+	
+	MoveComp->JumpZVelocity = OriginZVelocity;
+}
+
+void AACCharacter::SetStunState() const
+{
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (MoveComp == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("MoveComp is nullptr"));
+		return;
+	}
+	
+	// MovementComponent 속성 변경
+	MoveComp->MaxWalkSpeed = StunWalkSpeed;
+	MoveComp->JumpZVelocity = StunZVelocity;
+	
+	// 컨트롤러의 HUD 변경
+	AACMainPlayerController* MainPlayerController = GetMainPlayerController();
+	if (MainPlayerController == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("MainPlayerController is nullptr"));
+		return;
+	}
+	// MainPlayerController->ZoomOut();
+}
+
+void AACCharacter::SetPrisonState()
+{
+	Stat->SetCurrentHp(Stat->GetMaxHp());	
+}
+
+void AACCharacter::SetPrisonEscapeState()
+{
+	// Todo: 언젠가 Free로 되돌려야 함.
+	
+	// FTimerDelegate TimerDelegate;
+	// TimerDelegate.BindUObject(this, &AACCharacter::SetPrisonEscapeState);
+	// GetWorld()->GetTimerManager().SetTimer(EscapeTimerHandle, TimerDelegate, 3, false);
 }
 
 void AACCharacter::ResetHoldInteract()
@@ -1775,7 +1853,7 @@ void AACCharacter::SpendBullets(int32 InBulletCount)
 
 void AACCharacter::OnRep_BulletCount()
 {
-	AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
+	AACMainPlayerController* PC = GetMainPlayerController();
 	if (PC && PC->IsLocalController())
 	{
 		PC->UpdateAmmoUI(BulletCount);

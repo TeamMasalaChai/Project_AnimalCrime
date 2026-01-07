@@ -62,6 +62,7 @@ enum class ECharacterState : uint8
 	Angry,
 	Stun,
 	Prison,
+	PrisonEscape,
 	MAX_COUNT
 };
 

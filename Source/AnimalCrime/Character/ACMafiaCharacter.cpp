@@ -33,6 +33,12 @@ void AACMafiaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 float AACMafiaCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+	// 감옥 상태에서는 맞아서는 안됌.
+	if (CharacterState == ECharacterState::Prison)
+	{
+		return 0.0;
+	}
+	
 	float SuperResult = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	// 피격 사운드 재생
