@@ -16,6 +16,60 @@ AACBlackMarketDealer::AACBlackMarketDealer()
 
 }
 
+void AACBlackMarketDealer::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// 약간의 딜레이 후 하이라이트 적용 (플레이어 스폰 타이밍 고려)
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(
+		TimerHandle,
+		this,
+		&AACBlackMarketDealer::UpdateHighlightForLocalPlayer,
+		0.5f,  // 0.5초 후 실행
+		false // 한번 실행 후 자동 정리
+	);
+}
+
+void AACBlackMarketDealer::UpdateHighlightForLocalPlayer()
+{
+	// 로컬 플레이어 가져오기
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC == nullptr)
+	{
+		return;
+	}
+
+	AACCharacter* LocalChar = Cast<AACCharacter>(PC->GetPawn());
+	if (LocalChar == nullptr)
+	{
+		return;
+	}
+
+	// 마피아만 하이라이트 적용
+	if (LocalChar->GetCharacterType() == EACCharacterType::Mafia)
+	{
+		// AACCitizen의 메시 컴포넌트들 사용
+		TArray<USkeletalMeshComponent*> MeshComponents = {
+			HeadMeshComp,
+			FaceMeshComp,
+			TopMeshComp,
+			BottomMeshComp,
+			ShoesMeshComp,
+			FaceAccMeshComp,
+			GetMesh()
+		};
+
+		for (USkeletalMeshComponent* MeshComp : MeshComponents)
+		{
+			if (MeshComp && MafiaHighlightMaterial)
+			{
+				MeshComp->SetOverlayMaterial(MafiaHighlightMaterial);
+			}
+		}
+	}
+}
+
 //EACCharacterType AACBlackMarketDealer::GetCharacterType()
 //{
 //	return EACCharacterType::BlackMarketDealer;

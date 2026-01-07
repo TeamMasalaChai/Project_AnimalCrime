@@ -14,6 +14,12 @@ public:
 	AACBlackMarketDealer();
 
 	//virtual EACCharacterType GetCharacterType() override;
+protected:
+	virtual void BeginPlay() override;
+
+private:
+	void UpdateHighlightForLocalPlayer();
+
 
 	//!< 상호작용 인터페이스
 protected:
@@ -25,4 +31,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BlackMarket")
 	TObjectPtr<class UACBlackMarketComponent> BlackMarketComponent;
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Highlight")
+	TObjectPtr<UMaterialInterface> MafiaHighlightMaterial;
 };
