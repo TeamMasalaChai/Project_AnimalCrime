@@ -73,6 +73,7 @@ float AACMafiaCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 		// 상태 변경
 		CharacterState = ECharacterState::Stun;
 		OnRep_CharacterState();
+		// todo: SetCharacterState(ECharacterState::Stun) ?????
 		
 		if (CharacterState == ECharacterState::Stun)
 		{
@@ -84,7 +85,8 @@ float AACMafiaCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 	{
 		CharacterState = ECharacterState::OnDamage;
 		OnRep_CharacterState();
-		
+		// todo: SetCharacterState(ECharacterState::OnDamage) ?????
+
 		if (CharacterState == ECharacterState::OnDamage)
 		{
 			TimerDelegate.BindUObject(this, &AACMafiaCharacter::UpdateCharacterStatusFree);
