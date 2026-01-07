@@ -29,9 +29,12 @@ void UACInteractionInfoWidget::UpdateInteractions(const TArray<UACInteractionDat
 			continue;
 		}
 
+		const UEnum* KeyEnum = StaticEnum<EInteractionKey>();
+		FString KeyName = KeyEnum ? KeyEnum->GetNameStringByValue(static_cast<int64>(Data->AssignedKey)) : TEXT("?");
+
 		// "[E] 신분증 확인" 형식
 		FString Line = FString::Printf(TEXT("[%s] %s"),
-			*Data->AssignedKey,
+			*KeyName,
 			*Data->InteractionName.ToString());
 
 		HintText += Line;

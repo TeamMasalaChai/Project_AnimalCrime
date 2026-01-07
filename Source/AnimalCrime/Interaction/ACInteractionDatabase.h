@@ -18,13 +18,13 @@ class UACInteractionData;
  * 구조체로 래핑함 (Unreal 리플렉션 시스템 제약)
  */
 USTRUCT(BlueprintType)
-struct FInteractionMissionList
+struct FInteractionInfoList
 {
 	GENERATED_BODY()
 
 	// 해당 상호작용에서 가능한 임무들
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
-	TArray<UACInteractionData*> Missions;
+	TArray<UACInteractionData*> InteractionInfos;
 };
 
 /**
@@ -117,7 +117,7 @@ public:
 	 *       Missions: [DA_BuyWeapon, DA_BuyArmor]
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction Database")
-	TMap<FInteractionKey, FInteractionMissionList> InteractionMap;
+	TMap<FInteractionKey, FInteractionInfoList> InteractionMap;
 
 	/**
 	 * @brief 특정 조합에 해당하는 상호작용 임무들을 가져옴
@@ -137,9 +137,9 @@ public:
 		Key.InitiatorType = Initiator;
 		Key.TargetType = TargetType;
 
-		if (const FInteractionMissionList* Found = InteractionMap.Find(Key))
+		if (const FInteractionInfoList* Found = InteractionMap.Find(Key))
 		{
-			return Found->Missions;
+			return Found->InteractionInfos;
 		}
 
 		// 못 찾으면 빈 배열 반환
@@ -160,8 +160,8 @@ public:
 		Key.InitiatorType = Initiator;
 		Key.TargetType = TargetType;
 
-		const FInteractionMissionList* Found = InteractionMap.Find(Key);
-		return Found != nullptr && Found->Missions.Num() > 0;
+		const FInteractionInfoList* Found = InteractionMap.Find(Key);
+		return Found != nullptr && Found->InteractionInfos.Num() > 0;
 	}
 
 #if WITH_EDITOR
@@ -181,7 +181,7 @@ public:
 		for (const auto& Pair : InteractionMap)
 		{
 			// 빈 배열 경고
-			if (Pair.Value.Missions.Num() == 0)
+			if (Pair.Value.InteractionInfos.Num() == 0)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("[InteractionDatabase] Empty mission array for key: %s + %s"),
 					*UEnum::GetValueAsString(Pair.Key.InitiatorType),
@@ -189,9 +189,9 @@ public:
 			}
 
 			// nullptr 미션 경고
-			for (int32 i = 0; i < Pair.Value.Missions.Num(); ++i)
+			for (int32 i = 0; i < Pair.Value.InteractionInfos.Num(); ++i)
 			{
-				if (Pair.Value.Missions[i] == nullptr)
+				if (Pair.Value.InteractionInfos[i] == nullptr)
 				{
 					UE_LOG(LogTemp, Warning, TEXT("[InteractionDatabase] Null mission at index %d for key: %s + %s"),
 						i,

@@ -20,14 +20,17 @@ class ANIMALCRIME_API UACInteractionData : public UDataAsset
 
 public:
 	// === 임무 정보 ===
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mission")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
 	FText InteractionName;  // "시민 신분증 검사", "블랙마켓 거래"
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mission")
-	FString AssignedKey = TEXT("E");  // 'E', 'R', 'T' (다중 임무 시 사용)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+	EInteractionKey AssignedKey = EInteractionKey::E;  // 'E', 'R', 'T' (다중 임무 시 사용)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
-	ECharacterState InteractableState;
+	TArray<ECharacterState> InteractorState;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	TArray<ECharacterState> TargetState;
 
 	// === UI 정보 ===
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
