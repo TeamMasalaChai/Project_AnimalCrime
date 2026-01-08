@@ -23,6 +23,7 @@
 #include "ACGameRuleManager.h"
 #include "EngineUtils.h"
 #include "OnlineSubsystem.h"
+#include "Character/ACMafiaCharacter.h"
 #include "GameFramework/GameStateBase.h"
 #include "UI/Ammo/ACAmmoWidget.h"
 #include "Game/ACUIManagerComponent.h"
@@ -108,7 +109,13 @@ AACMainPlayerController::AACMainPlayerController()
 	{
 		SprintAction = SprintActionRef.Object;
 	}
-
+	
+	static ConstructorHelpers::FObjectFinder<UInputAction> EscapeActionRef(TEXT("/Game/Project/Input/Actions/IA_Escape.IA_Escape"));
+	if (EscapeActionRef.Succeeded())
+	{
+		EscapeAction = EscapeActionRef.Object;
+	}
+	
 	// ===== 퀵슬롯 Input Action 로드 (하나만) =====
 	static ConstructorHelpers::FObjectFinder<UInputAction> QuickSlotActionRef(TEXT("/Game/Project/Input/Actions/IA_QuickSlot.IA_QuickSlot"));
 	if (QuickSlotActionRef.Succeeded())
@@ -300,6 +307,11 @@ void AACMainPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleSprintStart);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AACMainPlayerController::HandleSprintEnd);
 		// EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Canceled, this, &AACMainPlayerController::HandleSprintEnd);
+	}
+	// 캐릭터 스킬 - Escape
+	if (EscapeAction)
+	{
+		EnhancedInputComponent->BindAction(EscapeAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleEscape);
 	}
 	
 	if (SettingsCloseAction)
@@ -532,6 +544,32 @@ void AACMainPlayerController::HandleSprintEnd(const struct FInputActionValue& Va
 	CharacterPawn->Sprint(Value);
 }
 
+void AACMainPlayerController::HandleEscape(const FInputActionValue& Value)
+{
+	bool InputFlag = Value.Get<bool>();
+	if (InputFlag == false)
+	{
+		AC_LOG(LogHY, Error, TEXT("InputFlag is false"));
+		return;
+	}
+	
+	if (CanUseEscapeSkill() == false)
+	{
+		AC_LOG(LogHY, Error, TEXT("CanUseEscapeSkill is false"));
+		return;
+	}
+	
+	
+	AACMafiaCharacter* MafiaPawn = GetPawn<AACMafiaCharacter>();
+	if (MafiaPawn == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("ControlledCharacter is nullptr"));
+		return;
+	}
+	AC_LOG(LogHY, Error, TEXT("PlayerController-Press Escape Key"));
+	MafiaPawn->ExcuteEscape();
+}
+
 #pragma endregion
 
 void AACMainPlayerController::HandleQuickSlot(const FInputActionValue& Value)
@@ -607,6 +645,26 @@ bool AACMainPlayerController::CanUseSkill() const
 	if (CharacterState == ECharacterState::None || 
 		CharacterState == ECharacterState::Stun ||
 		CharacterState == ECharacterState::Prison)
+	{
+		AC_LOG(LogHY, Error, TEXT("CharacterState is %s"), *UEnum::GetValueAsString(CharacterState));
+		return false;
+	}
+	
+	return true;
+}
+
+bool AACMainPlayerController::CanUseEscapeSkill() const
+{
+	AACMafiaCharacter* MafiaPawn = GetPawn<AACMafiaCharacter>();
+	if (MafiaPawn == nullptr)
+	{
+		AC_LOG(LogHY, Error, TEXT("CharacterPawn is nullptr"));
+		return false;
+	}
+	
+	ECharacterState CharacterState = MafiaPawn->GetCharacterState();
+	// 캐릭터의 상태가 None, Stun, Prison 상태일 경우 불가
+	if (CharacterState != ECharacterState::OnInteract)
 	{
 		AC_LOG(LogHY, Error, TEXT("CharacterState is %s"), *UEnum::GetValueAsString(CharacterState));
 		return false;

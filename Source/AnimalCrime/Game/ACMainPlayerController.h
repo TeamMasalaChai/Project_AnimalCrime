@@ -43,6 +43,7 @@ protected:
 	void HandleDash(const struct FInputActionValue& Value);
 	void HandleSprintStart(const struct FInputActionValue& Value);
 	void HandleSprintEnd(const struct FInputActionValue& Value);
+	void HandleEscape(const struct FInputActionValue& Value);
 
 	// ===== 퀵슬롯 관련 (하나의 핸들러로 통합) =====
 	void HandleQuickSlot(const struct FInputActionValue& Value);
@@ -52,6 +53,7 @@ protected:
 	
 	// ======스킬 체크 전 상태 체크 함수========
 	bool CanUseSkill() const;
+	bool CanUseEscapeSkill() const;
 public:
 	
 	
@@ -205,6 +207,8 @@ protected:
 	TObjectPtr<class UInputAction> DashAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputAction> SprintAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction> EscapeAction;
 
 	// ===== 총기 관련 테스트 =========
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
