@@ -9,6 +9,7 @@
 #include "ACPlayerState.h"
 #include "ACMainPlayerController.h"
 #include "EscapeQuest/ACEscapeArea.h"
+#include "Game/ACMainPlayerController.h"
 #include "AnimalCrime.h"
 
 #pragma region 생성자
@@ -155,6 +156,45 @@ AActor* AACMainGameState::GetDestinationActor() const
 	return DestinationObjects[RandIndex];
 }
 #pragma endregion
+
+void AACMainGameState::Multicast_GlobalShowNotification_Implementation(const FText& Message, EPlayerRole TargetRole)
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+
+	APlayerController* PC = World->GetFirstPlayerController();
+	if (PC == nullptr || PC->IsLocalController() == false)
+	{
+		return;
+	}
+
+	AACMainPlayerController* MainPC = Cast<AACMainPlayerController>(PC);
+	if (MainPC == nullptr)
+	{
+		return;
+	}
+
+	AACPlayerState* PS = PC->GetPlayerState<AACPlayerState>();
+	if (PS == nullptr)
+	{
+		return;
+	}
+
+	if(TargetRole != EPlayerRole::None && PS->PlayerRole != TargetRole)
+	{
+		return;
+	}
+
+	MainPC->ShowNotification(Message);
+}
+
+void AACMainGameState::GlobalShowNotification(const FText& Message)
+{
+	Multicast_GlobalShowNotification(Message, EPlayerRole::None);
+}
 
 void AACMainGameState::ServerChangeEscapeState_Implementation(EEscapeState NewEscapeState)
 {
