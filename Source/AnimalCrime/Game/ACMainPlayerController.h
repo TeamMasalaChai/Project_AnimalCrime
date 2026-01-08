@@ -277,7 +277,7 @@ protected:
 protected:
 	//!< UI 매니저 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-	class UACUIManagerComponent* UIManager;
+	TObjectPtr<class UACUIManagerComponent> UIManager;
 
 protected:
 	//!< 관전자 Index
