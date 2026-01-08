@@ -79,6 +79,7 @@ enum class ECharacterLocation : uint8
 UENUM(BlueprintType)
 enum class EACCharacterType : uint8
 {
+	None			UMETA(DisplayName = "None"),
 	Police			UMETA(DisplayName = "Police"),
 	Mafia			UMETA(DisplayName = "Mafia"),
 	Citizen			UMETA(DisplayName = "Citizen"),
