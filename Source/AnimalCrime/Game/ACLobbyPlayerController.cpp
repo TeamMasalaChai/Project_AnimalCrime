@@ -23,12 +23,6 @@ AACLobbyPlayerController::AACLobbyPlayerController()
 		LobbyScreenClass = LobbyScreenRef.Class;
 	}
 
-	static ConstructorHelpers::FClassFinder<UACFadeInScreen> FadeInScreenRef(TEXT("/Game/Project/UI/Common/WBP_FadeIn.WBP_FadeIn_C"));
-	if (FadeInScreenRef.Succeeded())
-	{
-		FadeInScreenClass = FadeInScreenRef.Class;
-	}
-
 	//SteamFriendList 로드
 	static ConstructorHelpers::FClassFinder<UUserWidget> SteamFriendListRef(TEXT("/Game/Project/UI/GameStart/WBP_FriendList.WBP_FriendList_C"));
 	if (SteamFriendListRef.Succeeded())
@@ -431,17 +425,20 @@ void AACLobbyPlayerController::HandleGameReady(const struct FInputActionValue& V
 
 void AACLobbyPlayerController::ClientPlayFadeIn_Implementation()
 {
-	FadeInScreen = CreateWidget<UACFadeInScreen>(this, FadeInScreenClass);
-	if (FadeInScreen == nullptr)
+	UACAdvancedFriendsGameInstance* GI = Cast<UACAdvancedFriendsGameInstance>(GetGameInstance());
+	if (GI == nullptr)
+	{
+		return;
+	}
+	GI->ShowTransitionScreen(); // 먼저 화면 가리기
+	if (GI->TransitionScreen == nullptr)
 	{
 		return;
 	}
 
-	FadeInScreen->AddToViewport();
-
 	if (HasAuthority())
 	{
-		FadeInScreen->OnFadeInFinished.AddDynamic(this, &AACLobbyPlayerController::OnGameStartFadeInFinished);
+		GI->TransitionScreen->OnFadeInFinished.AddDynamic(this, &AACLobbyPlayerController::OnGameStartFadeInFinished);
 	}
 }
 
