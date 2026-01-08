@@ -54,13 +54,6 @@ AACMainPlayerController::AACMainPlayerController()
 		RoleScreenClass = RoleScreenRef.Class;
 	}
 
-	// Placeholder Screen 로드 (임시 대기 화면)
-	static ConstructorHelpers::FClassFinder<UUserWidget> PlaceholderScreenRef(TEXT("/Game/Project/UI/Common/WBP_PlaceholderScreen.WBP_PlaceholderScreen_C"));
-	if (PlaceholderScreenRef.Succeeded())
-	{
-		PlaceholderScreenClass = PlaceholderScreenRef.Class;
-	}
-
 	// ===== 입력 관련 로드 =====
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> DefaultMappingContextRef(TEXT("/Game/Project/Input/IMC_Shoulder.IMC_Shoulder"));
 	if (DefaultMappingContextRef.Succeeded())
@@ -327,30 +320,6 @@ void AACMainPlayerController::SetupInputComponent()
 	{
 		EnhancedInputComponent->BindAction(PhoneAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandlePhone);
 	}
-}
-
-void AACMainPlayerController::PostSeamlessTravel()
-{
-	Super::PostSeamlessTravel();
-
-	if (IsLocalController() == false)
-	{
-		return;
-	}
-
-	// 대체 화면 위젯 생성 및 표시
-	if (PlaceholderScreenClass == nullptr)
-	{
-		return;
-	}
-
-	PlaceholderScreen = CreateWidget<UUserWidget>(this, PlaceholderScreenClass);
-	if (PlaceholderScreen == nullptr)
-	{
-		return;
-	}
-
-	PlaceholderScreen->AddToViewport(100); // 최상위 레이어
 }
 
 void AACMainPlayerController::OnRep_PlayerState()
@@ -884,12 +853,12 @@ void AACMainPlayerController::ScreenSetRole()
 	}
 
 	// 대체 화면 제거
-	if (PlaceholderScreen != nullptr && PlaceholderScreen->IsInViewport() == true)
+	UACAdvancedFriendsGameInstance* GI = GetGameInstance<UACAdvancedFriendsGameInstance>();
+	if (GI == nullptr)
 	{
-		PlaceholderScreen->RemoveFromParent();
-		PlaceholderScreen = nullptr;
-		AC_LOG(LogSY, Log, TEXT("Placeholder Screen Removed"));
+		return;
 	}
+	GI->HideTransitionScreen();
 
 
 	RoleScreen = CreateWidget<UACRoleScreen>(this, RoleScreenClass);

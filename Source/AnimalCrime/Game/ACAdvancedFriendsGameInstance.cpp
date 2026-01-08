@@ -8,6 +8,20 @@
 #include "Components/AudioComponent.h"
 #include "ACPlayerControllerBase.h"
 #include "VoipListenerSynthComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "UI/Common/ACFadeInScreen.h"
+
+UACAdvancedFriendsGameInstance::UACAdvancedFriendsGameInstance(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	// TransitionScreen 위젯 클래스 로드
+	static ConstructorHelpers::FClassFinder<UACFadeInScreen> TransitionScreenRef(
+		TEXT("/Game/Project/UI/Common/WBP_FadeIn.WBP_FadeIn_C")
+	);
+	if (TransitionScreenRef.Succeeded())
+	{
+		TransitionScreenClass = TransitionScreenRef.Class;
+	}
+}
 
 #pragma region 엔진 제공 함수
 void UACAdvancedFriendsGameInstance::Init()
@@ -202,4 +216,55 @@ void UACAdvancedFriendsGameInstance::DoServerTravel()
 		GetWorld()->ServerTravel("CityMap", true);
 		break;
 	}
+}
+
+void UACAdvancedFriendsGameInstance::ShowTransitionScreen()
+{
+	if (TransitionScreenClass == nullptr)
+	{
+		UE_LOG(LogSY, Warning, TEXT("TransitionScreenClass is null"));
+		return;
+	}
+	if (TransitionScreen == nullptr)
+	{
+		UE_LOG(LogSY, Log, TEXT("Creating TransitionScreen widget"));
+		TransitionScreen = CreateWidget<UACFadeInScreen>(this, TransitionScreenClass);
+	}
+
+	if (TransitionScreen == nullptr)
+	{
+		UE_LOG(LogSY, Warning, TEXT("TransitionScreen is null"));
+		return;
+	}
+	// GameViewportClient에 직접 추가 (핵심!) =====
+	UGameViewportClient* Viewport = GetGameViewportClient();
+	if (Viewport == nullptr)
+	{
+		UE_LOG(LogSY, Warning, TEXT("GameViewportClient is null"));
+		return;
+	}
+	// 이미 추가되었는지 확인 (중복 방지)
+	TSharedPtr<SWidget> WidgetSlate = TransitionScreen->TakeWidget();
+
+	// ViewportWidgetContent로 추가 (맵 전환 시에도 유지됨)
+	Viewport->AddViewportWidgetContent(WidgetSlate.ToSharedRef(), 1000);
+
+	UE_LOG(LogSY, Log, TEXT("TransitionScreen added to GameViewportClient"));
+}
+
+void UACAdvancedFriendsGameInstance::HideTransitionScreen()
+{
+	if (TransitionScreen == nullptr)
+	{
+		return;
+	}
+	UGameViewportClient* Viewport = GetGameViewportClient();
+	if (Viewport == nullptr)
+	{
+		return;
+	}
+	TSharedPtr<SWidget> WidgetSlate = TransitionScreen->TakeWidget();
+	Viewport->RemoveViewportWidgetContent(WidgetSlate.ToSharedRef());
+
+	UE_LOG(LogSY, Log, TEXT("TransitionScreen removed from GameViewportClient"));
 }

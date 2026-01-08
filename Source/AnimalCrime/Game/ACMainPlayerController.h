@@ -24,8 +24,6 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void SetupInputComponent() override;
-	virtual void PostSeamlessTravel() override;
-
 
 	virtual void OnRep_PlayerState() override;
 	// ===== 입력 처리 핸들러 =====
@@ -275,12 +273,6 @@ protected:
 	TSubclassOf<class UACRoleScreen> RoleScreenClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Role")
 	TObjectPtr<class UACRoleScreen> RoleScreen;
-
-	//!< 역할 대기 중 표시할 임시 화면 (전체를 가리는 검은 화면 등)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Role")
-	TSubclassOf<class UUserWidget> PlaceholderScreenClass;
-	UPROPERTY()
-	TObjectPtr<class UUserWidget> PlaceholderScreen;
 
 protected:
 	//!< UI 매니저 컴포넌트
