@@ -22,6 +22,8 @@ class ANIMALCRIME_API UACAdvancedFriendsGameInstance : public UAdvancedFriendsGa
 {
 	GENERATED_BODY()
 
+public:
+	UACAdvancedFriendsGameInstance(const FObjectInitializer& ObjectInitializer);
 #pragma region 엔진 제공 함수
 public:
 	virtual void Init() override;
@@ -80,6 +82,19 @@ public:
 private:
 	void DoServerTravel();
 
+public:
+ /**
+     @brief 맵 이동 중 대채 화면 표시
+ **/
+	UFUNCTION(BlueprintCallable)
+	void ShowTransitionScreen();
+
+ /**
+	 @brief 대체 화면 숨기기
+ **/
+	UFUNCTION(BlueprintCallable)
+	void HideTransitionScreen();
+
 #pragma region Map Level 관련 맴버 변수 
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
@@ -97,5 +112,13 @@ private:
 public:
 	//!< 플레이어 역할 저장
 	TMap<FUniqueNetIdRepl, EPlayerRole> SavedPlayerRoles;
+
+protected:
+	//!< 맵 전환 시 화면을 가리는 영구 위젯
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UACFadeInScreen> TransitionScreenClass;
+public:
+	UPROPERTY()
+	TObjectPtr<class UACFadeInScreen> TransitionScreen;
 };
 
