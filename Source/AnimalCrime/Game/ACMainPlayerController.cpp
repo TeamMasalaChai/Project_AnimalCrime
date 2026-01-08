@@ -54,6 +54,13 @@ AACMainPlayerController::AACMainPlayerController()
 		RoleScreenClass = RoleScreenRef.Class;
 	}
 
+	// Placeholder Screen 로드 (임시 대기 화면)
+	static ConstructorHelpers::FClassFinder<UUserWidget> PlaceholderScreenRef(TEXT("/Game/Project/UI/Common/WBP_PlaceholderScreen.WBP_PlaceholderScreen_C"));
+	if (PlaceholderScreenRef.Succeeded())
+	{
+		PlaceholderScreenClass = PlaceholderScreenRef.Class;
+	}
+
 	// ===== 입력 관련 로드 =====
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> DefaultMappingContextRef(TEXT("/Game/Project/Input/IMC_Shoulder.IMC_Shoulder"));
 	if (DefaultMappingContextRef.Succeeded())
@@ -96,13 +103,13 @@ AACMainPlayerController::AACMainPlayerController()
 	{
 		MeleeAction = MeleeActionRef.Object;
 	}
-	
+
 	static ConstructorHelpers::FObjectFinder<UInputAction> DashActionRef(TEXT("/Game/Project/Input/Actions/IA_Dash.IA_Dash"));
 	if (DashActionRef.Succeeded())
 	{
 		DashAction = DashActionRef.Object;
 	}
-	
+
 	static ConstructorHelpers::FObjectFinder<UInputAction> SprintActionRef(TEXT("/Game/Project/Input/Actions/IA_Sprint.IA_Sprint"));
 	if (SprintActionRef.Succeeded())
 	{
@@ -141,8 +148,8 @@ AACMainPlayerController::AACMainPlayerController()
 	{
 		SpectatorChangeAction = SpectatorChangeActionRef.Object;
 	}
-	
-	
+
+
 	// ===== Zoom ====
 	static ConstructorHelpers::FObjectFinder<UInputAction> ZoomActionRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Project/Input/Actions/IA_Zoom.IA_Zoom'"));
 	if (ZoomActionRef.Succeeded())
@@ -215,19 +222,12 @@ void AACMainPlayerController::BeginPlay()
 		// 서버와 클라이언트 모두 바인딩 필요
 	ACHUDWidget->BindPlayerState();
 	//}
-	
+
 	ZoomOut();
 	ACHUDWidget->WBP_Ammo->UpdateAmmo(0);
 
-	RoleScreen = CreateWidget<UACRoleScreen>(this, RoleScreenClass);
-	if (RoleScreen == nullptr)
-	{
-		return;
-	}
-
-	RoleScreen->AddToViewport();
-	RoleScreen->OnFadeOutFinished.AddDynamic(this, &AACMainPlayerController::OnRoleFadeInFinished);
-	if (HasAuthority())
+	// 서버(리슨 서버 호스트)인 경우에만 여기서 RoleScreen 표시
+	if (IsLocalController() && HasAuthority())
 	{
 		ScreenSetRole();
 	}
@@ -288,7 +288,7 @@ void AACMainPlayerController::SetupInputComponent()
 	{
 		EnhancedInputComponent->BindAction(MeleeAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleAttack);
 	}
-	
+
 	// 캐릭터 스킬 - Dash
 	if (DashAction)
 	{
@@ -301,7 +301,7 @@ void AACMainPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AACMainPlayerController::HandleSprintEnd);
 		// EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Canceled, this, &AACMainPlayerController::HandleSprintEnd);
 	}
-	
+
 	if (SettingsCloseAction)
 	{
 		EnhancedInputComponent->BindAction(SettingsCloseAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleSettingsClose);
@@ -316,7 +316,7 @@ void AACMainPlayerController::SetupInputComponent()
 	{
 		EnhancedInputComponent->BindAction(SpectatorChangeAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleSpectatorChange);
 	}
-	
+
 	if (ZoomAction)
 	{
 		EnhancedInputComponent->BindAction(ZoomAction, ETriggerEvent::Started, this, &AACMainPlayerController::ZoomIn);
@@ -327,6 +327,30 @@ void AACMainPlayerController::SetupInputComponent()
 	{
 		EnhancedInputComponent->BindAction(PhoneAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandlePhone);
 	}
+}
+
+void AACMainPlayerController::PostSeamlessTravel()
+{
+	Super::PostSeamlessTravel();
+
+	if (IsLocalController() == false)
+	{
+		return;
+	}
+
+	// 대체 화면 위젯 생성 및 표시
+	if (PlaceholderScreenClass == nullptr)
+	{
+		return;
+	}
+
+	PlaceholderScreen = CreateWidget<UUserWidget>(this, PlaceholderScreenClass);
+	if (PlaceholderScreen == nullptr)
+	{
+		return;
+	}
+
+	PlaceholderScreen->AddToViewport(100); // 최상위 레이어
 }
 
 void AACMainPlayerController::OnRep_PlayerState()
@@ -487,7 +511,7 @@ void AACMainPlayerController::HandleDash(const FInputActionValue& Value)
 		AC_LOG(LogHY, Error, TEXT("CanUseSkill is false"));
 		return;
 	}
-	
+
 	AACCharacter* CharacterPawn = GetPawn<AACCharacter>();
 	if (CharacterPawn == nullptr)
 	{
@@ -495,7 +519,7 @@ void AACMainPlayerController::HandleDash(const FInputActionValue& Value)
 		AC_LOG(LogHY, Error, TEXT("ControlledCharacter is nullptr"));
 		return;
 	}
-	
+
 	// Player에게 Dash 요청
 	CharacterPawn->Dash(Value);
 }
@@ -507,7 +531,7 @@ void AACMainPlayerController::HandleSprintStart(const struct FInputActionValue& 
 		AC_LOG(LogHY, Error, TEXT("CanUseSkill is false"));
 		return;
 	}
-	
+
 	AACCharacter* CharacterPawn = GetPawn<AACCharacter>();
 	if (CharacterPawn == nullptr)
 	{
@@ -601,17 +625,17 @@ bool AACMainPlayerController::CanUseSkill() const
 		AC_LOG(LogHY, Error, TEXT("CharacterPawn is nullptr"));
 		return false;
 	}
-	
+
 	ECharacterState CharacterState = CharacterPawn->GetCharacterState();
 	// 캐릭터의 상태가 None, Stun, Prison 상태일 경우 불가
-	if (CharacterState == ECharacterState::None || 
+	if (CharacterState == ECharacterState::None ||
 		CharacterState == ECharacterState::Stun ||
 		CharacterState == ECharacterState::Prison)
 	{
 		AC_LOG(LogHY, Error, TEXT("CharacterState is %s"), *UEnum::GetValueAsString(CharacterState));
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -846,17 +870,37 @@ void AACMainPlayerController::OnRoleFadeInFinished()
 
 void AACMainPlayerController::ScreenSetRole()
 {
+
 	AACPlayerState* PS = GetPlayerState<AACPlayerState>();
 	if (PS == nullptr)
 	{
 		return;
 	}
 
+	if (PS->PlayerRole == EPlayerRole::None)
+	{
+		AC_LOG(LogSY, Warning, TEXT("PlayerRole not replicated yet, skipping ScreenSetRole"));
+		return;
+	}
 
+	// 대체 화면 제거
+	if (PlaceholderScreen != nullptr && PlaceholderScreen->IsInViewport() == true)
+	{
+		PlaceholderScreen->RemoveFromParent();
+		PlaceholderScreen = nullptr;
+		AC_LOG(LogSY, Log, TEXT("Placeholder Screen Removed"));
+	}
+
+
+	RoleScreen = CreateWidget<UACRoleScreen>(this, RoleScreenClass);
 	if (RoleScreen == nullptr)
 	{
 		return;
 	}
+
+
+	RoleScreen->AddToViewport();
+	RoleScreen->OnFadeOutFinished.AddDynamic(this, &AACMainPlayerController::OnRoleFadeInFinished);
 	RoleScreen->SetRole(PS->PlayerRole);
 	AC_LOG(LogSY, Log, TEXT("Set Role!"));
 }
@@ -865,14 +909,14 @@ void AACMainPlayerController::ZoomIn()
 {
 	bZoomFlag = true;
 	AC_LOG(LogHY, Error, TEXT("ZoomIn %d"), bZoomFlag);
-	
+
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
 	if (ControlledCharacter == nullptr)
 	{
 		AC_LOG(LogHY, Log, TEXT("ControlledCharacter is nullptr"));
 		return;
 	}
-	
+
 	UCameraComponent* FollowCamera = ControlledCharacter->GetFollowCamera();
 	UCameraComponent* GunCamera = ControlledCharacter->GetGunCamera();
 
@@ -893,7 +937,7 @@ void AACMainPlayerController::ZoomOut()
 {
 	bZoomFlag = false;
 	AC_LOG(LogHY, Error, TEXT("ZoomOut %d"), bZoomFlag);
-	
+
 	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
 	if (ControlledCharacter == nullptr)
 	{

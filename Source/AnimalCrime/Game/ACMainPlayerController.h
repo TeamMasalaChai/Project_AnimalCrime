@@ -24,6 +24,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void SetupInputComponent() override;
+	virtual void PostSeamlessTravel() override;
 
 
 	virtual void OnRep_PlayerState() override;
@@ -49,12 +50,12 @@ protected:
 
 	// ===== 핸드폰 관련 =====
 	void HandlePhone(const struct FInputActionValue& Value);
-	
+
 	// ======스킬 체크 전 상태 체크 함수========
 	bool CanUseSkill() const;
 public:
-	
-	
+
+
 public:
 	/**
 		@brief 입력 모드 변경 (기본 입력 ↔ 설정 메뉴 입력)
@@ -159,10 +160,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientNotifySpectateTargetRemoved(APawn* RemovedPawn);
 
- /**
-     @brief 알림 메시지 표시용 함수
-	 @param Text - 함림 텍스트
- **/
+	/**
+		@brief 알림 메시지 표시용 함수
+		@param Text - 함림 텍스트
+	**/
 	UFUNCTION(BlueprintCallable)
 	void ShowNotification(const FText& Text);
 
@@ -274,6 +275,12 @@ protected:
 	TSubclassOf<class UACRoleScreen> RoleScreenClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Role")
 	TObjectPtr<class UACRoleScreen> RoleScreen;
+
+	//!< 역할 대기 중 표시할 임시 화면 (전체를 가리는 검은 화면 등)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Role")
+	TSubclassOf<class UUserWidget> PlaceholderScreenClass;
+	UPROPERTY()
+	TObjectPtr<class UUserWidget> PlaceholderScreen;
 
 protected:
 	//!< UI 매니저 컴포넌트

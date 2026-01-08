@@ -23,7 +23,7 @@ public:
 public:
 	//!< 플레이어 역할
 	UPROPERTY(Replicated)
-	EPlayerRole PlayerRole = EPlayerRole::Police;
+	EPlayerRole PlayerRole = EPlayerRole::None;
 
 	//!< 플레이어 위치 상태
 	UPROPERTY(Replicated)
