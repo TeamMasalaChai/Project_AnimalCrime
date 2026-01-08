@@ -172,13 +172,13 @@ void AACCCTVArea::SetSceneCaptureActive(bool bActive)
 
 void AACCCTVArea::SetSceneCaptureActiveByIndex(int32 Index, bool bActive)
 {
-    if (SceneCaptureComponents.IsValidIndex(Index) == true)
+    if (SceneCaptureComponents.IsValidIndex(Index) == false)
     {
         UE_LOG(LogHG, Error, TEXT("[CCTV] Invalid Index: %d"), Index);
         return;
     }
 
-    if (ActiveViewerCountPerCapture.IsValidIndex(Index) == true)
+    if (ActiveViewerCountPerCapture.IsValidIndex(Index) == false)
     {
         UE_LOG(LogHG, Error, TEXT("[CCTV] ActiveViewerCountPerCapture Invalid Index: %d"), Index);
         return;
