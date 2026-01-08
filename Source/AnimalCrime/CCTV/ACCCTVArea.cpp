@@ -210,7 +210,7 @@ void AACCCTVArea::SetSceneCaptureActiveByIndex(int32 Index, bool bActive)
     USceneCaptureComponent2D* SceneCapture = SceneCaptureComponents[Index];
     if (SceneCapture != nullptr)
     {
-        bool bShouldCapture = (ActiveViewerCountPerCapture[Index] > 0);
+        bool bShouldCapture = (ActiveViewerCount > 0) || (ActiveViewerCountPerCapture[Index] > 0);
         SceneCapture->bCaptureEveryFrame = bShouldCapture;
 
         if (bShouldCapture == true)
