@@ -153,16 +153,21 @@ void AACCCTVArea::SetSceneCaptureActive(bool bActive)
     UE_LOG(LogHG, Warning, TEXT("[CCTV] SetSceneCaptureActive: %d → ActiveViewerCount=%d"),
         bActive, ActiveViewerCount);
 
-    // 카운터가 0보다 크면 활성화
-    bool bShouldCapture = (ActiveViewerCount > 0);
-
-    for (USceneCaptureComponent2D* SceneCapture : SceneCaptureComponents)
+    // 각 Scene Capture를 개별적으로 제어
+    for (int32 i = 0; i < SceneCaptureComponents.Num(); i++)
     {
+        USceneCaptureComponent2D* SceneCapture = SceneCaptureComponents[i];
         if (SceneCapture != nullptr)
         {
+            // 전체 카운터 OR 개별 카운터 중 하나라도 0보다 크면 활성화
+            bool bShouldCapture = (ActiveViewerCount > 0) ||
+                (ActiveViewerCountPerCapture.IsValidIndex(i) && ActiveViewerCountPerCapture[i] > 0);
+
+            bool bWasCapturing = SceneCapture->bCaptureEveryFrame;
             SceneCapture->bCaptureEveryFrame = bShouldCapture;
 
-            if (bShouldCapture)
+            // 새로 활성화하거나, 이미 활성화된 경우에도 즉시 갱신
+            if (bShouldCapture == true)
             {
                 SceneCapture->CaptureScene();
             }
