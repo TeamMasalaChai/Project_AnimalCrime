@@ -35,6 +35,7 @@ enum class ESettingMode : uint8
 UENUM(BlueprintType)
 enum class EPlayerRole : uint8
 {
+	None			UMETA(DisplayName = "None"),		// 없음
 	Police			UMETA(DisplayName = "Police"),		// 경찰
 	Mafia			UMETA(DisplayName = "Mafia"),		// 마피아
 	Observer		UMETA(DisplayName = "Observer"),	// 관전자
