@@ -74,4 +74,10 @@ protected:
 	// CCTV Scene Capture 컴포넌트들 (블루프린트에서 설정)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CCTV")
 	TArray<class USceneCaptureComponent2D*> SceneCaptureComponents;
+
+	// 30프레임 캡쳐 핸들 타이머
+	FTimerHandle CaptureTimerHandle;
+
+	// 캡처 활성화 여부
+	bool bIsCaptureActive = false;
 };

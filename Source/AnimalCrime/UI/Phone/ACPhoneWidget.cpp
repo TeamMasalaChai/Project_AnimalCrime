@@ -7,6 +7,8 @@
 #include "Components/WidgetSwitcher.h"
 #include "UI/CCTV/ACCCTVSlotWidget.h"
 #include "UI/CCTV/ACCCTVWidget.h"
+#include "CCTV/ACCCTVArea.h"
+#include "Kismet/GameplayStatics.h"
 
 void UACPhoneWidget::NativeConstruct()
 {
@@ -90,18 +92,32 @@ void UACPhoneWidget::InitializeCCTVSlots()
 
 void UACPhoneWidget::ShowHomeScreen()
 {
+    // CCTVArea 찾아서 Scene Capture 비활성화
+    AACCCTVArea* CCTVArea = FindCCTVArea();
+    if (CCTVArea != nullptr)
+    {
+        CCTVArea->SetSceneCaptureActive(false);
+    }
+
     if (MainSwitcher != nullptr)
     {
-        MainSwitcher->SetActiveWidgetIndex(0); // 홈 화면
+        MainSwitcher->SetActiveWidgetIndex(0);
     }
 }
 
 void UACPhoneWidget::ShowCCTVScreen(int32 CCTVIndex)
 {
+    // CCTVArea 찾아서 Scene Capture 활성화
+    AACCCTVArea* CCTVArea = FindCCTVArea();
+    if (CCTVArea != nullptr)
+    {
+        CCTVArea->SetSceneCaptureActive(true);
+    }
+
     // 메인 화면을 CCTV 뷰어로 전환
     if (MainSwitcher != nullptr)
     {
-        MainSwitcher->SetActiveWidgetIndex(1); // CCTV 뷰어 화면
+        MainSwitcher->SetActiveWidgetIndex(1);
     }
 
     // 해당 CCTV 슬롯 보여주기
@@ -109,6 +125,27 @@ void UACPhoneWidget::ShowCCTVScreen(int32 CCTVIndex)
     {
         CCTVSwitcher->SetActiveWidgetIndex(CCTVIndex);
     }
+}
+
+AACCCTVArea* UACPhoneWidget::FindCCTVArea()
+{
+    // 이미 찾았으면 캐시된 것 반환
+    if (CachedCCTVArea != nullptr)
+    {
+        return CachedCCTVArea;
+    }
+
+    // 월드에서 CCTVArea 찾기
+    TArray<AActor*> FoundActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AACCCTVArea::StaticClass(), FoundActors);
+
+    if (FoundActors.Num() > 0)
+    {
+        CachedCCTVArea = Cast<AACCCTVArea>(FoundActors[0]);
+        return CachedCCTVArea;
+    }
+
+    return nullptr;
 }
 
 

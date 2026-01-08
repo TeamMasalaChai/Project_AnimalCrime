@@ -41,6 +41,9 @@ protected:
 	void ShowHomeScreen();
 	void ShowCCTVScreen(int32 CCTVIndex);
 
+	// CCTVArea를 찾는 함수
+	class AACCCTVArea* FindCCTVArea();
+
 protected:
 	// CCTV 버튼들
 	UPROPERTY(meta = (BindWidget))
@@ -96,4 +99,8 @@ protected:
 	// CCTV 슬롯 데이터들 (에디터에서 설정)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CCTV")
 	TArray<struct FCCTVSlotData> CCTVSlotDataArray;
+
+	// 캐싱된 CCTVArea
+	UPROPERTY()
+	TObjectPtr<class AACCCTVArea> CachedCCTVArea;
 };

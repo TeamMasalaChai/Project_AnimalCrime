@@ -13,6 +13,8 @@
 #include "AnimalCrime.h"
 #include "Game/ACMainPlayerController.h"
 #include "Components/SceneCaptureComponent2D.h"
+#include "Engine/SceneCapture2D.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AACCCTVArea::AACCCTVArea()
@@ -46,6 +48,22 @@ AACCCTVArea::AACCCTVArea()
 void AACCCTVArea::BeginPlay()
 {
 	Super::BeginPlay();	
+
+    // Scene Capture 컴포넌트들 자동 수집
+    if (SceneCaptureComponents.Num() == 0)
+    {
+        TArray<AActor*> FoundActors;
+        UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASceneCapture2D::StaticClass(), FoundActors);
+
+        for (AActor* Actor : FoundActors)
+        {
+            ASceneCapture2D* SceneCapture = Cast<ASceneCapture2D>(Actor);
+            if (SceneCapture && SceneCapture->GetCaptureComponent2D())
+            {
+                SceneCaptureComponents.Add(SceneCapture->GetCaptureComponent2D());
+            }
+        }
+    }
 
     // 콜리전 종료 이벤트 바인딩
     if (InteractBoxComponent)
@@ -113,14 +131,13 @@ void AACCCTVArea::SetSceneCaptureActive(bool bActive)
 {
     for (USceneCaptureComponent2D* SceneCapture : SceneCaptureComponents)
     {
-        if (SceneCapture)
+        if (SceneCapture != nullptr)
         {
             SceneCapture->bCaptureEveryFrame = bActive;
 
-            // 활성화 시 즉시 한 번 캡처하여 화면 갱신
             if (bActive)
             {
-                SceneCapture->CaptureScene();
+                SceneCapture->CaptureScene(); // 즉시 한 번 캡처
             }
         }
     }
