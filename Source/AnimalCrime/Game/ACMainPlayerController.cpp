@@ -759,7 +759,7 @@ void AACMainPlayerController::ClientToggleShopWidget_Implementation(TSubclassOf<
 	}
 }
 
-void AACMainPlayerController::CloseShop()
+void AACMainPlayerController::CloseShop_Implementation()
 {
 	if (CurrentShopWidget == nullptr || CurrentShopWidget->IsInViewport() == false)
 	{
@@ -786,7 +786,7 @@ void AACMainPlayerController::CloseShop()
 	ChangeInputMode(EInputMode::Sholder);
 }
 
-void AACMainPlayerController::CloseCCTV()
+void AACMainPlayerController::CloseCCTV_Implementation()
 {
 	if (CurrentCCTVWidget == nullptr || CurrentCCTVWidget->IsInViewport() == false)
 	{

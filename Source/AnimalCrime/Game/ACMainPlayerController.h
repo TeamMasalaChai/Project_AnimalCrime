@@ -76,13 +76,13 @@ public:
 	/**
 			@brief  상점 닫기 (위젯의 CloseButton이나 다른 곳에서 호출)
 	**/
-	UFUNCTION()
+	UFUNCTION(Client, Reliable)
 	void CloseShop();
 
 	/**
 		   @brief  CCTV 닫기 (위젯의 CloseButton이나 다른 곳에서 호출)
    **/
-	UFUNCTION()
+	UFUNCTION(Client, Reliable)
 	void CloseCCTV();
 
 protected:

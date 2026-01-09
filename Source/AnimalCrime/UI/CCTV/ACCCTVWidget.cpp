@@ -3,12 +3,32 @@
 
 #include "UI/CCTV/ACCCTVWidget.h"
 #include "ACCCTVSlotWidget.h"
+#include "CCTV/ACCCTVArea.h"             
+#include "Kismet/GameplayStatics.h" 
 
 void UACCCTVWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
 	InitializeCCTVSlots();
+}
+
+void UACCCTVWidget::NativeDestruct()
+{
+    Super::NativeDestruct();
+
+    // CCTV 위젯이 닫힐 때 Scene Capture 비활성화
+    TArray<AActor*> FoundActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AACCCTVArea::StaticClass(), FoundActors);
+
+    if (FoundActors.Num() > 0)
+    {
+        AACCCTVArea* CCTVArea = Cast<AACCCTVArea>(FoundActors[0]);
+        if (CCTVArea != nullptr)
+        {
+            CCTVArea->SetSceneCaptureActive(false);
+        }
+    }
 }
 
 void UACCCTVWidget::InitializeCCTVSlots()

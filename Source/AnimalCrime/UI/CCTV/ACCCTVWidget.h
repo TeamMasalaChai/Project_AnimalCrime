@@ -34,6 +34,7 @@ class ANIMALCRIME_API UACCCTVWidget : public UACCustomWidget
 
 public:
     virtual void NativeConstruct() override;
+    virtual void NativeDestruct() override;
 
     /**
         @brief CCTV 슬롯들을 초기화 (머티리얼과 텍스트 설정)
