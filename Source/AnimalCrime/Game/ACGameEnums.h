@@ -119,10 +119,21 @@ enum class EInteractionKey : uint8
 	Total
 };
 
-// 주요 위치 정보
+// 주요 시설 위치 정보
 UENUM(BlueprintType)
 enum class ESpot : uint8
 {
 	None				UMETA(DisplayName = "None"),
 	Bank				UMETA(DisplayName = "Bank"),
+};
+
+// 게임 종료 유형
+UENUM(BlueprintType)
+enum class EGameEndType : uint8
+{
+	None		UMETA(DisplayName = "None"),
+	Escape		UMETA(DisplayName = "Escape"),		// 탈출
+	Score		UMETA(DisplayName = "Score"),		// 점수
+	AllPrison	UMETA(DisplayName = "AllPrison"),	// 전원 감옥
+	TimeOver	UMETA(DisplayName = "TimeOver"),	// 시간 종료
 };

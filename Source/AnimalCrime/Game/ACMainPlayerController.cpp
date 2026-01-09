@@ -17,6 +17,7 @@
 #include "UI/CCTV/ACCCTVWidget.h"
 #include "UI/Interaction/ACInteractProgressWidget.h"
 #include "UI/GameStart/ACRoleScreen.h"
+#include "UI/GameResult/ACGameResultScreen.h"
 #include "ACPlayerState.h"
 #include "ACMainGameState.h"
 #include "ACMainGameMode.h"
@@ -57,6 +58,14 @@ AACMainPlayerController::AACMainPlayerController()
 	{
 		RoleScreenClass = RoleScreenRef.Class;
 	}
+
+	//Game Result Screen 로드
+	static ConstructorHelpers::FClassFinder<UACGameResultScreen> GameResultScreenRef(TEXT("/Game/Project/UI/GameResult/WBP_GameResultScreen.WBP_GameResultScreen_C"));
+	if (GameResultScreenRef.Succeeded())
+	{
+		GameResultScreenClass = GameResultScreenRef.Class;
+	}
+
 
 	// ===== 입력 관련 로드 =====
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> DefaultMappingContextRef(TEXT("/Game/Project/Input/IMC_Shoulder.IMC_Shoulder"));
@@ -947,6 +956,23 @@ void AACMainPlayerController::ScreenSetRole()
 	RoleScreen->OnFadeOutFinished.AddDynamic(this, &AACMainPlayerController::OnRoleFadeInFinished);
 	RoleScreen->SetRole(PS->PlayerRole);
 	AC_LOG(LogSY, Log, TEXT("Set Role!"));
+}
+
+void AACMainPlayerController::Client_ShowGameResult_Implementation(EGameEndType GameEndType)
+{
+	if (GameResultScreenClass == nullptr)
+	{
+		AC_LOG(LogSY, Error, TEXT("GameResultScreenClass is nullptr"));
+		return;
+	}
+	UACGameResultScreen* GameResultScreen = CreateWidget<UACGameResultScreen>(this, GameResultScreenClass);
+	if (GameResultScreen == nullptr)
+	{
+		AC_LOG(LogSY, Error, TEXT("GameResultWidget is nullptr"));
+		return;
+	}
+	GameResultScreen->AddToViewport();
+	GameResultScreen->SetGameResult(GameEndType);
 }
 
 void AACMainPlayerController::ZoomIn()
