@@ -7,6 +7,9 @@
 #include "Game/ACGameEnums.h"
 #include "ACMainPlayerController.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWalkyTalkyChanged, bool, bHasWalkyTalky);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnContrabandChanged, bool, bHasContraband);
+
 /**
  *
  */
@@ -122,6 +125,54 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<class UUserWidget> CurrentPhoneWidget;
+
+
+	 public:
+		 // ===== 추가: 바운드 아이템 관련 함수 =====
+
+		 /**
+		  * @brief 무전기 획득 (로컬)
+		  */
+		 UFUNCTION(BlueprintCallable, Category = "BoundItem")
+		 void SetHasWalkyTalky(bool bInHasWalkyTalky);
+
+		 /**
+		  * @brief 밀수품 획득 (로컬)
+		  */
+		 UFUNCTION(BlueprintCallable, Category = "BoundItem")
+		 void SetHasContraband(bool bInHasContraband);
+
+		 /**
+		  * @brief 무전기 소지 여부 확인
+		  */
+		 UFUNCTION(BlueprintPure, Category = "BoundItem")
+		 bool HasWalkyTalky() const { return bHasWalkyTalky; }
+
+		 /**
+		  * @brief 밀수품 소지 여부 확인
+		  */
+		 UFUNCTION(BlueprintPure, Category = "BoundItem")
+		 bool HasContraband() const { return bHasContraband; }
+
+  protected:
+	  // ===== 추가: 로컬 바운드 아이템 정보 (Replicated 아님!) =====
+
+	  //!< 무전기 소지 여부 (로컬)
+	  UPROPERTY(BlueprintReadOnly, Category = "BoundItem")
+	  bool bHasWalkyTalky = false;
+
+	  //!< 밀수품 소지 여부 (로컬)
+	  UPROPERTY(BlueprintReadOnly, Category = "BoundItem")
+	  bool bHasContraband = false;
+
+  public:
+	  // ===== 추가: 델리게이트 =====
+
+	  UPROPERTY(BlueprintAssignable, Category = "BoundItem")
+	  FOnWalkyTalkyChanged OnWalkyTalkyChanged;
+
+	  UPROPERTY(BlueprintAssignable, Category = "BoundItem")
+	  FOnContrabandChanged OnContrabandChanged;
 
 
 

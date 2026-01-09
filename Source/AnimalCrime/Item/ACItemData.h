@@ -12,6 +12,7 @@ enum class EItemType : uint8
 {
     Clothing,    // SkeletalMesh - Leader Pose로 겹침
     Weapon,      // StaticMesh - 소켓에 부착
+    Special,     // 특수 아이템 (무전기, 밀수품 등 - 바운드 아이템)
 };
 
 UENUM(BlueprintType)

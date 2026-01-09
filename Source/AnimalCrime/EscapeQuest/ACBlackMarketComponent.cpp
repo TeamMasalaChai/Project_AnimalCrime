@@ -2,6 +2,8 @@
 #include "Item/ACEscapeMissionBomb.h"
 #include "Character/ACMafiaCharacter.h"
 #include "Game/ACMainGameState.h"
+#include "Character/ACCharacter.h"
+#include "Game/ACMainPlayerController.h"
 
 #include "AnimalCrime.h"
 
@@ -18,6 +20,7 @@ void UACBlackMarketComponent::OpenBlackMarket(AACCharacter* InteractingPlayer)
 		AC_SUBLOG(LogSY, Warning, TEXT("InteractingPlayer is nullptr"));
 		return;
 	}
+
 	AACMafiaCharacter* Mafia = Cast<AACMafiaCharacter>(InteractingPlayer);
 	if (Mafia == nullptr)
 	{

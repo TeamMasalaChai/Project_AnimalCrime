@@ -80,9 +80,14 @@ void UACSlotWidget::OnPurchaseButtonClicked()
         // 무기는 퀵슬롯에 추가 (로컬 처리만, 캐릭터에 부착 안 함)
         ShopComponent->PurchaseAndAddToQuickSlot(ItemData);
     }
-    else
+    else if (ItemData->ItemType == EItemType::Clothing)
     {
         // 의류는 바로 착용 (서버 RPC 처리)
         ShopComponent->PurchaseAndEquipItem(ItemData);
+    }
+    else if (ItemData->ItemType == EItemType::Special)  // ← 추가
+    {
+        // 특수 아이템 (무전기, 밀수품 등) - 바운드 아이템에 등록
+        ShopComponent->PurchaseSpecialItem(ItemData);
     }
 }

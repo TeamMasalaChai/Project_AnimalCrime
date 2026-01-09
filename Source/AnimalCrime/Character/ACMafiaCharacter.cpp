@@ -32,6 +32,8 @@ void AACMafiaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AACMafiaCharacter, HandBomb);
+	DOREPLIFETIME(AACMafiaCharacter, Constrband);        
+	DOREPLIFETIME(AACMafiaCharacter, bHasWalkyTalky);   
 }
 
 void AACMafiaCharacter::BeginPlay()
@@ -562,9 +564,57 @@ void AACMafiaCharacter::ChangeTax(float InTimeRate)
 	GetWorld()->GetTimerManager().SetTimer(TaxTimerHandle, TimerDelegate, TaxTimeRate, true);
 }
 
+void AACMafiaCharacter::AddContraband()
+{
+	++Constrband;
+
+	// 로컬 PlayerController에 알림
+	OnRep_Contraband();
+}
+
+void AACMafiaCharacter::SubtractContraband()
+{
+	--Constrband;
+	if (Constrband < 0)
+	{
+		Constrband = 0;
+	}
+
+	// 로컬 PlayerController에 알림
+	OnRep_Contraband();
+}
+
+void AACMafiaCharacter::SetWalkyTalky(bool bInHasWalkyTalky)
+{
+	bHasWalkyTalky = bInHasWalkyTalky;
+
+	// 로컬 PlayerController에 알림
+	OnRep_HasWalkyTalky();
+}
+
 float AACMafiaCharacter::GetCurrentHP() const
 {
 	return Stat->GetCurrentHp();
+}
+
+void AACMafiaCharacter::OnRep_Contraband()
+{
+	// PlayerController에 알림
+	AACMainPlayerController* PC = GetController<AACMainPlayerController>();
+	if (PC != nullptr)
+	{
+		PC->SetHasContraband(Constrband > 0);
+	}
+}
+
+void AACMafiaCharacter::OnRep_HasWalkyTalky()
+{
+	// PlayerController에 알림
+	AACMainPlayerController* PC = GetController<AACMainPlayerController>();
+	if (PC != nullptr)
+	{
+		PC->SetHasWalkyTalky(bHasWalkyTalky);
+	}
 }
 
 void AACMafiaCharacter::ExcuteEscape()

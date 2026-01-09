@@ -14,6 +14,8 @@
 #include "Component/ACMoneyComponent.h"
 #include "Character/ACCharacter.h"
 #include "CrossHair/ACCrossHairWidget.h"
+#include "UI/BoundItem/ACBoundItemWidget.h"
+#include "Game/ACMainPlayerController.h"
 
 void UACHUDWidget::BindGameState()
 {
@@ -52,6 +54,8 @@ void UACHUDWidget::BindPlayerState()
 	// MoneyComponent를 바인딩
 	// ※ 확인 했으면 위에 주석들 다 지워주세요
 	BindMoneyComponent();
+
+	BindBoundItems();
 }
 
 void UACHUDWidget::HandleScoreChanged(float NewScore)
@@ -131,6 +135,61 @@ void UACHUDWidget::BindMoneyComponent()
 		{
 			UE_LOG(LogHG, Error, TEXT("MoneyComponent를 찾을 수 없음"));
 		}
+	}
+}
+
+void UACHUDWidget::BindBoundItems()
+{
+	if (APlayerController* PC = GetOwningPlayer())
+	{
+		if (AACMainPlayerController* MainPC = Cast<AACMainPlayerController>(PC))
+		{
+			// 델리게이트 바인딩
+			MainPC->OnWalkyTalkyChanged.AddDynamic(this, &UACHUDWidget::HandleWalkyTalkyChanged);
+			MainPC->OnContrabandChanged.AddDynamic(this, &UACHUDWidget::HandleContrabandChanged);
+
+			// 초기값 설정
+			HandleWalkyTalkyChanged(MainPC->HasWalkyTalky());
+			HandleContrabandChanged(MainPC->HasContraband());
+		}
+	}
+}
+
+void UACHUDWidget::HandleWalkyTalkyChanged(bool bHasWalkyTalky)
+{
+	if (WBP_WalkyTalky == nullptr)
+	{
+		return;
+	}
+
+	if (bHasWalkyTalky == true)
+	{
+		// 무전기 획득 - 이미지 표시
+		WBP_WalkyTalky->SetBoundItem(WalkyTalkyImage);
+	}
+	else
+	{
+		// 무전기 없음 - 투명 처리
+		WBP_WalkyTalky->ClearBoundItem();
+	}
+}
+
+void UACHUDWidget::HandleContrabandChanged(bool bHasContraband)
+{
+	if (WBP_Contraband == nullptr)
+	{
+		return;
+	}
+
+	if (bHasContraband == true)
+	{
+		// 밀수품 획득 - 이미지 표시
+		WBP_Contraband->SetBoundItem(ContrabandImage);
+	}
+	else
+	{
+		// 밀수품 없음 - 투명 처리
+		WBP_Contraband->ClearBoundItem();
 	}
 }
 

@@ -84,6 +84,7 @@ void AACEscapeMissionContraband::OnInteract(AACCharacter* ACPlayer, EInteraction
 		return;
 	}
 
+	// ===== 수정: AddContraband가 자동으로 PC에 알림 =====
 	ACPlayerMafia->AddContraband();
 
 	PC->Client_ShowNotification(FText::FromString(TEXT("밀수품을 획득했다")));

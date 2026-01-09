@@ -31,6 +31,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Shop")
     bool PurchaseItem(class UACItemData* ItemData);
 
+    /** @brief 특수 아이템 구매 (무전기 등 - 바운드 아이템) */
+    UFUNCTION(BlueprintCallable, Category = "Shop")
+    void PurchaseSpecialItem(class UACItemData* ItemData);
+
     /** @brief 아이템 착용 */
     UFUNCTION(BlueprintCallable, Category = "Shop")
     void EquipItem(class UACItemData* ItemData);
@@ -74,6 +78,12 @@ private:
 
     UFUNCTION(Client, Reliable)
     void ClientAddToQuickSlot(class UACItemData* ItemData);
+
+    UFUNCTION(Server, Reliable)
+    void ServerPurchaseSpecialItem(class UACItemData* ItemData);
+
+    UFUNCTION(Client, Reliable)
+    void ClientNotifySpecialItemPurchased(class UACItemData* ItemData);
 public:
     // 착용 중인 아이템들
     UPROPERTY(Replicated, BlueprintReadOnly, Category = "Shop")

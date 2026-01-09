@@ -78,8 +78,12 @@ protected:
 	// 밀수품 미션 관련 함수
 public:
 	int32 GetContraband() const { return Constrband; }
-	void AddContraband() { ++Constrband; }
-	void SubtractContraband() { --Constrband; }
+	void AddContraband();
+	void SubtractContraband();
+
+	// ===== 추가: 무전기 관련 함수 =====
+	bool HasWalkyTalky() const { return bHasWalkyTalky; }
+	void SetWalkyTalky(bool bInHasWalkyTalky);
 
 //protected:
 //	virtual float GetRequiredHoldTime() const override;
@@ -102,8 +106,27 @@ protected:
 	TObjectPtr<USoundBase> HitSound;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mission")
+	// ===== 수정: Replicated + RepNotify 추가 =====
+
+		/**
+		 * @brief 밀수품 소지 개수 (Replicated)
+		 */
+	UPROPERTY(ReplicatedUsing = OnRep_Contraband, EditAnywhere, BlueprintReadWrite, Category = "Mission")
 	int32 Constrband = 0;
+
+	/**
+	 * @brief 무전기 소지 여부 (Replicated)
+	 */
+	UPROPERTY(ReplicatedUsing = OnRep_HasWalkyTalky, BlueprintReadOnly, Category = "Mission")
+	bool bHasWalkyTalky = false;
+
+	// ===== RepNotify 함수 =====
+
+	UFUNCTION()
+	void OnRep_Contraband();
+
+	UFUNCTION()
+	void OnRep_HasWalkyTalky();
 	
 public:
 	void ExcuteEscape();

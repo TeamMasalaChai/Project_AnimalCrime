@@ -30,6 +30,25 @@ public:
 
 	// 새 함수 추가 - MoneyComponent 바인딩
 	void BindMoneyComponent();
+
+	// ===== 추가: 바운드 아이템 관련 =====
+
+	  /**
+	   * @brief PlayerController 바인딩 (바운드 아이템용)
+	   */
+	void BindBoundItems();
+
+	/**
+	 * @brief 무전기 소지 여부 변경 시 호출
+	 */
+	UFUNCTION()
+	void HandleWalkyTalkyChanged(bool bHasWalkyTalky);
+
+	/**
+	 * @brief 밀수품 소지 여부 변경 시 호출
+	 */
+	UFUNCTION()
+	void HandleContrabandChanged(bool bHasContraband);
 	
 	void ZoomInState();
 	void ZoomOutState();
@@ -52,4 +71,16 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UACCrossHairWidget> WBP_CrossHair;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UACBoundItemWidget> WBP_WalkyTalky;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UACBoundItemWidget> WBP_Contraband;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoundItem")
+	TObjectPtr<UTexture2D> WalkyTalkyImage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoundItem")
+	TObjectPtr<UTexture2D> ContrabandImage;
 };

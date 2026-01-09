@@ -9,6 +9,10 @@
 #include "Game/ACMainPlayerController.h"
 #include "ACMoneyComponent.h"
 #include "Objects/MoneyData.h"
+#include "Game/ACPlayerState.h"
+#include "UI/BoundItem/ACBoundItemWidget.h"  
+#include "Game/ACMainPlayerController.h"   
+#include "Character/ACMafiaCharacter.h"
 
 UACShopComponent::UACShopComponent()
 {
@@ -55,6 +59,34 @@ bool UACShopComponent::PurchaseItem(UACItemData* ItemData)
     }
 
     return MoneyComponent->SpendMoney(ItemData->Price);
+}
+
+void UACShopComponent::PurchaseSpecialItem(UACItemData* ItemData)
+{
+    if (ItemData == nullptr)
+    {
+        UE_LOG(LogHG, Warning, TEXT("PurchaseSpecialItem: ItemData is null"));
+        return;
+    }
+
+
+    // ===== 추가: 클라이언트에서 미리 체크 =====
+    FString ItemNameStr = ItemData->ItemName.ToString();
+    if (ItemNameStr.Contains(TEXT("무전기")) || ItemNameStr.Contains(TEXT("WalkyTalky")))
+    {
+        AActor* Owner = GetOwner();
+        if (AACCharacter* Character = Cast<AACCharacter>(Owner))
+        {
+            AACMafiaCharacter* MafiaChar = Cast<AACMafiaCharacter>(Character);
+            if (MafiaChar != nullptr && MafiaChar->HasWalkyTalky())
+            {
+                UE_LOG(LogHG, Warning, TEXT("무전기는 이미 소지하고 있습니다!"));
+                return;  // 서버 RPC 호출 안함!
+            }
+        }
+    }
+
+    ServerPurchaseSpecialItem(ItemData);
 }
 
 void UACShopComponent::EquipItem(UACItemData* ItemData)
@@ -408,3 +440,72 @@ void UACShopComponent::ServerPurchaseAndEquipItem_Implementation(UACItemData* It
     }
 }
 
+void UACShopComponent::ServerPurchaseSpecialItem_Implementation(UACItemData* ItemData)
+{
+    if (ItemData == nullptr)
+    {
+        return;
+    }
+
+    // ===== 수정: PurchaseItem 호출 **전에** 무전기 체크 =====
+    FString ItemNameStr = ItemData->ItemName.ToString();
+    if (ItemNameStr.Contains(TEXT("무전기")) || ItemNameStr.Contains(TEXT("WalkyTalky")))
+    {
+        AActor* Owner = GetOwner();
+        if (AACCharacter* Character = Cast<AACCharacter>(Owner))
+        {
+            AACMafiaCharacter* MafiaChar = Cast<AACMafiaCharacter>(Character);
+            if (MafiaChar != nullptr && MafiaChar->HasWalkyTalky())
+            {
+                UE_LOG(LogHG, Warning, TEXT("서버: 무전기는 이미 소지하고 있습니다!"));
+                return;  // 구매 차단! (PurchaseItem 호출 안함)
+            }
+        }
+    }
+
+    // 서버에서 구매 처리
+    if (PurchaseItem(ItemData) == false)
+    {
+        UE_LOG(LogHG, Warning, TEXT("특수 아이템 구매 실패: %s"), *ItemData->ItemName.ToString());
+        return;
+    }
+
+    // 구매 성공 - 클라이언트에게 알림 (Client RPC)
+    ClientNotifySpecialItemPurchased(ItemData);
+}
+
+void UACShopComponent::ClientNotifySpecialItemPurchased_Implementation(UACItemData* ItemData)
+{
+    if (ItemData == nullptr)
+    {
+        return;
+    }
+
+    AActor* Owner = GetOwner();
+    if (AACCharacter* Character = Cast<AACCharacter>(Owner))
+    {
+        FString ItemNameStr = ItemData->ItemName.ToString();
+
+        // 무전기 처리
+        if (ItemNameStr.Contains(TEXT("무전기")) || ItemNameStr.Contains(TEXT("WalkyTalky")))
+        {
+            AACMafiaCharacter* MafiaChar = Cast<AACMafiaCharacter>(Character);
+            if (MafiaChar == nullptr)
+            {
+                UE_LOG(LogHG, Warning, TEXT("마피아만 무전기를 구매할 수 있습니다!"));
+                return;
+            }
+
+            // ===== 안전장치: 여기서도 체크 (서버/클라 체크를 통과했다면 이미 없어야 함) =====
+            if (MafiaChar->HasWalkyTalky())
+            {
+                UE_LOG(LogHG, Error, TEXT("클라이언트: 무전기 중복 - 이 메시지가 나오면 안됨!"));
+                return;
+            }
+
+            // 무전기 획득
+            MafiaChar->SetWalkyTalky(true);
+            UE_LOG(LogHG, Log, TEXT("무전기 획득!"));
+        }
+    }
+}

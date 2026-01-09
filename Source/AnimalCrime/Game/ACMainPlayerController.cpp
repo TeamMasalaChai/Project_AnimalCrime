@@ -1258,3 +1258,33 @@ void AACMainPlayerController::Client_ShowNotification_Implementation(const FText
 {
 	ShowNotification(Message);
 }
+
+void AACMainPlayerController::SetHasWalkyTalky(bool bInHasWalkyTalky)
+{
+	if (bHasWalkyTalky == bInHasWalkyTalky)
+	{
+		return; // 이미 같은 값이면 리턴
+	}
+
+	bHasWalkyTalky = bInHasWalkyTalky;
+
+	// 델리게이트 브로드캐스트 (로컬에서만)
+	OnWalkyTalkyChanged.Broadcast(bHasWalkyTalky);
+
+	UE_LOG(LogHG, Log, TEXT("[Local] 무전기 소지 여부: %s"), bHasWalkyTalky ? TEXT("O") : TEXT("X"));
+}
+
+void AACMainPlayerController::SetHasContraband(bool bInHasContraband)
+{
+	if (bHasContraband == bInHasContraband)
+	{
+		return;
+	}
+
+	bHasContraband = bInHasContraband;
+
+	// 델리게이트 브로드캐스트 (로컬에서만)
+	OnContrabandChanged.Broadcast(bHasContraband);
+
+	UE_LOG(LogHG, Log, TEXT("[Local] 밀수품 소지 여부: %s"), bHasContraband ? TEXT("O") : TEXT("X"));
+}

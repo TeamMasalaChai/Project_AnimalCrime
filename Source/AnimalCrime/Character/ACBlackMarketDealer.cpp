@@ -85,6 +85,7 @@ void AACBlackMarketDealer::OnInteract(AACCharacter* ACPlayer, EInteractionKey In
 		return;
 	}
 
+	// ===== 수정: Character에서 직접 체크 =====
 	if (MafiaChar->GetContraband() <= 0)
 	{
 		PC->Client_ShowNotification(FText::FromString(TEXT("거래할 밀수품이 없습니다.")));
@@ -94,6 +95,7 @@ void AACBlackMarketDealer::OnInteract(AACCharacter* ACPlayer, EInteractionKey In
 
 	// 밀수품 개수 차감
 	MafiaChar->SubtractContraband();
+
 	BlackMarketComponent->OpenBlackMarket(ACPlayer);
 }
 
