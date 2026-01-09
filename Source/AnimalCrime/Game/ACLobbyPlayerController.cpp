@@ -419,6 +419,7 @@ void AACLobbyPlayerController::HandleGameReady(const struct FInputActionValue& V
 	else
 	{
 		AC_LOG(LogSY, Log, TEXT("클라이언트 - Ready 토글"));
+		bIsReady = !bIsReady;
 		ServerReadyToggle();
 	}
 }

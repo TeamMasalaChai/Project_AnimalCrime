@@ -22,7 +22,18 @@ public:
 	UFUNCTION()
 	void UpdatePlayerReadyText(int32 ReadyPlayerNum, int32 AllPlayerNum);
 
+	UFUNCTION()
+	void SetStartTextVisibility(bool bShowText);
+	UFUNCTION()
+	void SetReadyTextVisibility(bool bShowText);
+
 protected:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<class UTextBlock> ReadyPlayerText;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class USizeBox> StartTextSizeBox;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class USizeBox> ReadyTextSizeBox;
 };

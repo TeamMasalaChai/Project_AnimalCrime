@@ -68,6 +68,8 @@ public:
 	UFUNCTION()
 	void OnGameStartFadeInFinished();
 
+public:
+	bool GetIsReady() const { return bIsReady; }
 
 	// ===== UI =====
 protected:
