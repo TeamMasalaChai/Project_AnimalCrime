@@ -638,6 +638,8 @@ bool AACMainPlayerController::CanUseSkill() const
 	ECharacterState CharacterState = CharacterPawn->GetCharacterState();
 	// 캐릭터의 상태가 None, Stun, Prison 상태일 경우 불가
 	if (CharacterState == ECharacterState::None ||
+		CharacterState == ECharacterState::Interact ||
+		CharacterState == ECharacterState::OnInteract ||
 		CharacterState == ECharacterState::Stun ||
 		CharacterState == ECharacterState::Prison)
 	{
