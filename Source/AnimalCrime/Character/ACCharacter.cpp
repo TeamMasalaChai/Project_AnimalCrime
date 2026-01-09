@@ -1263,7 +1263,7 @@ void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 		
 		if ((InCharacterState == ECharacterState::None))
 		{
-			AC_LOG(LogHY, Warning, TEXT("Fail Now: %s Input: %s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState));
+			AC_LOG(LogHY, Warning, TEXT("Fail Now: %s Input: %s name:%s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState), *GetName());
 			return;
 		}
 	}
@@ -1282,7 +1282,7 @@ void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 			(InCharacterState == ECharacterState::OnInteract) || (InCharacterState == ECharacterState::Angry) || 
 			(InCharacterState == ECharacterState::Stun))
 		{
-			AC_LOG(LogHY, Warning, TEXT("Fail Now: %s Input: %s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState));
+			AC_LOG(LogHY, Warning, TEXT("Fail Now: %s Input: %s name:%s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState), *GetName());
 			return;
 		}
 	}
@@ -1298,7 +1298,7 @@ void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 		if ((InCharacterState == ECharacterState::None) || (InCharacterState == ECharacterState::OnInteract) ||
 			(InCharacterState == ECharacterState::Angry))
 		{
-			AC_LOG(LogHY, Warning, TEXT("Fail Now: %s Input: %s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState));
+			AC_LOG(LogHY, Warning, TEXT("Fail Now: %s Input: %s name:%s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState), *GetName());
 			return;
 		}
 	}
@@ -1314,12 +1314,12 @@ void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 		if ((InCharacterState == ECharacterState::None) || (InCharacterState == ECharacterState::OnDamage) ||
 			(InCharacterState == ECharacterState::Interact))
 		{
-			AC_LOG(LogHY, Warning, TEXT("Fail Now: %s Input: %s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState));
+			AC_LOG(LogHY, Warning, TEXT("Fail Now: %s Input: %s name:%s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState), *GetName());
 			return;
 		}
 	}
 	
-	AC_LOG(LogHY, Warning, TEXT("Success !!! Now: %s Input: %s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState));
+	AC_LOG(LogHY, Warning, TEXT("Success !!! Now: %s Input: %s name:%s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState), *GetName());
 	
 	//PrevCharacterState = CharacterState;
 	CharacterState = InCharacterState;
