@@ -429,7 +429,7 @@ void AACCharacter::ChangeInputMode(EInputMode NewMode)
 
 void AACCharacter::Move(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::OnInteract)
+	if ((CharacterState == ECharacterState::Interact) || (CharacterState == ECharacterState::OnInteract))
 	{
 		return;
 	}
