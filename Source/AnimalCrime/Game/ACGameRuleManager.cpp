@@ -158,7 +158,7 @@ void UACGameRuleManager::ShowGameResult(EGameEndType GameEndType)
 	}
 
 	// 5초 뒤 다음 맵 로드 예약
-	GetOwner()->GetWorldTimerManager().SetTimer(TimerHandle_NextMap, this, &UACGameRuleManager::LoadNextMap, 5.0f, false);
+	GetOwner()->GetWorldTimerManager().SetTimer(TimerHandle_NextMap, this, &UACGameRuleManager::LoadNextMap, 7.0f, false);
 }
 
 void UACGameRuleManager::RewardPoliceForAction(EPoliceAction Action, float InScore)

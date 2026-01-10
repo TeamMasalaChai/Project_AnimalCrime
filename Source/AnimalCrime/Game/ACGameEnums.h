@@ -38,7 +38,7 @@ enum class EPlayerRole : uint8
 	None			UMETA(DisplayName = "None"),		// 없음
 	Police			UMETA(DisplayName = "Police"),		// 경찰
 	Mafia			UMETA(DisplayName = "Mafia"),		// 마피아
-	Observer		UMETA(DisplayName = "Observer"),	// 관전자
+	Observer		UMETA(DisplayName = "Observer"),	// 관전자 (게임 진행 중 탈출을 해서 관전이 아닌 중간에 들어온 플레이어를 위한 타입)
 };
 
 //보이스 그룹
