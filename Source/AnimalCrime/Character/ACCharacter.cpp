@@ -2359,12 +2359,20 @@ void AACCharacter::SetVOIPAttenuation(bool bUseAttenuation)
 		return;
 	}
 
-	if (bUseAttenuation == true)
+	USoundAttenuation* NewAttenuation = bUseAttenuation ? VoiceAttenuation : nullptr;
+
+	// 이미 같은 설정이면 스킵
+	if (VOIPTalker->Settings.AttenuationSettings == NewAttenuation)
 	{
-		VOIPTalker->Settings.AttenuationSettings = VoiceAttenuation;
+		return;
 	}
-	else
+
+	VOIPTalker->Settings.AttenuationSettings = NewAttenuation;
+
+	// 재등록하여 변경사항 즉시 적용
+	APlayerState* PS = GetPlayerState();
+	if (PS != nullptr)
 	{
-		VOIPTalker->Settings.AttenuationSettings = nullptr;
+		VOIPTalker->RegisterWithPlayerState(PS);
 	}
 }
