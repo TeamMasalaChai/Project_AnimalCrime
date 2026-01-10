@@ -47,6 +47,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Shop")
     void PurchaseAndAddToQuickSlot(class UACItemData* ItemData);
 
+    /** @brief 탄약 구매 (추가) */
+    UFUNCTION(BlueprintCallable, Category = "Shop")
+    void PurchaseAmmo(class UACItemData* ItemData);
+
     /** @brief 무기 장착/해제 토글 */
     UFUNCTION(BlueprintCallable, Category = "Shop")
     void ToggleWeaponEquip(class UACItemData* ItemData);
@@ -81,6 +85,9 @@ private:
 
     UFUNCTION(Server, Reliable)
     void ServerPurchaseSpecialItem(FPrimaryAssetId ItemAssetId);
+
+    UFUNCTION(Server, Reliable)
+    void ServerPurchaseAmmo(FPrimaryAssetId ItemAssetId);
 
     UFUNCTION(Client, Reliable)
     void ClientNotifySpecialItemPurchased(FPrimaryAssetId ItemAssetId);

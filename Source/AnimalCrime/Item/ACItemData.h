@@ -13,6 +13,7 @@ enum class EItemType : uint8
     Clothing,    // SkeletalMesh - Leader Pose로 겹침
     Weapon,      // StaticMesh - 소켓에 부착
     Special,     // 특수 아이템 (무전기, 밀수품 등 - 바운드 아이템)
+    Ammo,        // 탄약 아이템
 };
 
 UENUM(BlueprintType)
@@ -73,4 +74,8 @@ public:
     // 무기 (스태틱 메시)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "ItemType == EItemType::Weapon", EditConditionHides))
     TObjectPtr <class UStaticMesh> EquipmentMesh;
+
+    // 탄약 개수 (추가)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "ItemType == EItemType::Ammo", EditConditionHides))
+    int32 AmmoCount = 5;
 };

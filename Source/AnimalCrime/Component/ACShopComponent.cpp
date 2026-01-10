@@ -177,6 +177,24 @@ void UACShopComponent::PurchaseAndAddToQuickSlot(UACItemData* ItemData)
     ServerPurchaseAndAddToQuickSlot(ItemData->GetPrimaryAssetId());  // 변경
 }
 
+void UACShopComponent::PurchaseAmmo(UACItemData* ItemData)
+{
+    if (ItemData == nullptr)
+    {
+        UE_LOG(LogHG, Warning, TEXT("PurchaseAmmo: ItemData is null"));
+        return;
+    }
+
+    if (ItemData->ItemType != EItemType::Ammo)
+    {
+        UE_LOG(LogHG, Warning, TEXT("PurchaseAmmo: ItemData is not Ammo type"));
+        return;
+    }
+
+    // 서버 RPC 호출
+    ServerPurchaseAmmo(ItemData->GetPrimaryAssetId());
+}
+
 void UACShopComponent::ToggleWeaponEquip(UACItemData* ItemData)
 {
     if (ItemData == nullptr)
@@ -512,6 +530,40 @@ void UACShopComponent::ServerPurchaseSpecialItem_Implementation(FPrimaryAssetId 
     }
 
     ClientNotifySpecialItemPurchased(ItemAssetId);  // AssetId 전달
+}
+
+void UACShopComponent::ServerPurchaseAmmo_Implementation(FPrimaryAssetId ItemAssetId)
+{
+    UACItemData* ItemData = LoadItemDataSync(ItemAssetId);
+    if (ItemData == nullptr)
+    {
+        UE_LOG(LogHG, Error, TEXT("ServerPurchaseAmmo: Failed to load ItemData"));
+        return;
+    }
+
+    if (ItemData->ItemType != EItemType::Ammo)
+    {
+        UE_LOG(LogHG, Warning, TEXT("ServerPurchaseAmmo: ItemData is not Ammo type"));
+        return;
+    }
+
+    // 서버에서 구매 처리
+    if (PurchaseItem(ItemData) == false)
+    {
+        UE_LOG(LogHG, Warning, TEXT("ServerPurchaseAmmo: Failed to purchase"));
+        return;
+    }
+
+    // 서버에서 총알 추가 (자동으로 클라이언트에 복제됨)
+    AACCharacter* Character = Cast<AACCharacter>(GetOwner());
+    if (Character == nullptr)
+    {
+        UE_LOG(LogHG, Error, TEXT("ServerPurchaseAmmo: Owner is not AACCharacter"));
+        return;
+    }
+
+    Character->AddBullets(ItemData->AmmoCount);
+    UE_LOG(LogHG, Log, TEXT("서버: 탄약 구매 성공! +%d발"), ItemData->AmmoCount);
 }
 
 void UACShopComponent::ClientNotifySpecialItemPurchased_Implementation(FPrimaryAssetId ItemAssetId)
