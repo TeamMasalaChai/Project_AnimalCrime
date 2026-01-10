@@ -103,4 +103,8 @@ private:
 	float GameScoreGauge = 5000.0f;
 	float MafiaWinThreshold = 0.0f;
 	float PoliceWinThreshold = 7000.0f;
+
+protected:
+	UPROPERTY()
+	uint8 bTimerFlag:1 = false;
 };

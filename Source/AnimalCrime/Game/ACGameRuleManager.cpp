@@ -57,6 +57,12 @@ void UACGameRuleManager::OnObjectDestroyed(float InScore)
 		if (World && GameMode->HasAuthority())
 		{
 			World->GetTimerManager().SetTimer(TimerHandle_NextMap, this, &UACGameRuleManager::LoadNextMap, 10.0f, false);
+			if (bTimerFlag == true)
+			{
+				return;
+			}
+			bTimerFlag = true;
+			World->GetTimerManager().SetTimer(TimerHandle_NextMap, this, &UACGameRuleManager::LoadNextMap, 10.0f, false);
 		}
 	}
 }
@@ -85,6 +91,11 @@ void UACGameRuleManager::OnAttackCitizen(float InScore)
 		UWorld* World = GameMode->GetWorld();
 		if (World && GameMode->HasAuthority())
 		{
+			if (bTimerFlag == true)
+			{
+				return;
+			}
+			bTimerFlag = true;
 			World->GetTimerManager().SetTimer(TimerHandle_NextMap, this, &UACGameRuleManager::LoadNextMap, 10.0f, false);
 		}
 	}
