@@ -91,6 +91,13 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void OnAttackCitizen(float InScore);
 	
+	
+public:
+	UFUNCTION()
+	void RemainTimeUp(int32 TimeAmount);
+	
+	UFUNCTION()
+	void RemainTimeDown(int32 TimeAmount);
 public:
  /**
      @brief 탈출, 체포 시에 게임 종료 조건 판단하는 함수
@@ -104,7 +111,16 @@ private:
 	float MafiaWinThreshold = 0.0f;
 	float PoliceWinThreshold = 7000.0f;
 
+	
+	
 protected:
 	UPROPERTY()
 	uint8 bTimerFlag:1 = false;
+	
+	int32 GameOverTime;
+	
+	FTimerHandle GameOverTimeHandle;
+	
+	UFUNCTION()
+	void CheckEndTimer();
 };

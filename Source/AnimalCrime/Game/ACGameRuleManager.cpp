@@ -19,6 +19,13 @@ void UACGameRuleManager::Init(AACMainGameMode* InGameMode)
 {
 	GameMode = Cast<AACMainGameMode>(InGameMode);
 	GameScoreGauge = 5000.0f;
+	
+	// 10분
+	GameOverTime = 600;
+	
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindUObject(this, &UACGameRuleManager::CheckEndTimer);
+	GetWorld()->GetTimerManager().SetTimer(GameOverTimeHandle, TimerDelegate, 1, true);
 }
 
 AACMainGameMode* UACGameRuleManager::GetOwner() const
@@ -154,6 +161,18 @@ void UACGameRuleManager::CheckGameEndCondition()
 	}
 }
 
+
+void UACGameRuleManager::CheckEndTimer()
+{
+	GameOverTime -= 1;
+	UE_LOG(LogHY, Error, TEXT("Remain Timer:%d"), GameOverTime);
+	if (GameOverTime < 0)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(GameOverTimeHandle);
+		LoadNextMap();
+	}
+}
+
 void UACGameRuleManager::RewardPoliceForAction(EPoliceAction Action, float InScore)
 {
 	switch (Action)
@@ -217,4 +236,17 @@ void UACGameRuleManager::LoadNextMap()
 	}
 	
 	GameInstance->LoadLobbyMap();
+}
+
+/*
+ *	테스트 용도로 만들은 함수
+ */
+void UACGameRuleManager::RemainTimeUp(int32 TimeAmount)
+{
+	GameOverTime += TimeAmount;
+}
+
+void UACGameRuleManager::RemainTimeDown(int32 TimeAmount)
+{
+	GameOverTime -= TimeAmount;
 }
