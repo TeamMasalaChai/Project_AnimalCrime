@@ -160,7 +160,7 @@ AACMainPlayerController::AACMainPlayerController()
 	{
 		ZoomAction = ZoomActionRef.Object;
 	}
-
+	
 	// ===== 게임 시간 ====
 	static ConstructorHelpers::FObjectFinder<UInputAction> TimerUpActionRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Project/Input/Actions/IA_TimeUp.IA_TimeUp'"));
 	if (TimerUpActionRef.Succeeded())
@@ -240,6 +240,7 @@ void AACMainPlayerController::BeginPlay()
 	//}
 
 	ZoomOut();
+	ACHUDWidget->HideSprintUI();
 	ACHUDWidget->WBP_Ammo->UpdateAmmo(0);
 
 	// 서버(리슨 서버 호스트)인 경우에만 여기서 RoleScreen 표시
@@ -378,7 +379,7 @@ void AACMainPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(ZoomAction, ETriggerEvent::Started, this, &AACMainPlayerController::ZoomIn);
 		EnhancedInputComponent->BindAction(ZoomAction, ETriggerEvent::Completed, this, &AACMainPlayerController::ZoomOut);
 	}
-
+	
 	if (TimerUpAction)
 	{
 		EnhancedInputComponent->BindAction(TimerUpAction, ETriggerEvent::Started, this, &AACMainPlayerController::TimeUp);
