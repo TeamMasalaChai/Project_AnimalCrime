@@ -90,4 +90,8 @@ void UACSlotWidget::OnPurchaseButtonClicked()
         // 특수 아이템 (무전기, 밀수품 등) - 바운드 아이템에 등록
         ShopComponent->PurchaseSpecialItem(ItemData);
     }
+    else if (ItemData->ItemType == EItemType::Ammo)  // 추가!
+    {
+        ShopComponent->PurchaseAmmo(ItemData);
+    }
 }
