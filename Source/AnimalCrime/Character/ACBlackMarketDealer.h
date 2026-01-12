@@ -20,7 +20,6 @@ protected:
 private:
 	void UpdateHighlightForLocalPlayer();
 
-
 	//!< 상호작용 인터페이스
 protected:
 	virtual void OnInteract(class AACCharacter* ACPlayer, EInteractionKey InKey) override;
@@ -33,5 +32,5 @@ protected:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Highlight")
-	TObjectPtr<UMaterialInterface> MafiaHighlightMaterial;
+	TObjectPtr<UMaterialInterface> MafiaHighlightMaterial;  // M_CharacterOutline
 };

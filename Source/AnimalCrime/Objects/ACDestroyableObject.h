@@ -31,6 +31,9 @@ public:
 	
 protected:
 	void HandleDestroyed(AController* InstigatorController);
+
+private:
+	void EnableCustomDepthForMafia();
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
