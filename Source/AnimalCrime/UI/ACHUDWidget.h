@@ -33,6 +33,9 @@ public:
 	
 	void ShowSprintUI();
 	void HideSprintUI();
+
+	void ShowDropUI();
+	void HideDropUI();
 	
 	// 새 함수 추가 - MoneyComponent 바인딩
 	void BindSprintGauge();
@@ -89,6 +92,9 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UACSprintWidget> WBP_Sprint;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UUserWidget> DropUI;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoundItem")
 	TObjectPtr<UTexture2D> WalkyTalkyImage;

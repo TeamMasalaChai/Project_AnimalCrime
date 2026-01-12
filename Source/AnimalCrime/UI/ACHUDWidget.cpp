@@ -125,6 +125,24 @@ void UACHUDWidget::HideSprintUI()
 	WBP_Sprint->HideSprintWidget();
 }
 
+void UACHUDWidget::ShowDropUI()
+{
+	if (DropUI == nullptr)
+	{
+		return;
+	}
+	DropUI->SetVisibility(ESlateVisibility::Visible);
+}
+
+void UACHUDWidget::HideDropUI()
+{
+	if (DropUI == nullptr)
+	{
+		return;
+	}
+	DropUI->SetVisibility(ESlateVisibility::Hidden);
+}
+
 void UACHUDWidget::BindSprintGauge()
 {
 	if (APlayerController* PC = GetOwningPlayer())

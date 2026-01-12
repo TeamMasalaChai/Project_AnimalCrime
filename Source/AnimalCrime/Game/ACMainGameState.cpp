@@ -251,7 +251,7 @@ void AACMainGameState::ServerChangeEscapeState_Implementation(EEscapeState NewEs
 			{
 				continue;
 			}
-			Mafia->ClientSetBombAreaVisible(false);
+			Mafia->ClientSetBombHeld(false);
 			Mafia->ClientSetEscapeAreaVisible(true);
 		}
 

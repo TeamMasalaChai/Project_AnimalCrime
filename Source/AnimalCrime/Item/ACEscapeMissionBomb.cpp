@@ -200,7 +200,7 @@ void AACEscapeMissionBomb::OnInteract(AACCharacter* ACPlayer, EInteractionKey In
 	AACMainGameState* GS = ACPlayerMafia->GetWorld()->GetGameState<AACMainGameState>();
 	if (GS && GS->EscapeState == EEscapeState::DeliverBomb)
 	{
-		ACPlayerMafia->ClientSetBombAreaVisible(true);
+		ACPlayerMafia->ClientSetBombHeld(true);
 	}
 
 	AC_LOG(LogSY, Log, TEXT("Bomb Interact Success"));

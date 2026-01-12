@@ -72,7 +72,7 @@ void UACBlackMarketComponent::OpenBlackMarket(AACCharacter* InteractingPlayer)
 		Mafia->HandBomb = SpawnedBomb;
 
 		//폭탄 설치 가능 구역 보이게 하기
-		Mafia->ClientSetBombAreaVisible(true);
+		Mafia->ClientSetBombHeld(true);
 		//캐릭터에 폭탄 부착
 		SpawnedBomb->AttachToCharacter();
 	}

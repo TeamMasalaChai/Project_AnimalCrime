@@ -20,6 +20,7 @@
 #include "Game/ACMainPlayerController.h"
 #include "Item/ACItemData.h"
 #include "Sound/SoundBase.h"
+#include "UI/ACHUDWidget.h"
 
 AACMafiaCharacter::AACMafiaCharacter()
 {
@@ -32,8 +33,8 @@ void AACMafiaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AACMafiaCharacter, HandBomb);
-	DOREPLIFETIME(AACMafiaCharacter, Constrband);        
-	DOREPLIFETIME(AACMafiaCharacter, bHasWalkyTalky);   
+	DOREPLIFETIME(AACMafiaCharacter, Constrband);
+	DOREPLIFETIME(AACMafiaCharacter, bHasWalkyTalky);
 }
 
 void AACMafiaCharacter::BeginPlay()
@@ -134,13 +135,13 @@ float AACMafiaCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 	// 감옥 상태에서는 맞아서는 안됌.
 	if (CharacterState == ECharacterState::OnDamage ||
 		CharacterState == ECharacterState::Stun ||
-		CharacterState == ECharacterState::Prison || 
-		CharacterState == ECharacterState::PrisonEscape || 
+		CharacterState == ECharacterState::Prison ||
+		CharacterState == ECharacterState::PrisonEscape ||
 		CharacterState == ECharacterState::OnInteract)
 	{
 		return 0.0;
 	}
-	
+
 	float SuperResult = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	// 피격 사운드 재생
@@ -252,14 +253,14 @@ void AACMafiaCharacter::OnInteract(AACCharacter* ACPlayer, EInteractionKey InKey
 		return;
 	}
 
-		//todo: DB로 교체
+	//todo: DB로 교체
 	AACMainGameMode* GM = GetWorld()->GetAuthGameMode<AACMainGameMode>();
 	switch (InKey)
 	{
 	case EInteractionKey::E:
 		AC_LOG(LogSW, Log, TEXT("마피아 신분증!"))
 			PC->Client_ShowNotification(FText::FromString(TEXT("마피아")));
-			break;
+		break;
 	case EInteractionKey::R:
 		// 경찰과 상호작용(투옥)
 		//if (this->CharacterState == ECharacterState::Stun)
@@ -324,7 +325,7 @@ void AACMafiaCharacter::ServerItemDrop_Implementation()
 
 		//폭탄 설치 가능 구역 숨기기
 
-		ClientSetBombAreaVisible(false);
+		ClientSetBombHeld(false);
 		AC_LOG(LogSY, Log, TEXT("Bomb dropped"));
 	}
 	else
@@ -333,7 +334,7 @@ void AACMafiaCharacter::ServerItemDrop_Implementation()
 	}
 }
 
-void AACMafiaCharacter::ClientSetBombAreaVisible_Implementation(bool bVisible)
+void AACMafiaCharacter::ClientSetBombHeld_Implementation(bool bIsHolding)
 {
 	AACMainGameState* GS = GetWorld()->GetGameState<AACMainGameState>();
 	if (GS == nullptr)
@@ -348,10 +349,17 @@ void AACMafiaCharacter::ClientSetBombAreaVisible_Implementation(bool bVisible)
 			continue;
 		}
 
-		Area->SetActorHiddenInGame(!bVisible);
+		Area->SetActorHiddenInGame(!bIsHolding);
 
 		AC_LOG(LogSY, Log, TEXT("ClientSetBombAreaVisible"));
 	}
+
+	AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
+	if (PC == nullptr || PC->ACHUDWidget == nullptr)
+	{
+		return;
+	}
+	bIsHolding ? PC->ACHUDWidget->ShowDropUI() : PC->ACHUDWidget->HideDropUI();
 }
 
 void AACMafiaCharacter::ClientSetEscapeAreaVisible_Implementation(bool bVisible)
@@ -631,6 +639,6 @@ void AACMafiaCharacter::ExcuteEscape()
 	{
 		return;
 	}
-	
+
 	ServerEscape();
 }
