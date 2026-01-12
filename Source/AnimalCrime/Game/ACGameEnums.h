@@ -7,7 +7,8 @@
 UENUM(BlueprintType)
 enum class EEscapeState : uint8
 {
-    GameStart   UMETA(DisplayName = "GameStart"),
+	Contraband   UMETA(DisplayName = "Contraband"),
+	BlackMarket   UMETA(DisplayName = "BlackMarket"),
     DeliverBomb UMETA(DisplayName = "DeliverBomb"),
     Escape      UMETA(DisplayName = "Escape"),
 };

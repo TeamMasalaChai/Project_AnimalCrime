@@ -2,6 +2,7 @@
 #include "Item/ACEscapeMissionBomb.h"
 #include "Character/ACMafiaCharacter.h"
 #include "Game/ACMainGameState.h"
+#include "Game/ACPlayerState.h"
 #include "Character/ACCharacter.h"
 #include "Game/ACMainPlayerController.h"
 
@@ -35,13 +36,13 @@ void UACBlackMarketComponent::OpenBlackMarket(AACCharacter* InteractingPlayer)
 		return;
 	}
 
-	AACMainGameState* GS = GetWorld()->GetGameState<AACMainGameState>();
-	if (GS == nullptr)
+	AACPlayerState* PS = Mafia->GetPlayerState<AACPlayerState>();
+	if (PS == nullptr)
 	{
-		AC_SUBLOG(LogSY, Warning, TEXT("GameState is nullptr"));
+		AC_SUBLOG(LogSY, Warning, TEXT("PlayerState is nullptr"));
 		return;
 	}
-	if (GS->EscapeState != EEscapeState::DeliverBomb)
+	if (PS->EscapeState != EEscapeState::BlackMarket)
 	{
 		AC_SUBLOG(LogSY, Log, TEXT("EscapeState is not DeliverBomb"));
 		return;
@@ -75,6 +76,9 @@ void UACBlackMarketComponent::OpenBlackMarket(AACCharacter* InteractingPlayer)
 		Mafia->ClientSetBombHeld(true);
 		//캐릭터에 폭탄 부착
 		SpawnedBomb->AttachToCharacter();
+
+		PS->EscapeState = EEscapeState::DeliverBomb;
+		PS->OnRep_EscapeState();
 	}
 }
 

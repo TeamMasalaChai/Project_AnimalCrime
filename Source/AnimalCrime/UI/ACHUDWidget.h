@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Game/ACGameEnums.h"
 #include "Blueprint/UserWidget.h"
 #include "UI/ACCustomWidget.h"
 #include "ACHUDWidget.generated.h"
@@ -64,6 +65,8 @@ public:
 	
 	void ZoomInState();
 	void ZoomOutState();
+
+	void UpdateQuestTracker(EEscapeState NewState);
 	
 public:
 	UPROPERTY(meta = (BindWidget))
@@ -95,6 +98,9 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UUserWidget> DropUI;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UACQuestTracker> QuestTracker;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoundItem")
 	TObjectPtr<UTexture2D> WalkyTalkyImage;

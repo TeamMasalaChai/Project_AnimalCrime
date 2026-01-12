@@ -9,6 +9,7 @@
 #include "Interaction/ACInteractionData.h"
 #include "Character/ACMafiaCharacter.h"
 #include "UI/Common/ACNotificationText.h"
+#include "Game/ACPlayerState.h"
 #include "Game/ACMainPlayerController.h"
 #include "AnimalCrime.h"
 
@@ -89,6 +90,13 @@ void AACEscapeMissionContraband::OnInteract(AACCharacter* ACPlayer, EInteraction
 
 	PC->Client_ShowNotification(FText::FromString(TEXT("밀수품을 획득했다")));
 
+	AACPlayerState* PS = ACPlayerMafia->GetPlayerState<AACPlayerState>();
+	if (PS == nullptr)
+	{
+		return;
+	}
+	PS->EscapeState = EEscapeState::BlackMarket;
+	PS->OnRep_EscapeState();
 	AC_LOG(LogSY, Log, TEXT("item Destroy"));
 	Destroy();
 }

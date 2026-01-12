@@ -130,10 +130,6 @@ public:
 	TArray< class AACPlayerState*> GetPlayersByRoleAndLocation(EPlayerRole InRole, ECharacterLocation InLocation) const;
 
 public:
-	//!< 탈출 임무
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
-	EEscapeState EscapeState = EEscapeState::DeliverBomb;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<TObjectPtr<class AACBombInstallArea>> BombAreas;
 

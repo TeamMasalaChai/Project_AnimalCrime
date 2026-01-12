@@ -15,6 +15,7 @@
 #include "Character/ACCharacter.h"
 #include "CrossHair/ACCrossHairWidget.h"
 #include "UI/BoundItem/ACBoundItemWidget.h"
+#include "UI/EscapeQuest/ACQuestTracker.h"
 #include "Game/ACMainPlayerController.h"
 #include "Sprint/ACSprintWidget.h"
 
@@ -25,7 +26,7 @@ void UACHUDWidget::BindGameState()
 		if (AACMainGameState* GS = World->GetGameState<AACMainGameState>())
 		{
 			GS->OnScoreChanged.AddDynamic(this, &UACHUDWidget::HandleScoreChanged);
-			
+
 			HandleScoreChanged(GS->GetTeamScore());
 		}
 	}
@@ -81,7 +82,7 @@ void UACHUDWidget::HandleMoneyChanged(int32 NewMoney)
 	{
 		return;
 	}
-	
+
 	WBP_Money->UpdateMoney(NewMoney);
 }
 
@@ -91,7 +92,7 @@ void UACHUDWidget::HandleAmmoChanged(int32 InAmmo)
 	{
 		return;
 	}
-	
+
 	WBP_Ammo->UpdateAmmo(InAmmo);
 }
 
@@ -101,7 +102,7 @@ void UACHUDWidget::HandleGaugeChanged(int32 InSprintGauge)
 	{
 		return;
 	}
-	
+
 	WBP_Sprint->UpdateSprintGauge(InSprintGauge);
 }
 
@@ -157,7 +158,7 @@ void UACHUDWidget::BindSprintGauge()
 		Character->OnSprintUIShow.AddUObject(this, &UACHUDWidget::ShowSprintUI);
 		Character->OnSprintUIHide.AddUObject(this, &UACHUDWidget::HideSprintUI);
 	}
-	
+
 	// 초기값 설정.
 	HandleGaugeChanged(10);
 }
@@ -268,7 +269,7 @@ void UACHUDWidget::ZoomInState()
 		UE_LOG(LogTemp, Warning, TEXT("WBP_CrossHair nullptr"));
 		return;
 	}
-	
+
 	WBP_Ammo->SetVisibility(ESlateVisibility::Visible);
 	WBP_CrossHair->SetVisibility(ESlateVisibility::Visible);
 }
@@ -288,4 +289,14 @@ void UACHUDWidget::ZoomOutState()
 
 	WBP_Ammo->SetVisibility(ESlateVisibility::Hidden);
 	WBP_CrossHair->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UACHUDWidget::UpdateQuestTracker(EEscapeState NewState)
+{
+	if (QuestTracker == nullptr)
+	{
+		return;
+	}
+
+	QuestTracker->UpdateQuest(NewState);
 }

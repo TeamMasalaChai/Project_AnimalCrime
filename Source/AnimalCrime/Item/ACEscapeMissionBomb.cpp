@@ -12,6 +12,7 @@
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Game/ACPlayerState.h"
 #include "AnimalCrime.h"
 
 AACEscapeMissionBomb::AACEscapeMissionBomb()
@@ -197,8 +198,8 @@ void AACEscapeMissionBomb::OnInteract(AACCharacter* ACPlayer, EInteractionKey In
 	ACPlayerMafia->HandBomb = this;
 
 	// 3. 설치 가능 구역 보이기
-	AACMainGameState* GS = ACPlayerMafia->GetWorld()->GetGameState<AACMainGameState>();
-	if (GS && GS->EscapeState == EEscapeState::DeliverBomb)
+	AACPlayerState* PS = ACPlayerMafia->GetPlayerState<AACPlayerState>();
+	if (PS && PS->EscapeState != EEscapeState::Escape)
 	{
 		ACPlayerMafia->ClientSetBombHeld(true);
 	}
