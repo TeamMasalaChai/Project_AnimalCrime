@@ -38,11 +38,15 @@ void AACEscapeArea::OnEscapeOverlapBegin(UPrimitiveComponent* OverlappedComponen
 		return;
 	}
 
-	AC_LOG(LogSY, Log, TEXT("Begin EscapeAreas"));
-
 	if (HasAuthority() == false)
 	{
 		AC_LOG(LogSY, Log, TEXT("HasAuthority false!"));
+		return;
+	}
+
+	AACMainGameState* GS = GetWorld()->GetGameState<AACMainGameState>();
+	if (GS == nullptr)
+	{
 		return;
 	}
 
@@ -52,31 +56,47 @@ void AACEscapeArea::OnEscapeOverlapBegin(UPrimitiveComponent* OverlappedComponen
 		return;
 	}
 
-	// UI변경, IMC 변경
-	PC->ClientOnEscapeSuccess();
-
 	AACPlayerState* PS = PC->GetPlayerState<AACPlayerState>();
 	if (PS == nullptr)
 	{
 		return;
 	}
 
+	// 탈출인원 추가
+	GS->AddEscapedCount();
+
+	// UI변경, IMC 변경
+	PC->ClientOnEscapeSuccess();
+
 	//관전 상태로 전환
 	PS->EnterSpectatorState();
 
+	//음성 그룹 변경
+	Mafia->SetVoiceGroup(EVoiceGroup::Escape);
+
 	//1초 뒤에 관전 실행
-	FTimerHandle TimerHandle;
-	FTimerDelegate Delegate;
-	Delegate.BindUFunction(
+	FTimerHandle SpectateTimerHandle;
+	FTimerDelegate SpectateDelegate;
+	SpectateDelegate.BindUFunction(
 		PC,
 		FName("ServerStartSpectateOtherPlayer")
 	);
-	GetWorld()->GetTimerManager().SetTimer(
-		TimerHandle,
-		Delegate,
+	GetWorld()->GetTimerManager().SetTimer( 
+		SpectateTimerHandle,
+		SpectateDelegate,
 		1.0f,
 		false
 	);
 
+	//1.5초 뒤에 대기 구역으로 이동 (탈출구역에서 소리 들리는 걸 방지)
+	FTimerHandle MoveTimerHandle;
+	FTimerDelegate MoveDelegate;
+	MoveDelegate.BindUFunction(Mafia, FName("MoveToEscapeWaitingLocation"));
+	GetWorld()->GetTimerManager().SetTimer(
+		MoveTimerHandle,
+		MoveDelegate,
+		1.5f,
+		false
+	);
 }
 

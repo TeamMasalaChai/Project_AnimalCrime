@@ -211,6 +211,18 @@ AACCharacter::AACCharacter()
 		MeleeMontage = MeleeMontageRef.Object;
 	}
 	
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> ZoomMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Project/Character/AM_Zoom.AM_Zoom'"));
+	if (ZoomMontageRef.Succeeded())
+	{
+		ZoomMontage = ZoomMontageRef.Object;
+	}
+	
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> ShootMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Project/Character/AM_Shoot.AM_Shoot'"));
+	if (ShootMontageRef.Succeeded())
+	{
+		ShootMontage = ShootMontageRef.Object;
+	}
+	
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> EscapeMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Project/Character/AM_EscapeSkill.AM_EscapeSkill'"));
 	if (EscapeMontageRef.Succeeded())
 	{
@@ -219,12 +231,13 @@ AACCharacter::AACCharacter()
 
 	// ShopComponent 생성
 	ShopComponent = CreateDefaultSubobject<UACShopComponent>(TEXT("ShopComponent"));
-
 	GetCharacterMovement()->NetworkSmoothingMode = ENetworkSmoothingMode::Disabled;
 	MoneyComp = CreateDefaultSubobject<UACMoneyComponent>(TEXT("MoneyComponent"));
 
 
 	bReplicates = true;
+
+	bAlwaysRelevant = true;
 
 	// 방망이 휘두르기 사운드 로드
 	static ConstructorHelpers::FObjectFinder<USoundBase> BatSwingSoundRef(
@@ -234,6 +247,14 @@ AACCharacter::AACCharacter()
 	{
 		BatSwingSound = BatSwingSoundRef.Object;
 	}
+	
+	static ConstructorHelpers::FObjectFinder<USoundBase> GunSoundRef(TEXT("/Script/Engine.SoundWave'/Game/Project/SFX/Gunshot/402010__eardeer__gunshot__high_1.402010__eardeer__gunshot__high_1'"));
+	if (GunSoundRef.Succeeded())
+	{
+		GunSound = GunSoundRef.Object;
+	}
+	
+	
 
 	// VOIPTalker 생성
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
@@ -285,7 +306,8 @@ void AACCharacter::BeginPlay()
 	// Police와 Mafia는 각자의 BeginPlay에서 초기화
 	// ※ 얘도 확인 했으면 지워주세요
 	//MoneyComp->InitMoneyComponent(EMoneyType::MoneyMafiaType);
-	
+
+	// 로컬: Voice 시작
 	if (IsLocallyControlled() == true)
 	{
 		// 로컬 플레이어: 딜레이 후 Voice 시작
@@ -301,10 +323,26 @@ void AACCharacter::BeginPlay()
 			}, 0.5f, false);
 		return;
 	}
-	// 원격 플레이어: VOIPTalker 등록
+	// 원격 플레이어 VOIPTalker 등록
+	// - 서버: OnRep 안 불리니까
+	// - 클라이언트: 이미 PlayerState가 설정된 상태로 복제되면 OnRep 안 불리니까
 	TryRegisterVOIPTalker();
 
 	AC_LOG(LogHY, Error, TEXT("End"));
+}
+
+void AACCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	AC_LOG(LogVT, Log, TEXT("SYTEST - AACCharacter::OnRep_PlayerState %s"), *GetName());
+	if (IsLocallyControlled() == true)
+	{
+		AC_LOG(LogVT, Log, TEXT("SYTEST - 로컬 플레이어이므로 VOIPTalker 등록 안함 %s"), *GetName());
+		return;
+	}
+	AC_LOG(LogVT, Log, TEXT("SYTEST - 원격 플레이어이므로 VOIPTalker 등록 시도 %s"), *GetName());
+	// 원격 플레이어: VOIPTalker 등록
+	TryRegisterVOIPTalker();
 }
 
 void AACCharacter::TryRegisterVOIPTalker()
@@ -315,10 +353,40 @@ void AACCharacter::TryRegisterVOIPTalker()
 		return;
 	}
 
+	//서버의 경우 플레이어 스테이트가 바로 안생길수도 있어서 타이머로 재시도
 	APlayerState* PS = GetPlayerState();
 	if (PS == nullptr)
 	{
+		AC_LOG(LogSY, Log, TEXT("PlayerState is nullptr in %s, retrying..."), *GetName());
 		// PlayerState가 아직 없으면 타이머로 재시도
+		GetWorld()->GetTimerManager().SetTimer(
+			VOIPTalkerTimerHandle,
+			this,
+			&AACCharacter::TryRegisterVOIPTalker,
+			0.1f,
+			false
+		);
+		return;
+	}
+
+	APlayerController* LocalPC = GetWorld()->GetFirstPlayerController();
+	if (LocalPC == nullptr)
+	{
+		AC_LOG(LogVT, Warning, TEXT("Local PlayerController is nullptr in %s, retrying..."), *GetName());
+		GetWorld()->GetTimerManager().SetTimer(
+			VOIPTalkerTimerHandle,
+			this,
+			&AACCharacter::TryRegisterVOIPTalker,
+			0.1f,
+			false
+		);
+		return;
+	}
+
+	AACCharacter* LocalChar = Cast<AACCharacter>(LocalPC->GetPawn());
+	if (LocalChar == nullptr)
+	{
+		AC_LOG(LogVT, Warning, TEXT("Local PlayerCharacter is nullptr in %s, retrying..."), *GetName());
 		GetWorld()->GetTimerManager().SetTimer(
 			VOIPTalkerTimerHandle,
 			this,
@@ -334,46 +402,29 @@ void AACCharacter::TryRegisterVOIPTalker()
 
 	if (VoiceAttenuation == nullptr)
 	{
-		AC_LOG(LogSY, Warning, TEXT("VoiceAttenuation is nullptr in %s"), *GetName());
+		AC_LOG(LogVT, Log, TEXT("VoiceAttenuation is nullptr in %s"), *GetName());
 	}
 
+	// 음성이 캐릭터 위치에서 나도록 설정
 	VOIPTalker->Settings.ComponentToAttachTo = GetRootComponent();
 
 	// Register 전에 무전기 상태에 따라 Attenuation 결정
 	bool bDisableAttenuation = false;
-	APlayerController* LocalPC = GetWorld()->GetFirstPlayerController();
-	if (LocalPC != nullptr)
+	if (VoiceGroup != EVoiceGroup::None && VoiceGroup == LocalChar->VoiceGroup)
 	{
-		AC_LOG(LogSY, Warning, TEXT("Local PlayerController is nullptr"));
-
-		AACCharacter* LocalChar = Cast<AACCharacter>(LocalPC->GetPawn());
-		if (LocalChar != nullptr)
-		{
-			if (VoiceGroup != EVoiceGroup::None && VoiceGroup == LocalChar->VoiceGroup)
-			{
-				// 양쪽 다 무전기 있으면서 같은 무전기 그룹이면 Attenuation 제거
-				bDisableAttenuation = true;
-				AC_LOG(LogSY, Log, TEXT("VOIPTalker Attenuation disabled for %s (Radio mode)"), *GetName());
-			}
-			else
-			{
-				AC_LOG(LogSY, Log, TEXT("VOIPTalker Attenuation enabled for %s (Normal mode)"), *GetName());
-			}
-		}
-		else
-		{
-			AC_LOG(LogSY, Warning, TEXT("Local PlayerCharacter is nullptr"));
-		}
+		// 양쪽 다 무전기 있으면서 같은 무전기 그룹이면 Attenuation 제거
+		bDisableAttenuation = true;
+		AC_LOG(LogVT, Log, TEXT("같은 무전기 그룹. VOIPTalker Attenuation disabled for %s (Radio mode)"), *GetName());
 	}
 	else
 	{
-		AC_LOG(LogSY, Warning, TEXT("Local PlayerController is nullptr"));
+		AC_LOG(LogVT, Log, TEXT("다른 무전기 그룹. VOIPTalker Attenuation enabled for %s (Normal mode)"), *GetName());
 	}
 
 	VOIPTalker->Settings.AttenuationSettings = bDisableAttenuation ? nullptr : VoiceAttenuation;
 	VOIPTalker->RegisterWithPlayerState(PS);
 
-	AC_LOG(LogSY, Log, TEXT("VOIPTalker registered for %s, Attenuation: %s"), *GetName(), VOIPTalker->Settings.AttenuationSettings ? TEXT("Enabled") : TEXT("Disabled"));
+	AC_LOG(LogVT, Log, TEXT("VOIPTalker registered for %s, Attenuation: %s"), *GetName(), VOIPTalker->Settings.AttenuationSettings ? TEXT("Enabled") : TEXT("Disabled"));
 }
 
 void AACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -382,7 +433,7 @@ void AACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	// 캐릭터 상태
 	DOREPLIFETIME(AACCharacter, CharacterState);
-	
+
 	// Skeletal Mesh
 	DOREPLIFETIME(AACCharacter, HeadMeshReal);
 	DOREPLIFETIME(AACCharacter, FaceMeshReal);
@@ -390,7 +441,7 @@ void AACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AACCharacter, BottomMeshReal);
 	DOREPLIFETIME(AACCharacter, ShoesMeshReal);
 	DOREPLIFETIME(AACCharacter, FaceAccMeshReal);
-	
+
 	// 나중에 총 객체 내부로 변경해야 함.
 	DOREPLIFETIME(AACCharacter, BulletCount);
 	//DOREPLIFETIME(AACCharacter, bHasRadio);
@@ -426,7 +477,7 @@ void AACCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void AACCharacter::ChangeInputMode(EInputMode NewMode)
 {
-	AACMainPlayerController* PC = Cast<AACMainPlayerController>(GetController());
+	AACPlayerControllerBase* PC = Cast<AACPlayerControllerBase>(GetController());  // Base로 변경
 	if (PC)
 	{
 		PC->ChangeInputMode(NewMode);
@@ -556,7 +607,7 @@ void AACCharacter::InteractHolding(const float DeltaTime)
 	if ((CharacterState == ECharacterState::OnDamage) || (CharacterState == ECharacterState::Stun))
 	{
 		AC_LOG(LogSW, Log, TEXT("%s's interaction was canceled!!"), *GetName())
-		ResetHoldInteract();
+			ResetHoldInteract();
 		return;
 	}
 
@@ -641,7 +692,7 @@ void AACCharacter::Dash(const FInputActionValue& Value)
 {
 	bool bDashFlag = Value.Get<bool>();
 	AC_LOG(LogHY, Log, TEXT("PlayerController -> AACCharacter | Input: %d"), bDashFlag);
-	
+
 	// Case: 심각한 에러 - 나와서는 안되는 값.
 	if (bDashFlag == false)
 	{
@@ -667,18 +718,18 @@ void AACCharacter::ServerDash_Implementation()
 		AC_LOG(LogHY, Error, TEXT("Dash Timer is already active"));
 		return;
 	}
-	
+
 	bDashCoolDown = false;
-	
+
 	AC_LOG(LogHY, Error, TEXT("Excute [Server Dash]"));
 
 	// 캐릭터가 바라보는 방향 획득
 	FVector ForwardDir = GetActorForwardVector();
-	
+
 	// 날아가는 힘 계산
 	FVector LaunchVelocity = ForwardDir * DashForwardImpulseData + FVector(0.f, 0.f, DashUpwardImpulseData);
 	LaunchCharacter(LaunchVelocity, true, false);
-	
+
 	// Dash 사용 쿨타임 적용.
 	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindUObject(this, &AACCharacter::ResetDashFlag);
@@ -746,14 +797,17 @@ void AACCharacter::ServerSprintEnd_Implementation()
 		AC_LOG(LogHY, Error, TEXT("Sprint Timer is already deactive"));
 		// return은 필요 없음.
 	}
-	
+
 	// 게이지 Down에 대한 Timer 종료
 	GetWorld()->GetTimerManager().ClearTimer(SprintGaugeDownTimerHandle);
 
 	// 게이지 Up에 대한 Timer 시작
 	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindUObject(this, &AACCharacter::GaugeUp);
-	GetWorld()->GetTimerManager().SetTimer(SprintGaugeUpTimerHandle, TimerDelegate, 1, true);
+	if (GetWorld()->GetTimerManager().IsTimerActive(SprintGaugeUpTimerHandle) == false)
+	{
+		GetWorld()->GetTimerManager().SetTimer(SprintGaugeUpTimerHandle, TimerDelegate, 1, true);
+	}
 
 	bSprint = false;
 	OnRep_Sprint();
@@ -784,24 +838,39 @@ void AACCharacter::OnRep_Sprint()
 void AACCharacter::GaugeUp()
 {
 	// 1씩 증가
-	SprintGauge += 1;
-	// AC_LOG(LogHY, Warning, TEXT("Gauge Up: %d"), SprintGauge);
-	if (SprintGauge > SprintGaugeData)
+	if (SprintGauge + 1 > SprintGaugeData)
 	{
-		SprintGauge = SprintGaugeData;
+		GetWorldTimerManager().ClearTimer(SprintGaugeUpTimerHandle);
+		bSprint = false;
+		OnRep_Sprint();
+		return;
 	}
+	// AC_LOG(LogHY, Warning, TEXT("Gauge Up: %d"), SprintGauge);
+	
+	SprintGauge += 1;
+	OnRep_SprintGauge();
 }
 
 void AACCharacter::GaugeDown()
 {
-	SprintGauge -= 1;
 	// AC_LOG(LogHY, Warning, TEXT("Gauge Down: %d"), SprintGauge);
-	if (SprintGauge <= 0)
+	if (SprintGauge - 1 <= 0)
 	{
 		GetWorldTimerManager().ClearTimer(SprintGaugeDownTimerHandle);
+		
+		// @Todo: 임시 방편 바꿔야할수도...
+		FTimerDelegate TimerDelegate;
+		TimerDelegate.BindUObject(this, &AACCharacter::GaugeUp);
+		if (GetWorld()->GetTimerManager().IsTimerActive(SprintGaugeUpTimerHandle) == false)
+		{
+			GetWorld()->GetTimerManager().SetTimer(SprintGaugeUpTimerHandle, TimerDelegate, 1, true);
+		}
 		bSprint = false;
 		OnRep_Sprint();
 	}
+	
+	SprintGauge -= 1;
+	OnRep_SprintGauge();
 }
 
 #pragma endregion
@@ -812,7 +881,7 @@ void AACCharacter::Jump()
 	if (CharacterState == ECharacterState::None ||
 		CharacterState == ECharacterState::Stun ||
 		CharacterState == ECharacterState::OnInteract ||
-		CharacterState == ECharacterState::Interact	||
+		CharacterState == ECharacterState::Interact ||
 		CharacterState == ECharacterState::Prison)
 	{
 		return;
@@ -849,11 +918,11 @@ void AACCharacter::ServerInteract_Implementation(AActor* Target, EInteractionKey
 
 	IACInteractInterface* Interactable = Cast<IACInteractInterface>(Target);
 	if (Interactable == nullptr)
-	{                                                                                                     
-	    AC_LOG(LogSW, Log, TEXT("%s has No Interface!!"), *Target->GetName());                            
-	    return;                                                                                           
-	}                                                                                                                                                                                                                                                 
-	
+	{
+		AC_LOG(LogSW, Log, TEXT("%s has No Interface!!"), *Target->GetName());
+		return;
+	}
+
 
 	Interactable->OnInteract(this, InKey);
 	AC_LOG(LogSW, Log, TEXT("%s Interacted with %s!!"), *Target->GetName(), *GetName());
@@ -898,7 +967,7 @@ void AACCharacter::PerformEscape()
 	{
 		return;
 	}
-	
+
 	MulticastPlayEscapeSkillMontage();
 }
 
@@ -929,13 +998,42 @@ bool AACCharacter::IsHoldingGun()
 	return true;
 }
 
+void AACCharacter::MulticastPlayZoomMontage_Implementation()
+{
+	// 보류
+	// if (MeleeMontage && GetMesh() && GetMesh()->GetAnimInstance())
+	// {
+	// 	GetMesh()->GetAnimInstance()->Montage_Play(ZoomMontage, 1.0f);
+	// }
+}
+
+void AACCharacter::MulticastPlayShootMontage_Implementation()
+{
+	if (ShootMontage && GetMesh() && GetMesh()->GetAnimInstance())
+	{
+		GetMesh()->GetAnimInstance()->Montage_Play(ShootMontage, 1.0f);
+	}
+
+	// 로컬 클라이언트 + 무기 장착 시에만 사운드 재생
+	if (GunSound && ShopComponent)
+	{
+		UACItemData* EquippedWeapon = ShopComponent->EquippedWeapon;
+
+		// 무기를 들고 있는지 확인
+		if (EquippedWeapon != nullptr && EquippedWeapon->ItemType == EItemType::Weapon)
+		{
+			UGameplayStatics::PlaySound2D(this, GunSound);
+		}
+	}
+}
+
 void AACCharacter::FireHitscan()
 {
 	if (IsHoldingGun() == false)
 	{
 		return;
 	}
-	
+
 	if (GetBulletCount() <= 0)
 	{
 		AC_LOG(LogTemp, Log, TEXT("총알 갯수 %d"), GetBulletCount());
@@ -947,7 +1045,7 @@ void AACCharacter::FireHitscan()
 		AC_LOG(LogSY, Log, TEXT("Cannot interact while carrying"));
 		return;
 	}
-	
+
 	ServerShoot();
 }
 
@@ -1133,7 +1231,7 @@ void AACCharacter::UpdateFocus()
 	if (FocusedInteractable != PreviousFocus)
 	{
 		// 이전 Focus 위젯 숨김
-		if (PreviousFocus!=nullptr && IsValid(PreviousFocus))
+		if (PreviousFocus != nullptr && IsValid(PreviousFocus))
 		{
 			PrevInteractable->HideInteractionHints();
 		}
@@ -1169,7 +1267,7 @@ void AACCharacter::UpdateFocus()
 			if (InteractionData->InteractorLocation != PS->CharacterLocation)
 			{
 				AC_LOG(LogSW, Error, TEXT("%d is not %d Location!!!"), PS->CharacterLocation, InteractionData->InteractorLocation)
-				continue;
+					continue;
 			}
 
 			// 3) 대상 상태 체크 (대상이 캐릭터인 경우만)
@@ -1208,7 +1306,7 @@ void AACCharacter::UpdateFocus()
 			FocusedInterface->ShowInteractionHints(FocusedInteractions);
 		}
 	}
-	
+
 }
 
 void AACCharacter::AddInteractable(AActor* Interactor)
@@ -1267,7 +1365,7 @@ void AACCharacter::OnRep_CharacterState()
 		AC_LOG(LogHY, Error, TEXT("this is Invalid"));
 		return;
 	}
-	
+
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
 	if (MoveComp == nullptr)
 	{
@@ -1279,31 +1377,31 @@ void AACCharacter::OnRep_CharacterState()
 
 	switch (CharacterState)
 	{
-		case ECharacterState::Free:
-		{
-			SetFreeState();
-			break;
-		}
-		case ECharacterState::Stun:
-		{
-			SetStunState();
-			break;
-		}
-		case ECharacterState::OnDamage:
-		{
-			SetOnDamageState();
-			break;
-		}
-		case ECharacterState::Interact:
-		{
-			SetInteractState();
-			break;
-		}
-		case ECharacterState::OnInteract:
-		{
-			SetOnInteractState();
-			break;
-		}
+	case ECharacterState::Free:
+	{
+		SetFreeState();
+		break;
+	}
+	case ECharacterState::Stun:
+	{
+		SetStunState();
+		break;
+	}
+	case ECharacterState::OnDamage:
+	{
+		SetOnDamageState();
+		break;
+	}
+	case ECharacterState::Interact:
+	{
+		SetInteractState();
+		break;
+	}
+	case ECharacterState::OnInteract:
+	{
+		SetOnInteractState();
+		break;
+	}
 	}
 
 	// todo: 시민은 처리 안해주고있음
@@ -1352,7 +1450,7 @@ void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 	if (CharacterState == ECharacterState::Free)
 	{
 		// Free로만 변경가능.	보류( || (InCharacterState == ECharacterState::Prison))
-		
+
 		if ((InCharacterState == ECharacterState::None))
 		{
 			AC_LOG(LogHY, Warning, TEXT("Fail Now: %s Input: %s name:%s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState), *GetName());
@@ -1367,7 +1465,7 @@ void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 			bOnInteract = true;
 		}
 	}
-	
+
 	// Case: Free에서 갈 수 있는 케이스 여부
 	// OnDamage->None (X)
 	// OnDamage->Free
@@ -1378,8 +1476,8 @@ void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 	if (CharacterState == ECharacterState::OnDamage)
 	{
 		// Free로만 변경가능.
-		if ((InCharacterState == ECharacterState::None) || (InCharacterState == ECharacterState::Interact) || 
-			(InCharacterState == ECharacterState::OnInteract) || (InCharacterState == ECharacterState::Angry) || 
+		if ((InCharacterState == ECharacterState::None) || (InCharacterState == ECharacterState::Interact) ||
+			(InCharacterState == ECharacterState::OnInteract) || (InCharacterState == ECharacterState::Angry) ||
 			(InCharacterState == ECharacterState::Stun))
 		{
 			AC_LOG(LogHY, Warning, TEXT("Fail Now: %s Input: %s name:%s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState), *GetName());
@@ -1420,7 +1518,7 @@ void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 		}
 		bOnInteract = false;
 	}
-	
+
 	// Stun->None (X),
 	// Stun->Free
 	// Stun->OnDamage (X)
@@ -1441,9 +1539,9 @@ void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 			bOnInteract = true;
 		}
 	}
-	
+
 	AC_LOG(LogHY, Warning, TEXT("Success !!! Now: %s Input: %s name:%s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState), *GetName());
-	
+
 	//PrevCharacterState = CharacterState;
 	CharacterState = InCharacterState;
 
@@ -1461,7 +1559,7 @@ void AACCharacter::SetFreeState()
 		AC_LOG(LogHY, Error, TEXT("MoveComp is nullptr"));
 		return;
 	}
-	
+
 	// Case: Police
 	// if (GetCharacterType() == EACCharacterType::Police)
 	// {
@@ -1473,13 +1571,13 @@ void AACCharacter::SetFreeState()
 	// {
 	// 	MoveComp->MaxWalkSpeed = OriginMafiaMoveSpeedData;
 	// }
-	
+
 	// 테스트
 	bOnDamage = false;
 	bStun = false;
-	
+
 	AC_LOG(LogHY, Error, TEXT("Before speed: %f"), MoveComp->MaxWalkSpeed);
-	MoveComp->MaxWalkSpeed = CalculateMoveSpeed(); 
+	MoveComp->MaxWalkSpeed = CalculateMoveSpeed();
 	AC_LOG(LogHY, Error, TEXT("After  speed: %f"), MoveComp->MaxWalkSpeed);
 	MoveComp->JumpZVelocity = OriginZVelocity;
 }
@@ -1492,7 +1590,7 @@ void AACCharacter::SetOnDamageState()
 		AC_LOG(LogHY, Error, TEXT("MoveComp is nullptr"));
 		return;
 	}
-	
+
 	bOnDamage = true;
 	AC_LOG(LogHY, Error, TEXT("Before speed: %f"), MoveComp->MaxWalkSpeed);
 	MoveComp->MaxWalkSpeed = CalculateMoveSpeed();
@@ -1507,14 +1605,14 @@ void AACCharacter::SetStunState()
 		AC_LOG(LogHY, Error, TEXT("MoveComp is nullptr"));
 		return;
 	}
-	
+
 	// MovementComponent 속성 변경
 	bStun = true;
 	AC_LOG(LogHY, Error, TEXT("Before speed: %f"), MoveComp->MaxWalkSpeed);
 	MoveComp->MaxWalkSpeed = CalculateMoveSpeed();
 	AC_LOG(LogHY, Error, TEXT("After  speed: %f"), MoveComp->MaxWalkSpeed);
 	MoveComp->JumpZVelocity = StunZVelocity;
-	
+
 	// 컨트롤러의 HUD 변경
 	// AACMainPlayerController* MainPlayerController = GetMainPlayerController();
 	// if (MainPlayerController == nullptr)
@@ -1560,7 +1658,7 @@ void AACCharacter::SetOnInteractState()
 		AC_LOG(LogHY, Error, TEXT("MoveComp is nullptr"));
 		return;
 	}
-	
+
 	AC_LOG(LogSW, Error, TEXT("%s changed to OnInteract"), *GetName());
 	MoveComp->MaxWalkSpeed = CalculateMoveSpeed();
 }
@@ -1568,24 +1666,24 @@ void AACCharacter::SetOnInteractState()
 float AACCharacter::CalculateMoveSpeed() const
 {
 	float Speed = 600.0f;
-	
-	AC_LOG(LogHY,Error,TEXT("Type: %s"),*StaticEnum<EACCharacterType>()->GetNameStringByValue(static_cast<int64>(GetCharacterType())));
+
+	AC_LOG(LogHY, Error, TEXT("Type: %s"), *StaticEnum<EACCharacterType>()->GetNameStringByValue(static_cast<int64>(GetCharacterType())));
 	// Free 상태일 때
 	if (GetCharacterType() == EACCharacterType::Police)
 	{
-		Speed = OriginPoliceMoveSpeedData; 
+		Speed = OriginPoliceMoveSpeedData;
 	}
 	// Case: Mafia
 	else if (GetCharacterType() == EACCharacterType::Mafia)
 	{
 		Speed = OriginMafiaMoveSpeedData;
 	}
-	
+
 	if (bOnDamage)
 	{
 		if (GetCharacterType() == EACCharacterType::Police)
 		{
-			Speed -= 200;	
+			Speed -= 200;
 		}
 		else if (GetCharacterType() == EACCharacterType::Mafia)
 		{
@@ -1596,7 +1694,7 @@ float AACCharacter::CalculateMoveSpeed() const
 			AC_LOG(LogHY, Error, TEXT("과연 뭘까?"));
 		}
 	}
-	
+
 	// @Todo 애매...
 	Speed += SprintMoveSpeedData;
 	if (bSprint)
@@ -1612,7 +1710,7 @@ float AACCharacter::CalculateMoveSpeed() const
 	{
 		Speed = StunWalkSpeed;
 	}
-	
+
 	if (bOnInteract || bInteract)
 	{
 		AC_LOG(LogHY, Error, TEXT("bOnInteract:%d, bInteract:%d"), bOnInteract, bInteract);
@@ -2029,10 +2127,10 @@ void AACCharacter::OnRep_FaceAccMesh() const
 void AACCharacter::ServerShoot_Implementation()
 {
 	SpendBullets(1);
-	
+
 	UCameraComponent* ActiveCamera = GunCamera;
-	
-	
+
+
 	FVector CameraLoc;
 	FRotator CameraRot;
 	float MaxDistance = 2000;
@@ -2040,12 +2138,14 @@ void AACCharacter::ServerShoot_Implementation()
 	AC_LOG(LogHY, Log, TEXT("Firing Hitscan!! Who:%s %s"), *CameraLoc.ToString(), *CameraRot.ToString());
 	CameraLoc = ActiveCamera->GetComponentLocation();
 	CameraRot = ActiveCamera->GetComponentRotation();
-	
+
 	AC_LOG(LogHY, Log, TEXT("Firing Hitscan!! Gun:%s %s"), *CameraLoc.ToString(), *CameraRot.ToString());
 	AC_LOG(LogHY, Log, TEXT("Firing Hitscan!! Follow:%s %s"), *FollowCamera->GetComponentLocation().ToString(), *FollowCamera->GetComponentRotation().ToString());
-	
+
 	FVector TraceEnd = CameraLoc + (CameraRot.Vector() * MaxDistance);
 
+	AC_LOG(LogHY, Error, TEXT("Shoot Test"));
+	MulticastPlayShootMontage();
 	// 총구 위치
 	// 방안 [소켓으로부터 출발] [SkeletalMesh의 경우 거기서]
 	//FVector MuzzleLoc = GetMesh()->GetSocketLocation("RightHandSocket");
@@ -2057,7 +2157,7 @@ void AACCharacter::ServerShoot_Implementation()
 	FHitResult Hit;
 
 	FCollisionObjectQueryParams ObjectParams;
-	
+
 	ObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
 	ObjectParams.AddObjectTypesToQuery(ECC_WorldDynamic);
 	ObjectParams.AddObjectTypesToQuery(ECC_GameTraceChannel1);
@@ -2069,19 +2169,32 @@ void AACCharacter::ServerShoot_Implementation()
 	QueryParams.AddIgnoredActor(this);
 	QueryParams.AddIgnoredActor(GetOwner());
 	QueryParams.bReturnPhysicalMaterial = true;
-	
+
 	bool bHit = GetWorld()->LineTraceSingleByObjectType(Hit, MuzzleLoc, End, ObjectParams, QueryParams);
-	
+
 	// FColor LineColor = bHit ? FColor::Red : FColor::Green;
 	// DrawDebugLine(GetWorld(),MuzzleLoc, bHit ? Hit.ImpactPoint : End, LineColor, false, 2.0f, 0, 2.0f);
 	if (bHit)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Hit: %s"), *Hit.GetActor()->GetName());
-		UGameplayStatics::ApplyDamage(Hit.GetActor(), GunDamage, GetController(),this, AACGunBase::StaticClass());
+		UGameplayStatics::ApplyDamage(Hit.GetActor(), GunDamage, GetController(), this, AACGunBase::StaticClass());
 	}
 }
 
-bool AACCharacter::CanZoomIn() const
+void AACCharacter::OnRep_SprintGauge()
+{
+	OnSprintChanged.Broadcast(SprintGauge);
+	if (SprintGauge == 10)
+	{
+		OnSprintUIHide.Broadcast();
+	}
+	else
+	{
+		OnSprintUIShow.Broadcast();
+	}
+}
+
+bool AACCharacter::CanZoomIn()
 {
 	if (CharacterState == ECharacterState::None || CharacterState == ECharacterState::OnDamage ||
 		CharacterState == ECharacterState::Interact || CharacterState == ECharacterState::OnInteract ||
@@ -2090,8 +2203,9 @@ bool AACCharacter::CanZoomIn() const
 		AC_LOG(LogHY, Log, TEXT("Cant ZoomIn %s"), *UEnum::GetValueAsString(CharacterState));
 		return false;
 	}
-	
-	
+
+	// MulticastPlayZoomMontage();
+
 	return true;
 }
 
@@ -2206,7 +2320,7 @@ void AACCharacter::SpendBullets(int32 InBulletCount)
 		AC_LOG(LogHY, Error, TEXT("Input BulletCount is Zero"));
 		return;
 	}
-	
+
 	if (BulletCount < InBulletCount)
 	{
 		AC_LOG(LogHY, Error, TEXT("Current Bullet Count: %d Input BulletCount: %d"), BulletCount, InBulletCount);
@@ -2214,7 +2328,7 @@ void AACCharacter::SpendBullets(int32 InBulletCount)
 	}
 	BulletCount -= InBulletCount;
 	OnRep_BulletCount();
-	
+
 	// AACMainPlayerController* MainPlayerController = Cast<AACMainPlayerController>(GetController());
 	// if (MainPlayerController == nullptr)
 	// {
@@ -2231,48 +2345,6 @@ void AACCharacter::OnRep_BulletCount()
 		PC->UpdateAmmoUI(BulletCount);
 	}
 }
-
-//void AACCharacter::SetHasRadio(bool bNewHasRadio)
-//{
-//	if (bHasRadio == bNewHasRadio)
-//	{
-//		return;
-//	}
-//
-//	bHasRadio = bNewHasRadio;
-//
-//	// 클라이언트들 → 자동으로 OnRep 호출됨
-//	// 서버(Listen Server 호스트) → 수동 호출 필요
-//	if (HasAuthority() == true)
-//	{
-//		OnRep_HasRadio();
-//	}
-//}
-
-//void AACCharacter::OnRep_HasRadio()
-//{
-//	// 로컬 플레이어 캐릭터가 무전기 상태 변경 시 모든 다른 캐릭터의 VOIP 설정 업데이트
-//	if (IsLocallyControlled() == true)
-//	{
-//		UpdateRadioVoiceSettings();
-//	}
-//	else
-//	{
-//		// 다른 캐릭터의 무전기 상태가 변경됨 → 로컬 플레이어가 무전기 있으면 해당 캐릭터 VOIP 업데이트
-//		APlayerController* LocalPC = GetWorld()->GetFirstPlayerController();
-//		if (LocalPC == nullptr)
-//		{
-//			return;
-//		}
-//
-//		AACCharacter* LocalChar = Cast<AACCharacter>(LocalPC->GetPawn());
-//		if (LocalChar != nullptr && LocalChar->GetHasRadio() == true)
-//		{
-//			// 나(로컬)도 무전기 있고, 상대도 무전기 있으면 Attenuation 제거
-//			SetVOIPAttenuation(!bHasRadio);
-//		}
-//	}
-//}
 
 void AACCharacter::OnRep_VoiceGroup()
 {
@@ -2299,12 +2371,19 @@ void AACCharacter::OnRep_VoiceGroup()
 		if (VoiceGroup != EVoiceGroup::None && LocalChar->VoiceGroup == VoiceGroup)
 		{
 			// 나(로컬)도 무전기 있고, 상대도 무전기 있으면서 같은 무전기 그룹이면 Attenuation 제거
+			AC_LOG(LogSY, Log, TEXT("OnRep_VoiceGroup - Disable VOIP Attenuation for Character: %s"), *GetName());
 			SetVOIPAttenuation(false);
+		}
+		else
+		{
+			// 다른 그룹이면 Attenuation 다시 적용
+			AC_LOG(LogSY, Log, TEXT("OnRep_VoiceGroup - Enable VOIP Attenuation for Character: %s"), *GetName());
+			SetVOIPAttenuation(true);
 		}
 	}
 }
 
-void AACCharacter::SetVoiceGroupp(EVoiceGroup NewVoiceGroup)
+void AACCharacter::SetVoiceGroup(EVoiceGroup NewVoiceGroup)
 {
 	if (VoiceGroup == NewVoiceGroup)
 	{
@@ -2312,7 +2391,7 @@ void AACCharacter::SetVoiceGroupp(EVoiceGroup NewVoiceGroup)
 	}
 
 	VoiceGroup = NewVoiceGroup;
-
+	AC_LOG(LogVT, Log, TEXT("SetVoiceGroup - Character: %s NewVoiceGroup: %s"), *GetName(), *UEnum::GetValueAsString(NewVoiceGroup));
 	// 클라이언트들 → 자동으로 OnRep 호출됨
 	// 서버(Listen Server 호스트) → 수동 호출 필요
 	if (HasAuthority() == true)
@@ -2347,8 +2426,6 @@ void AACCharacter::UpdateRadioVoiceSettings()
 		{
 			OtherChar->SetVOIPAttenuation(true);
 		}
-		//bool bBothHaveRadio = bHasRadio && OtherChar->GetHasRadio();
-		//OtherChar->SetVOIPAttenuation(!bBothHaveRadio);
 	}
 }
 

@@ -12,6 +12,14 @@
 
 class AACMainPlayerController;
 
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSprintChanged, int32 /*Current*/);
+DECLARE_MULTICAST_DELEGATE(FOnSprintUIShow);
+DECLARE_MULTICAST_DELEGATE(FOnSprintUIHide);
+
+
+
+
 UCLASS()
 class ANIMALCRIME_API AACCharacter : public ACharacter, public IACInteractInterface
 {
@@ -28,6 +36,7 @@ public:
 protected:
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
+	virtual void OnRep_PlayerState() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -241,6 +250,13 @@ protected:
 	/** 몽타주: 기본 공격  */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Member|Attack|Anim", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UAnimMontage> MeleeMontage;
+	
+	/** 몽타주: 총  */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Member|Attack|Anim", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UAnimMontage> ZoomMontage;
+	/** 몽타주: 기본 공격  */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Member|Attack|Anim", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UAnimMontage> ShootMontage;
 
 	/** 플레그: 공격 시도 중 여부 */
 	UPROPERTY()
@@ -267,6 +283,12 @@ public:
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastPlayAttackMontage();
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastPlayZoomMontage();
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastPlayShootMontage();
 	
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastPlayEscapeSkillMontage();
@@ -325,7 +347,7 @@ public:
 		@param NewVoiceGroup - 새로운 무전기 그룹 Enum
 	**/
 	UFUNCTION(BlueprintCallable, Category = "VOIP")
-	void SetVoiceGroupp(EVoiceGroup NewVoiceGroup);
+	void SetVoiceGroup(EVoiceGroup NewVoiceGroup);
 
 	/**
 		@brief 로컬 플레이어의 무전기 상태에 따라 모든 다른 캐릭터들의 VOIPTalker Attenuation을 업데이트하는 함수.
@@ -393,6 +415,7 @@ private:
 protected:
 	/**
 		@brief VOIPTalker 등록 시도 함수. 타이머로 주기적으로 호출되어 VOIPTalker가 생성될 때까지 시도함.
+		자기자신은 호출하지않음. 원격 플레이어만 호출해야함.
 	**/
 	void TryRegisterVOIPTalker();
 
@@ -473,7 +496,11 @@ protected: // Dash 전용 맴버 변수
 	UPROPERTY(Replicated)
 	uint8 bDashCoolDown = true;
 
-
+public:
+	FOnSprintChanged OnSprintChanged;
+	
+	FOnSprintUIShow OnSprintUIShow;
+	FOnSprintUIHide OnSprintUIHide;
 protected: // Sprint 전용 맴버 변수
 	UPROPERTY(ReplicatedUsing = OnRep_Sprint)
 	uint8 bSprint : 1 = false;
@@ -491,11 +518,14 @@ protected: // Sprint 전용 맴버 변수
 	FTimerHandle SprintGaugeDownTimerHandle;
 	FTimerHandle SprintGaugeUpTimerHandle;
 
-	UPROPERTY(Replicated)
+	UFUNCTION()
+	void OnRep_SprintGauge();
+	
+	UPROPERTY(ReplicatedUsing = OnRep_SprintGauge)
 	int32 SprintGauge = 10;
 	
 public:
-	bool CanZoomIn() const;
+	bool CanZoomIn();
 	
 
 protected:
@@ -506,6 +536,9 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TObjectPtr<USoundBase> BatSwingSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundBase> GunSound;
 
 // 피격 효과 관련
 public:
@@ -554,11 +587,6 @@ protected:
 	TObjectPtr<class USoundAttenuation> VoiceAttenuation;
 
 	FTimerHandle VOIPTalkerTimerHandle;
-
-	//protected:
-	//	//!< 무전기 보유 여부. 양쪽 다 무전기가 있으면 거리에 상관없이 음성이 들림.
-	//	UPROPERTY(ReplicatedUsing = OnRep_HasRadio, BlueprintReadWrite, Category = "VOIP")
-	//	uint8 bHasRadio : 1 = false;
 
 public:
 	//!< 무전기 그룹, 양쪽 다 같은 무전기 그룹에 있으면 거리에 상관없이 음성이 들림.

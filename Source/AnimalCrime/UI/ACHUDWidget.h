@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Game/ACGameEnums.h"
 #include "Blueprint/UserWidget.h"
 #include "UI/ACCustomWidget.h"
 #include "ACHUDWidget.generated.h"
@@ -28,6 +29,18 @@ public:
 	UFUNCTION()
 	void HandleAmmoChanged(int32 InAmmo);
 
+	UFUNCTION()
+	void HandleGaugeChanged(int32 InSprintGauge);
+	
+	void ShowSprintUI();
+	void HideSprintUI();
+
+	void ShowDropUI();
+	void HideDropUI();
+	
+	// 새 함수 추가 - MoneyComponent 바인딩
+	void BindSprintGauge();
+	
 	// 새 함수 추가 - MoneyComponent 바인딩
 	void BindMoneyComponent();
 
@@ -52,6 +65,8 @@ public:
 	
 	void ZoomInState();
 	void ZoomOutState();
+
+	void UpdateQuestTracker(EEscapeState NewState);
 	
 public:
 	UPROPERTY(meta = (BindWidget))
@@ -77,10 +92,22 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UACBoundItemWidget> WBP_Contraband;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UACSprintWidget> WBP_Sprint;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UUserWidget> DropUI;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UACQuestTracker> QuestTracker;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoundItem")
 	TObjectPtr<UTexture2D> WalkyTalkyImage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoundItem")
 	TObjectPtr<UTexture2D> ContrabandImage;
+
+	
+
 };
