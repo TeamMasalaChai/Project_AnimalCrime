@@ -250,6 +250,13 @@ protected:
 	/** 몽타주: 기본 공격  */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Member|Attack|Anim", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UAnimMontage> MeleeMontage;
+	
+	/** 몽타주: 총  */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Member|Attack|Anim", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UAnimMontage> ZoomMontage;
+	/** 몽타주: 기본 공격  */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Member|Attack|Anim", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UAnimMontage> ShootMontage;
 
 	/** 플레그: 공격 시도 중 여부 */
 	UPROPERTY()
@@ -276,6 +283,12 @@ public:
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastPlayAttackMontage();
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastPlayZoomMontage();
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastPlayShootMontage();
 	
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastPlayEscapeSkillMontage();
@@ -512,7 +525,7 @@ protected: // Sprint 전용 맴버 변수
 	int32 SprintGauge = 10;
 	
 public:
-	bool CanZoomIn() const;
+	bool CanZoomIn();
 	
 
 protected:
@@ -523,6 +536,9 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TObjectPtr<USoundBase> BatSwingSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundBase> GunSound;
 
 // 피격 효과 관련
 public:
