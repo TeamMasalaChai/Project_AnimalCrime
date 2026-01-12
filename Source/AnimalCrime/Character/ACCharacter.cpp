@@ -211,6 +211,18 @@ AACCharacter::AACCharacter()
 		MeleeMontage = MeleeMontageRef.Object;
 	}
 	
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> ZoomMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Project/Character/AM_Zoom.AM_Zoom'"));
+	if (ZoomMontageRef.Succeeded())
+	{
+		ZoomMontage = ZoomMontageRef.Object;
+	}
+	
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> ShootMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Project/Character/AM_Shoot.AM_Shoot'"));
+	if (ShootMontageRef.Succeeded())
+	{
+		ShootMontage = ShootMontageRef.Object;
+	}
+	
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> EscapeMontageRef(TEXT("/Script/Engine.AnimMontage'/Game/Project/Character/AM_EscapeSkill.AM_EscapeSkill'"));
 	if (EscapeMontageRef.Succeeded())
 	{
@@ -219,7 +231,6 @@ AACCharacter::AACCharacter()
 
 	// ShopComponent 생성
 	ShopComponent = CreateDefaultSubobject<UACShopComponent>(TEXT("ShopComponent"));
-
 	GetCharacterMovement()->NetworkSmoothingMode = ENetworkSmoothingMode::Disabled;
 	MoneyComp = CreateDefaultSubobject<UACMoneyComponent>(TEXT("MoneyComponent"));
 
@@ -236,6 +247,14 @@ AACCharacter::AACCharacter()
 	{
 		BatSwingSound = BatSwingSoundRef.Object;
 	}
+	
+	static ConstructorHelpers::FObjectFinder<USoundBase> GunSoundRef(TEXT("/Script/Engine.SoundWave'/Game/Project/SFX/Gunshot/402010__eardeer__gunshot__high_1.402010__eardeer__gunshot__high_1'"));
+	if (GunSoundRef.Succeeded())
+	{
+		GunSound = GunSoundRef.Object;
+	}
+	
+	
 
 	// VOIPTalker 생성
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
@@ -977,6 +996,35 @@ bool AACCharacter::IsHoldingGun()
 		return false;
 	}
 	return true;
+}
+
+void AACCharacter::MulticastPlayZoomMontage_Implementation()
+{
+	// 보류
+	// if (MeleeMontage && GetMesh() && GetMesh()->GetAnimInstance())
+	// {
+	// 	GetMesh()->GetAnimInstance()->Montage_Play(ZoomMontage, 1.0f);
+	// }
+}
+
+void AACCharacter::MulticastPlayShootMontage_Implementation()
+{
+	if (ShootMontage && GetMesh() && GetMesh()->GetAnimInstance())
+	{
+		GetMesh()->GetAnimInstance()->Montage_Play(ShootMontage, 1.0f);
+	}
+
+	// 로컬 클라이언트 + 무기 장착 시에만 사운드 재생
+	if (GunSound && ShopComponent)
+	{
+		UACItemData* EquippedWeapon = ShopComponent->EquippedWeapon;
+
+		// 무기를 들고 있는지 확인
+		if (EquippedWeapon != nullptr && EquippedWeapon->ItemType == EItemType::Weapon)
+		{
+			UGameplayStatics::PlaySound2D(this, GunSound);
+		}
+	}
 }
 
 void AACCharacter::FireHitscan()
@@ -2096,6 +2144,8 @@ void AACCharacter::ServerShoot_Implementation()
 
 	FVector TraceEnd = CameraLoc + (CameraRot.Vector() * MaxDistance);
 
+	AC_LOG(LogHY, Error, TEXT("Shoot Test"));
+	MulticastPlayShootMontage();
 	// 총구 위치
 	// 방안 [소켓으로부터 출발] [SkeletalMesh의 경우 거기서]
 	//FVector MuzzleLoc = GetMesh()->GetSocketLocation("RightHandSocket");
@@ -2144,7 +2194,7 @@ void AACCharacter::OnRep_SprintGauge()
 	}
 }
 
-bool AACCharacter::CanZoomIn() const
+bool AACCharacter::CanZoomIn()
 {
 	if (CharacterState == ECharacterState::None || CharacterState == ECharacterState::OnDamage ||
 		CharacterState == ECharacterState::Interact || CharacterState == ECharacterState::OnInteract ||
@@ -2154,6 +2204,7 @@ bool AACCharacter::CanZoomIn() const
 		return false;
 	}
 
+	// MulticastPlayZoomMontage();
 
 	return true;
 }
