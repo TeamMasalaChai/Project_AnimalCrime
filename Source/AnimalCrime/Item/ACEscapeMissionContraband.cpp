@@ -28,7 +28,7 @@ AACEscapeMissionContraband::AACEscapeMissionContraband()
 	NiagaraEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraEffect"));
 	NiagaraEffect->SetupAttachment(RootComponent);
 	NiagaraEffect->SetAutoActivate(true);
-	NiagaraEffect->SetRelativeRotation(FRotator(0.0f, 0.0f, -20.0f));
+	NiagaraEffect->SetRelativeLocation(FVector(0.0f, 0.0f, -20.0f));
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraRef(TEXT("/Game/DrapEffet/VFX/NE_drop_effects03.NE_drop_effects03"));
 	if (NiagaraRef.Succeeded())
 	{

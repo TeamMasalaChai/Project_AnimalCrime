@@ -22,6 +22,9 @@
 #include "Components/CapsuleComponent.h"
 #include "Prison/ACPrisonBase.h"
 #include "StartPosition/ACPlayerStart.h"
+#include "Item/ACEscapeMissionContraband.h"
+#include "EscapeQuest/ACContrabandSpawnPoint.h"
+#include "Algo/RandomShuffle.h"
 
 AACMainGameMode::AACMainGameMode()
 {
@@ -169,6 +172,7 @@ void AACMainGameMode::BeginPlay()
 
 	GenerateOutfitPool();
 	SpawnAllAI();
+	SpawnRandomContrabands();
 
 	AC_LOG(LogHY, Warning, TEXT("End"));
 }
@@ -580,4 +584,27 @@ void AACMainGameMode::GameRemainTimeUp()
 void AACMainGameMode::GameRemainTimeDown()
 {
 	GameRuleManager->RemainTimeDown(60);
+}
+
+void AACMainGameMode::SpawnRandomContrabands()
+{
+	// 월드에 배치된 모든 밀수품 찾기
+	TArray<AActor*> SpawnPoints;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AACContrabandSpawnPoint::StaticClass(), SpawnPoints);
+
+	// 랜덤 셔플
+	Algo::RandomShuffle(SpawnPoints);
+
+	// 스폰 개수 결정 (배치된 개수보다 많으면 전부 활성화)
+	int32 NumToSpawn = FMath::Min(ActiveContrabandCount, SpawnPoints.Num());
+
+	// 랜덤하게 밀수품 생성
+	for (int32 i = 0; i < NumToSpawn; ++i)
+	{
+		GetWorld()->SpawnActor<AACEscapeMissionContraband>(
+			AACEscapeMissionContraband::StaticClass(),
+			SpawnPoints[i]->GetActorLocation(),
+			SpawnPoints[i]->GetActorRotation()
+		);
+	}
 }

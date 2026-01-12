@@ -106,7 +106,9 @@ public:
 	void SpawnAllAI();
 	FVector GetRandomSpawnLocation() const;
 	FVector GetRandomSpawnLocation(const FVector& Location, float Radius = 5000) const;
-	
+
+	/** 맵에 배치된 밀수품 중 랜덤으로 활성화 */
+	void SpawnRandomContrabands();
 	
 	void GenerateOutfitPool();
 	FOutfitCombo GiveOutfitFromPool();
@@ -126,15 +128,19 @@ public:
 private:
 	UPROPERTY(EditAnywhere, meta=(AllowedClasses=Actor))
 	TArray<TObjectPtr<class AACCitizen>> AIObjectArray;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TSubclassOf<AACCitizen> CitizenBPClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TSubclassOf<class AACBlackMarketDealer> BlackMarketDealerBPClass;
-	
+
 	UPROPERTY(EditAnywhere, meta=(AllowedClasses=Actor))
 	int32 AINums = 5;
+
+	/** 맵에 배치된 밀수품 중 활성화할 개수 */
+	UPROPERTY(EditAnywhere, Category = "Contraband")
+	int32 ActiveContrabandCount = 6;
 	
 	UPROPERTY()
 	TArray<FOutfitCombo> OutfitPool;
@@ -203,8 +209,7 @@ protected:
 	int32 MafiaCount;
 	
 #pragma endregion 
-	
-	
+
 public:
 	void GameRemainTimeUp();
 	void GameRemainTimeDown();
