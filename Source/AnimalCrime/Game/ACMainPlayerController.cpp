@@ -472,6 +472,12 @@ bool AACMainPlayerController::CanUseEscapeSkill() const
 		return false;
 	}
 
+	if (CharacterState == ECharacterState::Stun)
+	{
+		AC_LOG(LogHY, Error, TEXT("CharacterState is %s"), *UEnum::GetValueAsString(CharacterState));
+		return false;
+	}
+	
 	return true;
 }
 
@@ -828,7 +834,7 @@ void AACMainPlayerController::ZoomIn()
 			if (!StaticMeshComp) continue;
 
 			// RightHand 소켓에 붙어 있는지 확인
-			if (StaticMeshComp->GetAttachSocketName() == TEXT("RightHandSocket"))
+			if (StaticMeshComp->GetAttachSocketName() == TEXT("RightHandPistolSocket"))
 			{
 				StaticMeshComp->SetHiddenInGame(true);
 			}
@@ -889,7 +895,7 @@ void AACMainPlayerController::ZoomOut()
 			if (!StaticMeshComp) continue;
 
 			// RightHand 소켓에 붙어 있는지 확인
-			if (StaticMeshComp->GetAttachSocketName() == TEXT("RightHandSocket"))
+			if (StaticMeshComp->GetAttachSocketName() == TEXT("RightHandPistolSocket"))
 			{
 				StaticMeshComp->SetHiddenInGame(false);
 			}
