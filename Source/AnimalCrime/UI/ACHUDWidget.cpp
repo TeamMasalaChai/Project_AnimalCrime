@@ -160,15 +160,25 @@ void UACHUDWidget::BindSprintGauge()
 		if (Character == nullptr)
 		{
 			// Pawn이 아직 없으면 타이머로 재시도
-			UE_LOG(LogHY, Warning, TEXT("Pawn is nullptr BindSprintGauge"));
+			UE_LOG(LogHY, Warning, TEXT("Pawn is nullptr BindSprintGauge, 0.1초 후 재시도"));
+
+			FTimerHandle RetryTimerHandle;
+			GetWorld()->GetTimerManager().SetTimer(
+				RetryTimerHandle,
+				this,
+				&UACHUDWidget::BindSprintGauge,
+				0.1f,  // 0.1초 후
+				false  // 한 번만
+			);
+			return;
 		}
 		Character->OnSprintChanged.AddUObject(this, &UACHUDWidget::HandleGaugeChanged);
 		Character->OnSprintUIShow.AddUObject(this, &UACHUDWidget::ShowSprintUI);
 		Character->OnSprintUIHide.AddUObject(this, &UACHUDWidget::HideSprintUI);
-	}
 
-	// 초기값 설정.
-	HandleGaugeChanged(10);
+		// 초기값 설정.
+		HandleGaugeChanged(10);
+	}
 }
 
 void UACHUDWidget::BindMoneyComponent()
