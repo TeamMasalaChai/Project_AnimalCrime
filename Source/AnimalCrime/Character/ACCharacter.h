@@ -336,14 +336,6 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SetCarryState(bool bPlay);
 
-	/**
-		@brief brief bHasRadio가 리플리케이트될 때 호출되는 함수.
-			로컬 플레이어의 무전기 상태가 변경되면 모든 캐릭터의 VOIP 설정을 업데이트하고,
-			다른 캐릭터의 무전기 상태가 변경되면 해당 캐릭터의 VOIP 설정만 업데이트한다.
-	**/
-	//UFUNCTION()
-	//void OnRep_HasRadio();
-
  /**
 		@brief brief VoiceGroup이 리플리케이트될 때 호출되는 함수.
 			로컬 플레이어의 무전기 상태가 변경되면 모든 캐릭터의 VOIP 설정을 업데이트하고,
@@ -602,7 +594,7 @@ protected:
 	// VOIP 관련
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VOIP")
-	TObjectPtr<class UVOIPTalker> VOIPTalker;
+	TObjectPtr<class UACVOIPTalker> VOIPTalker;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VOIP")
 	TObjectPtr<class USoundAttenuation> VoiceAttenuation;
