@@ -36,8 +36,11 @@ AACMainGameMode::AACMainGameMode()
 	PlayerStateClass = AACPlayerState::StaticClass();
 
 	//MafiaPawnClass = AACMafiaCharacter::StaticClass();
+	//static ConstructorHelpers::FClassFinder<APawn> MafiaPawnBP(
+	//	TEXT("/Game/Project/Character/BP_ACMafia")
+	//);
 	static ConstructorHelpers::FClassFinder<APawn> MafiaPawnBP(
-		TEXT("/Game/Project/Character/BP_ACMafia")
+		TEXT("/Game/Project/Character/BP_TestMafia")
 	);
 
 	static ConstructorHelpers::FClassFinder<APawn> PolicePawnBP(

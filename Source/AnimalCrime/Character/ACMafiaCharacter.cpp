@@ -28,6 +28,8 @@ AACMafiaCharacter::AACMafiaCharacter()
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MafiaCollision"));
 
 	Stat = CreateDefaultSubobject<UACDestroyableStatComponent>(TEXT("StatComponent"));
+
+	VoiceGroup = EVoiceGroup::None;
 }
 
 void AACMafiaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

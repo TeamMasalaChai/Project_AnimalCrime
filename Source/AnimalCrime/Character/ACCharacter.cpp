@@ -259,10 +259,15 @@ AACCharacter::AACCharacter()
 	// VOIPTalker 생성
 	VOIPTalker = CreateDefaultSubobject<UACVOIPTalker>(TEXT("VOIPTalker"));
 
-	static ConstructorHelpers::FObjectFinder<USoundAttenuation> AttenuationRef(TEXT("/Game/Project/Sound/SA_VOIP.SA_VOIP"));
-	if (AttenuationRef.Succeeded())
+	static ConstructorHelpers::FObjectFinder<USoundAttenuation> AttenuationProximityRef(TEXT("/Game/Project/Sound/SA_Proximity.SA_Proximity"));
+	if (AttenuationProximityRef.Succeeded())
 	{
-		VoiceAttenuation = AttenuationRef.Object;
+		VoiceProximity = AttenuationProximityRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<USoundAttenuation> AttenuationRadioRef(TEXT("/Game/Project/Sound/SA_Radio.SA_Radio"));
+	if (AttenuationRadioRef.Succeeded())
+	{
+		VoiceRadio = AttenuationRadioRef.Object;
 	}
 	
 	static ConstructorHelpers::FObjectFinder<UACSkillData> SkillDataAssetRef(TEXT("/Script/AnimalCrime.ACSkillData'/Game/Project/Character/DA_SkillData.DA_SkillData'"));
@@ -408,28 +413,35 @@ void AACCharacter::TryRegisterVOIPTalker()
 	// 타이머 정리
 	GetWorld()->GetTimerManager().ClearTimer(VOIPTalkerTimerHandle);
 
-	if (VoiceAttenuation == nullptr)
+	if (VoiceProximity == nullptr)
 	{
-		AC_LOG(LogVT, Log, TEXT("VoiceAttenuation is nullptr in %s"), *GetName());
+		AC_LOG(LogVT, Log, TEXT("VoiceProximity is nullptr in %s"), *GetName());
+		return;
+	}
+
+	if (VoiceRadio == nullptr)
+	{
+		AC_LOG(LogVT, Log, TEXT("VoiceRadio is nullptr in %s"), *GetName());
+		return;
 	}
 
 	// 음성이 캐릭터 위치에서 나도록 설정
 	VOIPTalker->Settings.ComponentToAttachTo = GetRootComponent();
 
 	// Register 전에 무전기 상태에 따라 Attenuation 결정
-	bool bDisableAttenuation = false;
+	bool bUseRadio = false;
 	if (VoiceGroup != EVoiceGroup::None && VoiceGroup == LocalChar->VoiceGroup)
 	{
 		// 양쪽 다 무전기 있으면서 같은 무전기 그룹이면 Attenuation 제거
-		bDisableAttenuation = true;
-		AC_LOG(LogVT, Log, TEXT("같은 무전기 그룹. VOIPTalker Attenuation disabled for %s (Radio mode)"), *GetName());
+		bUseRadio = true;
+		AC_LOG(LogVT, Log, TEXT("같은 무전기 그룹. VOIPTalker Radio mode for %s"), *GetName());
 	}
 	else
 	{
-		AC_LOG(LogVT, Log, TEXT("다른 무전기 그룹. VOIPTalker Attenuation enabled for %s (Normal mode)"), *GetName());
+		AC_LOG(LogVT, Log, TEXT("다른 무전기 그룹. VOIPTalker Proximity mode for %s"), *GetName());
 	}
 
-	VOIPTalker->Settings.AttenuationSettings = bDisableAttenuation ? nullptr : VoiceAttenuation;
+	VOIPTalker->Settings.AttenuationSettings = bUseRadio ? VoiceRadio : VoiceProximity;
 	VOIPTalker->RegisterWithPlayerState(PS);
 
 	AC_LOG(LogVT, Log, TEXT("VOIPTalker registered for %s, Attenuation: %s"), *GetName(), VOIPTalker->Settings.AttenuationSettings ? TEXT("Enabled") : TEXT("Disabled"));
@@ -2526,15 +2538,15 @@ void AACCharacter::OnRep_VoiceGroup()
 
 		if (VoiceGroup != EVoiceGroup::None && LocalChar->VoiceGroup == VoiceGroup)
 		{
-			// 나(로컬)도 무전기 있고, 상대도 무전기 있으면서 같은 무전기 그룹이면 Attenuation 제거
-			AC_LOG(LogSY, Log, TEXT("OnRep_VoiceGroup - Disable VOIP Attenuation for Character: %s"), *GetName());
-			SetVOIPAttenuation(false);
+			// 나(로컬)도 무전기 있고, 상대도 무전기 있으면서 같은 무전기 그룹이면 라디오 모드
+			AC_LOG(LogSY, Log, TEXT("Radio Mode: %s"), *GetName());
+			SetVOIPMode(true);
 		}
 		else
 		{
-			// 다른 그룹이면 Attenuation 다시 적용
-			AC_LOG(LogSY, Log, TEXT("OnRep_VoiceGroup - Enable VOIP Attenuation for Character: %s"), *GetName());
-			SetVOIPAttenuation(true);
+			// 거리 감쇠 모드 다시 적용
+			AC_LOG(LogSY, Log, TEXT("Proximity Mode: %s"), *GetName());
+			SetVOIPMode(false);
 		}
 	}
 }
@@ -2573,26 +2585,27 @@ void AACCharacter::UpdateRadioVoiceSettings()
 			continue;
 		}
 
-		// 나도 무전기 있고 상대도 무전기 있으면서 같은 그룹이면 → Attenuation 제거
+		// 나도 무전기 있고 상대도 무전기 있으면서 같은 그룹이면 → 라디오 모드
 		if (VoiceGroup != EVoiceGroup::None && VoiceGroup == OtherChar->VoiceGroup)
 		{
-			OtherChar->SetVOIPAttenuation(false);
+			OtherChar->SetVOIPMode(true);
 		}
 		else
 		{
-			OtherChar->SetVOIPAttenuation(true);
+			OtherChar->SetVOIPMode(false);
 		}
 	}
 }
 
-void AACCharacter::SetVOIPAttenuation(bool bUseAttenuation)
+void AACCharacter::SetVOIPMode(bool bUseRadio)
 {
 	if (VOIPTalker == nullptr)
 	{
 		return;
 	}
 
-	USoundAttenuation* NewAttenuation = bUseAttenuation ? VoiceAttenuation : nullptr;
+
+	USoundAttenuation* NewAttenuation = bUseRadio ? VoiceRadio : VoiceProximity;
 
 	// 이미 같은 설정이면 스킵
 	if (VOIPTalker->Settings.AttenuationSettings == NewAttenuation)

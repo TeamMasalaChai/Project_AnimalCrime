@@ -382,9 +382,9 @@ public:
 
 	/**
 		@brief 다른 캐릭터의 VOIPTalker Attenuation 설정 (로컬에서만 호출)
-		@param bUseAttenuation - true면 거리 감쇠 적용, false면 감쇠 없음 (거리 무관)
+		@param bUseRadio - true면 라디오, false면 거리 기반
 	**/
-	void SetVOIPAttenuation(bool bUseAttenuation);
+	void SetVOIPMode(bool bUseRadio);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component")
 	TObjectPtr<class UACMoneyComponent> MoneyComp;
@@ -624,7 +624,10 @@ public:
 	TObjectPtr<class UACVOIPTalker> VOIPTalker;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VOIP")
-	TObjectPtr<class USoundAttenuation> VoiceAttenuation;
+	TObjectPtr<class USoundAttenuation> VoiceProximity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VOIP")
+	TObjectPtr<class USoundAttenuation> VoiceRadio;
 
 	FTimerHandle VOIPTalkerTimerHandle;
 
