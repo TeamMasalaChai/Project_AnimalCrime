@@ -494,13 +494,14 @@ protected:
 	
 	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "State")
 	//ECharacterState PrevCharacterState;
-	
+public:
 	void SetFreeState();
 	void SetOnDamageState();
 	void SetStunState();
 	void SetInteractState();
 	void SetOnInteractState();
 	
+protected:
 	float CalculateMoveSpeed() const;
 
 protected: // Dash 전용 맴버 변수
@@ -567,13 +568,22 @@ protected:
 	**/
 	void ResetHitEffect();
 
-	// ===== 피격 효과 Material =====
+	// 피격 효과 Material
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	TObjectPtr<UMaterialInterface> DamageOverlayMaterial;
+
+	// 스턴 효과 Material
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stun")
+	TObjectPtr<UMaterialInterface> StunOverlayMaterial;
+
+	UFUNCTION()
+	void OnRep_Stun();
 private:
 	// 피격 효과 타이머
 	FTimerHandle HitEffectTimerHandle;
 
+	void ApplyStunOverlay();
+	void RemoveStunOverlay();
 
 // 나중에 사라져야하는 코드들.	
 public:

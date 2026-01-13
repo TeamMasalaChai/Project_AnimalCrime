@@ -193,6 +193,12 @@ float AACMafiaCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 	}
 	else
 	{
+		if (DamageAmount > 0.0f)
+		{
+			// todo: 마피아 OnDamage 효과 시간
+			MulticastPlayHitEffect(2.f);  // 모든 클라이언트에 전파
+		}
+
 		SetCharacterState(ECharacterState::OnDamage);
 		if (CharacterState == ECharacterState::OnDamage)
 		{
@@ -229,7 +235,7 @@ void AACMafiaCharacter::UpdateCharacterStatusRevive()
 		return;
 	}
 	AC_LOG(LogHY, Error, TEXT("상태가 변경되었습니다."));
-	bStun = false;
+	//bStun = false;
 	SetCharacterState(ECharacterState::Free);
 	if (HasAuthority() == true)
 	{

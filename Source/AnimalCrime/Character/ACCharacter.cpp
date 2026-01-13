@@ -270,6 +270,14 @@ AACCharacter::AACCharacter()
 	{
 		SkillDataAsset = SkillDataAssetRef.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UMaterial> StunOverlayRef(
+		TEXT("/Game/Project/Character/Material/M_StunOverlay.M_StunOverlay")
+	);
+	if (StunOverlayRef.Succeeded())
+	{
+		StunOverlayMaterial = StunOverlayRef.Object;
+	}
 }
 
 #pragma region 엔진 제공 함수
@@ -446,6 +454,10 @@ void AACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AACCharacter, BulletCount);
 	//DOREPLIFETIME(AACCharacter, bHasRadio);
 	DOREPLIFETIME(AACCharacter, VoiceGroup);
+
+	DOREPLIFETIME(AACCharacter, bStun);
+	DOREPLIFETIME(AACCharacter, bOnDamage);
+	DOREPLIFETIME(AACCharacter, bInteract);
 }
 
 void AACCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -1576,6 +1588,8 @@ void AACCharacter::SetFreeState()
 	bOnDamage = false;
 	bStun = false;
 
+	RemoveStunOverlay();
+
 	AC_LOG(LogHY, Error, TEXT("Before speed: %f"), MoveComp->MaxWalkSpeed);
 	MoveComp->MaxWalkSpeed = CalculateMoveSpeed();
 	AC_LOG(LogHY, Error, TEXT("After  speed: %f"), MoveComp->MaxWalkSpeed);
@@ -1606,8 +1620,20 @@ void AACCharacter::SetStunState()
 		return;
 	}
 
+	// 피격 효과 타이머 클리어
+	// 스턴 상태로 전환될 때 기존 피격 타이머를 제거하여
+	// ResetHitEffect()가 호출되지 않도록 함
+	if (GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(HitEffectTimerHandle))
+	{
+		GetWorld()->GetTimerManager().ClearTimer(HitEffectTimerHandle);
+		AC_LOG(LogHG, Warning, TEXT("Cleared HitEffect timer for Stun"));
+	}
+
 	// MovementComponent 속성 변경
 	bStun = true;
+
+	ApplyStunOverlay();
+
 	AC_LOG(LogHY, Error, TEXT("Before speed: %f"), MoveComp->MaxWalkSpeed);
 	MoveComp->MaxWalkSpeed = CalculateMoveSpeed();
 	AC_LOG(LogHY, Error, TEXT("After  speed: %f"), MoveComp->MaxWalkSpeed);
@@ -2258,6 +2284,16 @@ void AACCharacter::ResetHitEffect()
 		AC_LOG(LogHY, Error, TEXT("this is nullptr"));
 		return;
 	}
+
+	// 스턴 상태면 Overlay Material 제거하지 않음
+	 // 만약 타이머 클리어가 실패했거나 타이밍 이슈로
+	 // ResetHitEffect()가 호출되더라도 스턴 오버레이는 유지
+	if (bStun == true)
+	{
+		AC_LOG(LogHG, Warning, TEXT("Stun active, keeping StunOverlay"));
+		return;
+	}
+
 	// 모든 메시 컴포넌트 리스트
 	TArray<USkeletalMeshComponent*> MeshComponents = {
 		HeadMesh,
@@ -2278,6 +2314,74 @@ void AACCharacter::ResetHitEffect()
 		}
 	}
 	AC_LOG(LogHY, Error, TEXT("Reset Test"));
+}
+
+void AACCharacter::OnRep_Stun()
+{
+	if (bStun == true)
+	{
+		ApplyStunOverlay();
+	}
+	else
+	{
+		RemoveStunOverlay();
+	}
+}
+
+void AACCharacter::ApplyStunOverlay()
+{
+	if (StunOverlayMaterial == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("StunOverlayMaterial is null!"));
+		return;
+	}
+
+	// 모든 메시 컴포넌트
+	TArray<USkeletalMeshComponent*> MeshComponents = {
+		HeadMesh,
+		FaceMesh,
+		TopMesh,
+		BottomMesh,
+		ShoesMesh,
+		FaceAccMesh,
+		GetMesh()
+	};
+
+	// 각 메시에 Overlay Material 적용
+	for (USkeletalMeshComponent* MeshComp : MeshComponents)
+	{
+		if (MeshComp != nullptr)
+		{
+			MeshComp->SetOverlayMaterial(StunOverlayMaterial);
+		}
+	}
+
+	AC_LOG(LogHG, Log, TEXT("Stun overlay applied"));
+}
+
+void AACCharacter::RemoveStunOverlay()
+{
+	// 모든 메시 컴포넌트
+	TArray<USkeletalMeshComponent*> MeshComponents = {
+		HeadMesh,
+		FaceMesh,
+		TopMesh,
+		BottomMesh,
+		ShoesMesh,
+		FaceAccMesh,
+		GetMesh()
+	};
+
+	// 각 메시의 Overlay Material 제거
+	for (USkeletalMeshComponent* MeshComp : MeshComponents)
+	{
+		if (MeshComp != nullptr)
+		{
+			MeshComp->SetOverlayMaterial(nullptr);
+		}
+	}
+
+	AC_LOG(LogHG, Log, TEXT("Stun overlay removed"));
 }
 
 int32 AACCharacter::GetBulletCount() const
