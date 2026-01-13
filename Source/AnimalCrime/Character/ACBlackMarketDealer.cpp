@@ -6,6 +6,7 @@
 #include "Component/ACInteractableComponent.h"
 #include "Game/ACMainPlayerController.h"
 #include "AnimalCrime.h"
+#include "Components/PostProcessComponent.h"
 
 AACBlackMarketDealer::AACBlackMarketDealer()
 {
@@ -18,52 +19,67 @@ AACBlackMarketDealer::AACBlackMarketDealer()
 
 void AACBlackMarketDealer::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
-	// 약간의 딜레이 후 하이라이트 적용 (플레이어 스폰 타이밍 고려)
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(
-		TimerHandle,
-		this,
-		&AACBlackMarketDealer::UpdateHighlightForLocalPlayer,
-		0.5f,  // 0.5초 후 실행
-		false // 한번 실행 후 자동 정리
-	);
+    // 약간의 딜레이 후 하이라이트 적용 (플레이어 스폰 타이밍 고려)
+    FTimerHandle TimerHandle;
+    GetWorld()->GetTimerManager().SetTimer(
+        TimerHandle,
+        this,
+        &AACBlackMarketDealer::UpdateHighlightForLocalPlayer,
+        0.5f,
+        false
+    );
 }
 
 void AACBlackMarketDealer::UpdateHighlightForLocalPlayer()
 {
-	// 로컬 플레이어 가져오기
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (PC == nullptr)
-	{
-		AC_LOG(LogHG, Error, TEXT("PC is nullptr"));
-		return;
-	}
+    // 로컬 플레이어 가져오기
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (PC == nullptr)
+    {
+        AC_LOG(LogHG, Error, TEXT("PC is nullptr"));
+        return;
+    }
 
-	AACCharacter* LocalChar = Cast<AACCharacter>(PC->GetPawn());
-	if (LocalChar == nullptr)
-	{
-		AC_LOG(LogHG, Error, TEXT("LocalChar is nullptr"));
-		return;
-	}
+    AACCharacter* LocalChar = Cast<AACCharacter>(PC->GetPawn());
+    if (LocalChar == nullptr)
+    {
+        AC_LOG(LogHG, Error, TEXT("LocalChar is nullptr"));
+        return;
+    }
 
-	// 마피아만 하이라이트 적용
-	if (LocalChar->GetCharacterType() == EACCharacterType::Mafia)
-	{
-		TArray<USkeletalMeshComponent*> MeshComponents = {
-			HeadMeshComp, FaceMeshComp, TopMeshComp,
-			BottomMeshComp, ShoesMeshComp, FaceAccMeshComp, GetMesh()
-		};
+    // 마피아만 하이라이트 적용
+    if (LocalChar->GetCharacterType() == EACCharacterType::Mafia)
+    {
+        UE_LOG(LogHG, Warning, TEXT("BlackMarketDealer: Applying highlights for Mafia"));
 
-		for (USkeletalMeshComponent* MeshComp : MeshComponents)
-		{
-			if (MeshComp && MafiaHighlightMaterial)
-			{
-				MeshComp->SetOverlayMaterial(MafiaHighlightMaterial);
-			}
-		}
-	}
+        TArray<USkeletalMeshComponent*> MeshComponents = {
+            HeadMeshComp, FaceMeshComp, TopMeshComp,
+            BottomMeshComp, ShoesMeshComp, FaceAccMeshComp, GetMesh()
+        };
+
+        // 1. Overlay Material 적용 (흰색 외곽선, 건물에 가려짐)
+        for (USkeletalMeshComponent* MeshComp : MeshComponents)
+        {
+            if (MeshComp && MafiaHighlightMaterial)
+            {
+                MeshComp->SetOverlayMaterial(MafiaHighlightMaterial);
+            }
+        }
+
+        // 2. Custom Depth 활성화 (PPM_Highlight용, 건물 뒤 노란색)
+        for (USkeletalMeshComponent* MeshComp : MeshComponents)
+        {
+            if (MeshComp)
+            {
+                MeshComp->SetRenderCustomDepth(true);
+                MeshComp->SetCustomDepthStencilValue(2);  // Stencil = 2 (BlackMarketDealer용)
+            }
+        }
+
+        UE_LOG(LogHG, Warning, TEXT("BlackMarketDealer: Overlay + CustomDepth(Stencil=2) applied"));
+    }
 }
 
 void AACBlackMarketDealer::OnInteract(AACCharacter* ACPlayer, EInteractionKey InKey)

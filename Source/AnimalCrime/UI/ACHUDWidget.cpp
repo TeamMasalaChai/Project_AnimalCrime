@@ -15,7 +15,9 @@
 #include "Character/ACCharacter.h"
 #include "CrossHair/ACCrossHairWidget.h"
 #include "UI/BoundItem/ACBoundItemWidget.h"
+#include "UI/EscapeQuest/ACQuestTracker.h"
 #include "Game/ACMainPlayerController.h"
+#include "Sprint/ACSprintWidget.h"
 
 void UACHUDWidget::BindGameState()
 {
@@ -24,7 +26,7 @@ void UACHUDWidget::BindGameState()
 		if (AACMainGameState* GS = World->GetGameState<AACMainGameState>())
 		{
 			GS->OnScoreChanged.AddDynamic(this, &UACHUDWidget::HandleScoreChanged);
-			
+
 			HandleScoreChanged(GS->GetTeamScore());
 		}
 	}
@@ -54,8 +56,8 @@ void UACHUDWidget::BindPlayerState()
 	// MoneyComponent를 바인딩
 	// ※ 확인 했으면 위에 주석들 다 지워주세요
 	BindMoneyComponent();
-
 	BindBoundItems();
+	BindSprintGauge();
 }
 
 void UACHUDWidget::HandleScoreChanged(float NewScore)
@@ -80,7 +82,7 @@ void UACHUDWidget::HandleMoneyChanged(int32 NewMoney)
 	{
 		return;
 	}
-	
+
 	WBP_Money->UpdateMoney(NewMoney);
 }
 
@@ -90,8 +92,75 @@ void UACHUDWidget::HandleAmmoChanged(int32 InAmmo)
 	{
 		return;
 	}
-	
+
 	WBP_Ammo->UpdateAmmo(InAmmo);
+}
+
+void UACHUDWidget::HandleGaugeChanged(int32 InSprintGauge)
+{
+	if (WBP_Sprint == nullptr)
+	{
+		return;
+	}
+
+	WBP_Sprint->UpdateSprintGauge(InSprintGauge);
+}
+
+void UACHUDWidget::ShowSprintUI()
+{
+	if (WBP_Sprint == nullptr)
+	{
+		return;
+	}
+
+	WBP_Sprint->ShowSprintWidget();
+}
+
+void UACHUDWidget::HideSprintUI()
+{
+	if (WBP_Sprint == nullptr)
+	{
+		return;
+	}
+
+	WBP_Sprint->HideSprintWidget();
+}
+
+void UACHUDWidget::ShowDropUI()
+{
+	if (DropUI == nullptr)
+	{
+		return;
+	}
+	DropUI->SetVisibility(ESlateVisibility::Visible);
+}
+
+void UACHUDWidget::HideDropUI()
+{
+	if (DropUI == nullptr)
+	{
+		return;
+	}
+	DropUI->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UACHUDWidget::BindSprintGauge()
+{
+	if (APlayerController* PC = GetOwningPlayer())
+	{
+		AACCharacter* Character = Cast<AACCharacter>(PC->GetPawn());
+		if (Character == nullptr)
+		{
+			// Pawn이 아직 없으면 타이머로 재시도
+			UE_LOG(LogHY, Warning, TEXT("Pawn is nullptr BindSprintGauge"));
+		}
+		Character->OnSprintChanged.AddUObject(this, &UACHUDWidget::HandleGaugeChanged);
+		Character->OnSprintUIShow.AddUObject(this, &UACHUDWidget::ShowSprintUI);
+		Character->OnSprintUIHide.AddUObject(this, &UACHUDWidget::HideSprintUI);
+	}
+
+	// 초기값 설정.
+	HandleGaugeChanged(10);
 }
 
 void UACHUDWidget::BindMoneyComponent()
@@ -200,7 +269,7 @@ void UACHUDWidget::ZoomInState()
 		UE_LOG(LogTemp, Warning, TEXT("WBP_CrossHair nullptr"));
 		return;
 	}
-	
+
 	WBP_Ammo->SetVisibility(ESlateVisibility::Visible);
 	WBP_CrossHair->SetVisibility(ESlateVisibility::Visible);
 }
@@ -220,4 +289,14 @@ void UACHUDWidget::ZoomOutState()
 
 	WBP_Ammo->SetVisibility(ESlateVisibility::Hidden);
 	WBP_CrossHair->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UACHUDWidget::UpdateQuestTracker(EEscapeState NewState)
+{
+	if (QuestTracker == nullptr)
+	{
+		return;
+	}
+
+	QuestTracker->UpdateQuest(NewState);
 }

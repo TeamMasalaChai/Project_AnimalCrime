@@ -9,6 +9,7 @@
 #include "Interaction/ACInteractionData.h"
 #include "Character/ACMafiaCharacter.h"
 #include "UI/Common/ACNotificationText.h"
+#include "Game/ACPlayerState.h"
 #include "Game/ACMainPlayerController.h"
 #include "AnimalCrime.h"
 
@@ -28,7 +29,7 @@ AACEscapeMissionContraband::AACEscapeMissionContraband()
 	NiagaraEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraEffect"));
 	NiagaraEffect->SetupAttachment(RootComponent);
 	NiagaraEffect->SetAutoActivate(true);
-	NiagaraEffect->SetRelativeRotation(FRotator(0.0f, 0.0f, -20.0f));
+	NiagaraEffect->SetRelativeLocation(FVector(0.0f, 0.0f, -20.0f));
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraRef(TEXT("/Game/DrapEffet/VFX/NE_drop_effects03.NE_drop_effects03"));
 	if (NiagaraRef.Succeeded())
 	{
@@ -89,6 +90,13 @@ void AACEscapeMissionContraband::OnInteract(AACCharacter* ACPlayer, EInteraction
 
 	PC->Client_ShowNotification(FText::FromString(TEXT("밀수품을 획득했다")));
 
+	AACPlayerState* PS = ACPlayerMafia->GetPlayerState<AACPlayerState>();
+	if (PS == nullptr)
+	{
+		return;
+	}
+	PS->EscapeState = EEscapeState::BlackMarket;
+	PS->OnRep_EscapeState();
 	AC_LOG(LogSY, Log, TEXT("item Destroy"));
 	Destroy();
 }

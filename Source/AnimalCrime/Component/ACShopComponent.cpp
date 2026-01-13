@@ -13,6 +13,7 @@
 #include "UI/BoundItem/ACBoundItemWidget.h"  
 #include "Game/ACMainPlayerController.h"   
 #include "Character/ACMafiaCharacter.h"
+#include "Engine/AssetManager.h"
 
 UACShopComponent::UACShopComponent()
 {
@@ -34,6 +35,24 @@ void UACShopComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
     DOREPLIFETIME(UACShopComponent, EquippedBottom);
     DOREPLIFETIME(UACShopComponent, EquippedShoes);
     DOREPLIFETIME(UACShopComponent, EquippedWeapon);
+}
+
+UACItemData* LoadItemDataSync(const FPrimaryAssetId& AssetId)
+{
+    if (!AssetId.IsValid())
+    {
+        return nullptr;
+    }
+
+    UAssetManager& AssetManager = UAssetManager::Get();
+    FSoftObjectPath AssetPath = AssetManager.GetPrimaryAssetPath(AssetId);
+
+    if (AssetPath.IsValid())
+    {
+        return Cast<UACItemData>(AssetPath.TryLoad());
+    }
+
+    return nullptr;
 }
 
 bool UACShopComponent::PurchaseItem(UACItemData* ItemData)
@@ -86,7 +105,7 @@ void UACShopComponent::PurchaseSpecialItem(UACItemData* ItemData)
         }
     }
 
-    ServerPurchaseSpecialItem(ItemData);
+    ServerPurchaseSpecialItem(ItemData->GetPrimaryAssetId());  // 변경
 }
 
 void UACShopComponent::EquipItem(UACItemData* ItemData)
@@ -112,7 +131,7 @@ void UACShopComponent::PurchaseAndEquipItem(UACItemData* ItemData)
 {
     if (ItemData == nullptr) return;
 
-    ServerPurchaseAndEquipItem(ItemData);
+    ServerPurchaseAndEquipItem(ItemData->GetPrimaryAssetId());  // 변경
 }
 
 void UACShopComponent::PurchaseAndAddToQuickSlot(UACItemData* ItemData)
@@ -155,7 +174,25 @@ void UACShopComponent::PurchaseAndAddToQuickSlot(UACItemData* ItemData)
     }
 
     // 서버 RPC 호출
-    ServerPurchaseAndAddToQuickSlot(ItemData);
+    ServerPurchaseAndAddToQuickSlot(ItemData->GetPrimaryAssetId());  // 변경
+}
+
+void UACShopComponent::PurchaseAmmo(UACItemData* ItemData)
+{
+    if (ItemData == nullptr)
+    {
+        UE_LOG(LogHG, Warning, TEXT("PurchaseAmmo: ItemData is null"));
+        return;
+    }
+
+    if (ItemData->ItemType != EItemType::Ammo)
+    {
+        UE_LOG(LogHG, Warning, TEXT("PurchaseAmmo: ItemData is not Ammo type"));
+        return;
+    }
+
+    // 서버 RPC 호출
+    ServerPurchaseAmmo(ItemData->GetPrimaryAssetId());
 }
 
 void UACShopComponent::ToggleWeaponEquip(UACItemData* ItemData)
@@ -166,7 +203,7 @@ void UACShopComponent::ToggleWeaponEquip(UACItemData* ItemData)
         return;
     }
 
-    ServerToggleWeaponEquip(ItemData);
+    ServerToggleWeaponEquip(ItemData->GetPrimaryAssetId());  // 변경
 }
 
 void UACShopComponent::OnRep_EquippedWeapon()
@@ -316,9 +353,14 @@ void UACShopComponent::UnequipWeapon()
     }
 }
 
-void UACShopComponent::ClientAddToQuickSlot_Implementation(UACItemData* ItemData)
+void UACShopComponent::ClientAddToQuickSlot_Implementation(FPrimaryAssetId ItemAssetId)
 {
-    if (ItemData == nullptr) return;
+    UACItemData* ItemData = LoadItemDataSync(ItemAssetId);
+    if (ItemData == nullptr)
+    {
+        UE_LOG(LogHG, Error, TEXT("ClientAddToQuickSlot: Failed to load ItemData"));
+        return;
+    }
 
     AACCharacter* Character = Cast<AACCharacter>(GetOwner());
     if (Character == nullptr) return;
@@ -341,11 +383,12 @@ void UACShopComponent::ClientAddToQuickSlot_Implementation(UACItemData* ItemData
     }
 }
 
-void UACShopComponent::ServerPurchaseAndAddToQuickSlot_Implementation(UACItemData* ItemData)
+void UACShopComponent::ServerPurchaseAndAddToQuickSlot_Implementation(FPrimaryAssetId ItemAssetId)
 {
+    UACItemData* ItemData = LoadItemDataSync(ItemAssetId);
     if (ItemData == nullptr)
     {
-        UE_LOG(LogHG, Warning, TEXT("ServerPurchaseAndAddToQuickSlot: ItemData is null"));
+        UE_LOG(LogHG, Error, TEXT("ServerPurchaseAndAddToQuickSlot: Failed to load ItemData"));
         return;
     }
 
@@ -358,14 +401,12 @@ void UACShopComponent::ServerPurchaseAndAddToQuickSlot_Implementation(UACItemDat
     {
         UACQuickSlotWidget* QuickSlot = PC->ACHUDWidget->WBP_QuickSlot;
 
-        // 1. 퀵슬롯이 가득 찼는지 체크
         if (QuickSlot->IsFull())
         {
             UE_LOG(LogHG, Warning, TEXT("Server: QuickSlot is full! Purchase blocked."));
             return;
         }
 
-        // 2. 중복 아이템 체크
         if (QuickSlot->HasSameItem(ItemData))
         {
             UE_LOG(LogHG, Warning, TEXT("Server: Same item already exists! Purchase blocked."));
@@ -373,13 +414,12 @@ void UACShopComponent::ServerPurchaseAndAddToQuickSlot_Implementation(UACItemDat
         }
     }
 
-    // 서버에서 구매 시도
     if (PurchaseItem(ItemData) == false)
     {
         UE_LOG(LogHG, Warning, TEXT("Server: Failed to purchase item %s"), *ItemData->ItemName.ToString());
         return;
     }
-    
+
     // 나중에 사라져야할 코드
     if (ItemData->ItemName.ToString() == TEXT("Pistol_001"))
     {
@@ -393,8 +433,7 @@ void UACShopComponent::ServerPurchaseAndAddToQuickSlot_Implementation(UACItemDat
         CharacterPawn->AddBullets(10000);
     }
 
-    // 구매 성공 - 클라이언트에게 퀵슬롯 추가 명령
-    ClientAddToQuickSlot(ItemData);
+    ClientAddToQuickSlot(ItemAssetId);  // AssetId 전달
 }
 
 void UACShopComponent::MulticastUnequipWeapon_Implementation()
@@ -402,11 +441,15 @@ void UACShopComponent::MulticastUnequipWeapon_Implementation()
     UnequipWeapon();
 }
 
-void UACShopComponent::ServerToggleWeaponEquip_Implementation(UACItemData* ItemData)
+void UACShopComponent::ServerToggleWeaponEquip_Implementation(FPrimaryAssetId ItemAssetId)
 {
-    if (ItemData == nullptr) return;
+    UACItemData* ItemData = LoadItemDataSync(ItemAssetId);
+    if (ItemData == nullptr)
+    {
+        UE_LOG(LogHG, Error, TEXT("ServerToggleWeaponEquip: Failed to load ItemData"));
+        return;
+    }
 
-    // 아이템 이름으로 비교
     bool bIsSameWeapon = (EquippedWeapon != nullptr && EquippedWeapon->ItemName.EqualTo(ItemData->ItemName));
 
     if (bIsSameWeapon)
@@ -415,24 +458,34 @@ void UACShopComponent::ServerToggleWeaponEquip_Implementation(UACItemData* ItemD
     }
     else
     {
-        MulticastEquipItem(ItemData);
+        MulticastEquipItem(ItemAssetId);  // AssetId 전달
     }
 }
 
-void UACShopComponent::MulticastEquipItem_Implementation(UACItemData* ItemData)
+void UACShopComponent::MulticastEquipItem_Implementation(FPrimaryAssetId ItemAssetId)
 {
-    if (ItemData == nullptr) return;
+    UACItemData* ItemData = LoadItemDataSync(ItemAssetId);
+    if (ItemData == nullptr)
+    {
+        UE_LOG(LogHG, Error, TEXT("MulticastEquipItem: Failed to load ItemData"));
+        return;
+    }
 
     EquipItem(ItemData);
 }
 
-void UACShopComponent::ServerPurchaseAndEquipItem_Implementation(UACItemData* ItemData)
+void UACShopComponent::ServerPurchaseAndEquipItem_Implementation(FPrimaryAssetId ItemAssetId)
 {
-    if (ItemData == nullptr) return;
+    UACItemData* ItemData = LoadItemDataSync(ItemAssetId);
+    if (ItemData == nullptr)
+    {
+        UE_LOG(LogHG, Error, TEXT("ServerPurchaseAndEquipItem: Failed to load ItemData"));
+        return;
+    }
 
     if (PurchaseItem(ItemData))
     {
-        MulticastEquipItem(ItemData);
+        MulticastEquipItem(ItemAssetId);  // 여기도 AssetId 전달
     }
     else
     {
@@ -440,52 +493,98 @@ void UACShopComponent::ServerPurchaseAndEquipItem_Implementation(UACItemData* It
     }
 }
 
-void UACShopComponent::ServerPurchaseSpecialItem_Implementation(UACItemData* ItemData)
+void UACShopComponent::ServerPurchaseSpecialItem_Implementation(FPrimaryAssetId ItemAssetId)
 {
+	UACItemData* ItemData = LoadItemDataSync(ItemAssetId);
+	if (ItemData == nullptr)
+	{
+		UE_LOG(LogHG, Error, TEXT("ServerPurchaseSpecialItem: Failed to load ItemData"));
+		return;
+	}
+
+	AActor* Owner = GetOwner();
+	if (Owner == nullptr)
+	{
+		UE_LOG(LogHG, Error, TEXT("ServerPurchaseSpecialItem: Owner is null"));
+		return;
+	}
+	AACCharacter* Character = Cast<AACCharacter>(Owner);
+	if (Character == nullptr)
+	{
+		UE_LOG(LogHG, Error, TEXT("ServerPurchaseSpecialItem: Owner is not AACCharacter"));
+		return;
+	}
+
+	// 구매할 아이템이 무전기면 특수 처리
+	FString ItemNameStr = ItemData->ItemName.ToString();
+	if (ItemNameStr.Contains(TEXT("무전기")) || ItemNameStr.Contains(TEXT("WalkyTalky")))
+	{
+		if (Character->GetCharacterType() == EACCharacterType::Police)
+		{
+			UE_LOG(LogHG, Warning, TEXT("서버: 경찰은 무전기를 구매할 수 없습니다!"));
+			return;
+		}
+
+		AACMafiaCharacter* MafiaChar = Cast<AACMafiaCharacter>(Character);
+		if (MafiaChar != nullptr && MafiaChar->HasWalkyTalky())
+		{
+			UE_LOG(LogHG, Warning, TEXT("서버: 무전기는 이미 소지하고 있습니다!"));
+			return;
+		}
+
+		// 무전기 구매 성공 후 음성 그룹 마피아로 설정
+		Character->SetVoiceGroup(EVoiceGroup::Mafia);
+	}
+
+	if (PurchaseItem(ItemData) == false)
+	{
+		UE_LOG(LogHG, Warning, TEXT("특수 아이템 구매 실패: %s"), *ItemData->ItemName.ToString());
+		return;
+	}
+
+	ClientNotifySpecialItemPurchased(ItemAssetId);  // AssetId 전달
+}
+
+void UACShopComponent::ServerPurchaseAmmo_Implementation(FPrimaryAssetId ItemAssetId)
+{
+    UACItemData* ItemData = LoadItemDataSync(ItemAssetId);
     if (ItemData == nullptr)
     {
+        UE_LOG(LogHG, Error, TEXT("ServerPurchaseAmmo: Failed to load ItemData"));
         return;
     }
 
-    // ===== 수정: PurchaseItem 호출 **전에** 무전기 체크 =====
-    FString ItemNameStr = ItemData->ItemName.ToString();
-    if (ItemNameStr.Contains(TEXT("무전기")) || ItemNameStr.Contains(TEXT("WalkyTalky")))
+    if (ItemData->ItemType != EItemType::Ammo)
     {
-        AActor* Owner = GetOwner();
-        if (AACCharacter* Character = Cast<AACCharacter>(Owner))
-        {
-            // ===== 추가: 경찰 체크 - 경찰은 무전기 구매 불가 =====
-            if (Character->GetCharacterType() == EACCharacterType::Police)
-            {
-                UE_LOG(LogHG, Warning, TEXT("서버: 경찰은 무전기를 구매할 수 없습니다!"));
-                return;  // 구매 차단! (PurchaseItem 호출 안함)
-            }
-
-            // ===== 마피아 중복 체크 =====
-            AACMafiaCharacter* MafiaChar = Cast<AACMafiaCharacter>(Character);
-            if (MafiaChar != nullptr && MafiaChar->HasWalkyTalky())
-            {
-                UE_LOG(LogHG, Warning, TEXT("서버: 무전기는 이미 소지하고 있습니다!"));
-                return;  // 구매 차단! (PurchaseItem 호출 안함)
-            }
-        }
+        UE_LOG(LogHG, Warning, TEXT("ServerPurchaseAmmo: ItemData is not Ammo type"));
+        return;
     }
 
     // 서버에서 구매 처리
     if (PurchaseItem(ItemData) == false)
     {
-        UE_LOG(LogHG, Warning, TEXT("특수 아이템 구매 실패: %s"), *ItemData->ItemName.ToString());
+        UE_LOG(LogHG, Warning, TEXT("ServerPurchaseAmmo: Failed to purchase"));
         return;
     }
 
-    // 구매 성공 - 클라이언트에게 알림 (Client RPC)
-    ClientNotifySpecialItemPurchased(ItemData);
+    // 서버에서 총알 추가 (자동으로 클라이언트에 복제됨)
+    AACCharacter* Character = Cast<AACCharacter>(GetOwner());
+    if (Character == nullptr)
+    {
+        UE_LOG(LogHG, Error, TEXT("ServerPurchaseAmmo: Owner is not AACCharacter"));
+        return;
+    }
+
+    Character->AddBullets(ItemData->AmmoCount);
+    UE_LOG(LogHG, Log, TEXT("서버: 탄약 구매 성공! +%d발"), ItemData->AmmoCount);
 }
 
-void UACShopComponent::ClientNotifySpecialItemPurchased_Implementation(UACItemData* ItemData)
+void UACShopComponent::ClientNotifySpecialItemPurchased_Implementation(FPrimaryAssetId ItemAssetId)
 {
+    UACItemData* ItemData = LoadItemDataSync(ItemAssetId);
     if (ItemData == nullptr)
     {
+        UE_LOG(LogHG, Error, TEXT("ClientNotifySpecialItemPurchased: Failed to load ItemData"));
         return;
     }
 
@@ -494,7 +593,6 @@ void UACShopComponent::ClientNotifySpecialItemPurchased_Implementation(UACItemDa
     {
         FString ItemNameStr = ItemData->ItemName.ToString();
 
-        // 무전기 처리
         if (ItemNameStr.Contains(TEXT("무전기")) || ItemNameStr.Contains(TEXT("WalkyTalky")))
         {
             AACMafiaCharacter* MafiaChar = Cast<AACMafiaCharacter>(Character);
@@ -504,14 +602,12 @@ void UACShopComponent::ClientNotifySpecialItemPurchased_Implementation(UACItemDa
                 return;
             }
 
-            // ===== 안전장치: 여기서도 체크 (서버/클라 체크를 통과했다면 이미 없어야 함) =====
             if (MafiaChar->HasWalkyTalky())
             {
                 UE_LOG(LogHG, Error, TEXT("클라이언트: 무전기 중복 - 이 메시지가 나오면 안됨!"));
                 return;
             }
 
-            // 무전기 획득
             MafiaChar->SetWalkyTalky(true);
             UE_LOG(LogHG, Log, TEXT("무전기 획득!"));
         }

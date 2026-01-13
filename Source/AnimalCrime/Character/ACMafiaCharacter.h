@@ -35,11 +35,11 @@ protected:
 
 public:
 /**
-	@brief 클라이언트에서 폭탄 설치 가능 영역 표시 여부를 갱신함.
-	@param bVisible - true면 설치구역을 보여주고, false면 숨김
+	@brief 클라이언트에서 폭탄 설치 가능 영역 표시 여부를 갱신함. 버리기 UI도 표시
+	@param bVisible - true면 설치구역을 보여주고, false면 숨김. true면 버리기 UI 표시
 **/
 	UFUNCTION(Client, Reliable)
-	void ClientSetBombAreaVisible(bool bVisible);
+	void ClientSetBombHeld(bool bIsHolding);
 
 	UFUNCTION(Client, Reliable)
 	void ClientSetEscapeAreaVisible(bool bVisible);
@@ -80,6 +80,9 @@ public:
 	bool HasWalkyTalky() const { return bHasWalkyTalky; }
 	void SetWalkyTalky(bool bInHasWalkyTalky);
 
+public:
+	UFUNCTION()
+	void MoveToEscapeWaitingLocation();
 //protected:
 //	virtual float GetRequiredHoldTime() const override;
 

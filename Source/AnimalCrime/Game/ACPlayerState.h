@@ -21,6 +21,10 @@ public:
 	void EnterSpectatorState();
 
 public:
+	UFUNCTION()
+	void OnRep_EscapeState();
+
+public:
 	//!< 플레이어 역할
 	UPROPERTY(Replicated)
 	EPlayerRole PlayerRole = EPlayerRole::None;
@@ -28,4 +32,8 @@ public:
 	//!< 플레이어 위치 상태
 	UPROPERTY(Replicated)
 	ECharacterLocation CharacterLocation = ECharacterLocation::None;
+
+	//!< 탈출 임무 상태
+	UPROPERTY(ReplicatedUsing = OnRep_EscapeState)
+	EEscapeState EscapeState = EEscapeState::Contraband;
 };

@@ -125,7 +125,9 @@ void UACShopWidget::LoadAndCreateSlots(const FString& SearchPath)
     {
         if (ItemData == nullptr) continue;
 
-        if (ItemData->ItemType == EItemType::Weapon || ItemData->ItemType == EItemType::Special)
+        if (ItemData->ItemType == EItemType::Weapon ||
+            ItemData->ItemType == EItemType::Special ||
+            ItemData->ItemType == EItemType::Ammo)
         {
             WeaponItems.Add(ItemData);
         }

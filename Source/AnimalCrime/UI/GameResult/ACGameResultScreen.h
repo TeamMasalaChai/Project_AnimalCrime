@@ -18,6 +18,9 @@ public:
 	void SetGameResult(EGameEndType GameEndType);
 
 protected:
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<class UImage> RoleBackGround;
+
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UTextBlock> GameResultText;
 
@@ -28,6 +31,10 @@ protected:
 	TObjectPtr<class UHorizontalBox> WinnerBoxes;
 
 	//!< BP에서 설정
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Winner")
+	TObjectPtr<UTexture2D> MafiaWinTexture;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Winner")
+	TObjectPtr<UTexture2D> PoliceWinTexture;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Winner")
 	TSubclassOf<class UACGameResultWinnerBox> WinnerBoxClass;
 };

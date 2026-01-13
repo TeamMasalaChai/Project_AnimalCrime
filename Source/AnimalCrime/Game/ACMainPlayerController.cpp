@@ -18,6 +18,7 @@
 #include "UI/Interaction/ACInteractProgressWidget.h"
 #include "UI/GameStart/ACRoleScreen.h"
 #include "UI/GameResult/ACGameResultScreen.h"
+#include "UI/Spectator/ACSpectatorScreen.h"
 #include "ACPlayerState.h"
 #include "ACMainGameState.h"
 #include "ACMainGameMode.h"
@@ -36,10 +37,10 @@
 AACMainPlayerController::AACMainPlayerController()
 {
 	//탈출 스크린 로드
-	static ConstructorHelpers::FClassFinder<UUserWidget> EscapeScreenRef(TEXT("/Game/Project/UI/WBP_EscapeText.WBP_EscapeText_C"));
-	if (EscapeScreenRef.Succeeded())
+	static ConstructorHelpers::FClassFinder<UACSpectatorScreen> SpectatorScreenRef(TEXT("/Game/Project/UI/Spectator/WBP_SpectatorScreen.WBP_SpectatorScreen_C"));
+	if (SpectatorScreenRef.Succeeded())
 	{
-		EscapeScreenClass = EscapeScreenRef.Class;
+		SpectatorScreenClass = SpectatorScreenRef.Class;
 	}
 
 	// HUD Class 대입.
@@ -69,47 +70,6 @@ AACMainPlayerController::AACMainPlayerController()
 
 
 	// ===== 입력 관련 로드 =====
-	static ConstructorHelpers::FObjectFinder<UInputMappingContext> DefaultMappingContextRef(TEXT("/Game/Project/Input/IMC_Shoulder.IMC_Shoulder"));
-	if (DefaultMappingContextRef.Succeeded())
-	{
-		DefaultMappingContext = DefaultMappingContextRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> MoveActionRef(TEXT("/Game/Project/Input/Actions/IA_Move.IA_Move"));
-	if (MoveActionRef.Succeeded())
-	{
-		MoveAction = MoveActionRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> LookActionRef(TEXT("/Game/Project/Input/Actions/IA_Look.IA_Look"));
-	if (LookActionRef.Succeeded())
-	{
-		LookAction = LookActionRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> JumpActionRef(TEXT("/Game/Project/Input/Actions/IA_Jump.IA_Jump"));
-	if (JumpActionRef.Succeeded())
-	{
-		JumpAction = JumpActionRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> InteractActionRef(TEXT("/Game/Project/Input/Actions/IA_Interact.IA_Interact"));
-	if (InteractActionRef.Succeeded())
-	{
-		InteractAction = InteractActionRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> ItemDropActionRef(TEXT("/Game/Project/Input/Actions/IA_ItemDrop.IA_ItemDrop"));
-	if (ItemDropActionRef.Succeeded())
-	{
-		ItemDropAction = ItemDropActionRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> MeleeActionRef(TEXT("/Game/Project/Input/Actions/IA_Attack.IA_Attack"));
-	if (MeleeActionRef.Succeeded())
-	{
-		MeleeAction = MeleeActionRef.Object;
-	}
 
 	static ConstructorHelpers::FObjectFinder<UInputAction> DashActionRef(TEXT("/Game/Project/Input/Actions/IA_Dash.IA_Dash"));
 	if (DashActionRef.Succeeded())
@@ -117,36 +77,17 @@ AACMainPlayerController::AACMainPlayerController()
 		DashAction = DashActionRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction> SprintActionRef(TEXT("/Game/Project/Input/Actions/IA_Sprint.IA_Sprint"));
-	if (SprintActionRef.Succeeded())
-	{
-		SprintAction = SprintActionRef.Object;
-	}
-	
 	static ConstructorHelpers::FObjectFinder<UInputAction> EscapeActionRef(TEXT("/Game/Project/Input/Actions/IA_Escape.IA_Escape"));
 	if (EscapeActionRef.Succeeded())
 	{
 		EscapeAction = EscapeActionRef.Object;
 	}
-	
+
 	// ===== 퀵슬롯 Input Action 로드 (하나만) =====
 	static ConstructorHelpers::FObjectFinder<UInputAction> QuickSlotActionRef(TEXT("/Game/Project/Input/Actions/IA_QuickSlot.IA_QuickSlot"));
 	if (QuickSlotActionRef.Succeeded())
 	{
 		QuickSlotAction = QuickSlotActionRef.Object;
-	}
-
-	// ===== 설정창 입력 로드 =====
-	static ConstructorHelpers::FObjectFinder<UInputMappingContext> SettingsMappingContextRef(TEXT("/Game/Project/Input/IMC_Settings.IMC_Settings"));
-	if (SettingsMappingContextRef.Succeeded())
-	{
-		SettingsMappingContext = SettingsMappingContextRef.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UInputAction> SettingsCloseActionRef(TEXT("/Game/Project/Input/Actions/IA_SettingsClose.IA_SettingsClose"));
-	if (SettingsCloseActionRef.Succeeded())
-	{
-		SettingsCloseAction = SettingsCloseActionRef.Object;
 	}
 
 	// ===== 관전자 입력 로드 =====
@@ -168,6 +109,18 @@ AACMainPlayerController::AACMainPlayerController()
 	if (ZoomActionRef.Succeeded())
 	{
 		ZoomAction = ZoomActionRef.Object;
+	}
+	
+	// ===== 게임 시간 ====
+	static ConstructorHelpers::FObjectFinder<UInputAction> TimerUpActionRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Project/Input/Actions/IA_TimeUp.IA_TimeUp'"));
+	if (TimerUpActionRef.Succeeded())
+	{
+		TimerUpAction = TimerUpActionRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> TimerDownActionRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Project/Input/Actions/IA_TimeDown.IA_TimeDown'"));
+	if (TimerDownActionRef.Succeeded())
+	{
+		TimerDownAction = TimerDownActionRef.Object;
 	}
 
 	// ===== 핸드폰 관련 로드 =====
@@ -237,6 +190,7 @@ void AACMainPlayerController::BeginPlay()
 	//}
 
 	ZoomOut();
+	ACHUDWidget->HideSprintUI();
 	ACHUDWidget->WBP_Ammo->UpdateAmmo(0);
 
 	// 서버(리슨 서버 호스트)인 경우에만 여기서 RoleScreen 표시
@@ -245,7 +199,7 @@ void AACMainPlayerController::BeginPlay()
 		ScreenSetRole();
 	}
 	AC_LOG(LogHY, Warning, TEXT("End"));
-	
+
 	bReplicates = true;
 }
 
@@ -257,8 +211,34 @@ void AACMainPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AACMainPlayerController::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
+
 	DOREPLIFETIME(AACMainPlayerController, bZoomFlag);
+}
+
+void AACMainPlayerController::TimeUp()
+{
+	AC_LOG(LogHY, Error, TEXT("TimeUp !!!"));
+	AACMainGameMode* GameMode = GetWorld()->GetAuthGameMode<AACMainGameMode>();
+	if (GameMode == nullptr)
+	{
+		return;
+	}
+
+	AC_LOG(LogHY, Error, TEXT("TimeUp"));
+	GameMode->GetGameRuleManager()->RemainTimeUp(60);
+}
+
+void AACMainPlayerController::TimeDown()
+{
+	AC_LOG(LogHY, Error, TEXT("TimeDown !!!"));
+	AACMainGameMode* GameMode = GetWorld()->GetAuthGameMode<AACMainGameMode>();
+	if (GameMode == nullptr)
+	{
+		return;
+	}
+
+	AC_LOG(LogHY, Error, TEXT("TimeDown"));
+	GameMode->GetGameRuleManager()->RemainTimeDown(60);
 }
 
 void AACMainPlayerController::SetupInputComponent()
@@ -273,62 +253,19 @@ void AACMainPlayerController::SetupInputComponent()
 		return;
 	}
 
-	// Enhanced Input Subsystem에 기본 매핑 컨텍스트 추가
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-	{
-		if (DefaultMappingContext)
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		}
-	}
-
 	// 입력 액션 바인딩
-	if (MoveAction)
-	{
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AACMainPlayerController::HandleMove);
-	}
-	if (LookAction)
-	{
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AACMainPlayerController::HandleLook);
-	}
-	if (JumpAction)
-	{
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleJump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AACMainPlayerController::HandleStopJumping);
-	}
-	if (InteractAction)
-	{
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleInteractStart);
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AACMainPlayerController::HandleInteractHold);
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AACMainPlayerController::HandleInteractRelease);
-	}
-	if (ItemDropAction)
-	{
-		EnhancedInputComponent->BindAction(ItemDropAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleItemDrop);
-	}
-	if (MeleeAction)
-	{
-		EnhancedInputComponent->BindAction(MeleeAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleAttack);
-	}
 
 	// 캐릭터 스킬 - Dash
 	if (DashAction)
 	{
 		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleDash);
 	}
-	// 캐릭터 스킬 - Sprint
-	if (SprintAction)
-	{
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleSprintStart);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AACMainPlayerController::HandleSprintEnd);
-		// EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Canceled, this, &AACMainPlayerController::HandleSprintEnd);
-	}
 	// 캐릭터 스킬 - Escape
 	if (EscapeAction)
 	{
 		EnhancedInputComponent->BindAction(EscapeAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleEscape);
 	}
-	
+
 	if (SettingsCloseAction)
 	{
 		EnhancedInputComponent->BindAction(SettingsCloseAction, ETriggerEvent::Started, this, &AACMainPlayerController::HandleSettingsClose);
@@ -349,6 +286,16 @@ void AACMainPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(ZoomAction, ETriggerEvent::Started, this, &AACMainPlayerController::ZoomIn);
 		EnhancedInputComponent->BindAction(ZoomAction, ETriggerEvent::Completed, this, &AACMainPlayerController::ZoomOut);
 	}
+	
+	if (TimerUpAction)
+	{
+		EnhancedInputComponent->BindAction(TimerUpAction, ETriggerEvent::Started, this, &AACMainPlayerController::TimeUp);
+	}
+	
+	if (TimerDownAction)
+	{
+		EnhancedInputComponent->BindAction(TimerDownAction, ETriggerEvent::Started, this, &AACMainPlayerController::TimeDown);
+	}
 
 	if (PhoneAction)
 	{
@@ -366,101 +313,6 @@ void AACMainPlayerController::OnRep_PlayerState()
 }
 
 // ===== 입력 핸들러 구현 =====
-void AACMainPlayerController::HandleMove(const FInputActionValue& Value)
-{
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
-	{
-		return;
-	}
-
-	ControlledCharacter->Move(Value);
-}
-
-void AACMainPlayerController::HandleLook(const FInputActionValue& Value)
-{
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
-	{
-		return;
-	}
-
-	ControlledCharacter->Look(Value);
-}
-
-void AACMainPlayerController::HandleJump(const FInputActionValue& Value)
-{
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
-	{
-		return;
-	}
-
-	ControlledCharacter->Jump();
-}
-
-void AACMainPlayerController::HandleStopJumping(const FInputActionValue& Value)
-{
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
-	{
-		return;
-	}
-
-	ControlledCharacter->StopJumping();
-}
-
-void AACMainPlayerController::HandleInteractStart(const FInputActionValue& Value)
-{
-	// 1. float 값 추출 (E=1.0, R=2.0, T=3.0)
-	float InputFloat = Value.Get<float>();
-	//UE_LOG(LogSW, Log, TEXT("Interact [%f] Key Input!!"), InputFloat);
-
-	// 2. 정수 변환
-	int32 InputIndex = FMath::RoundToInt(InputFloat);
-	//UE_LOG(LogSW, Log, TEXT("Interact [%d] Key Input!!"), InputIndex);
-
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
-		return;
-
-	// 3. 인덱스 전달
-	ControlledCharacter->InteractStarted(InputIndex - 1);
-
-}
-
-void AACMainPlayerController::HandleInteractHold(const FInputActionValue& Value)
-{
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
-	{
-		return;
-	}
-
-	ControlledCharacter->InteractHolding(GetWorld()->GetDeltaSeconds());
-}
-
-void AACMainPlayerController::HandleInteractRelease(const FInputActionValue& Value)
-{
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
-	{
-		return;
-	}
-
-	ControlledCharacter->InteractReleased();
-}
-
-void AACMainPlayerController::HandleItemDrop(const FInputActionValue& Value)
-{
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
-	{
-		return;
-	}
-
-	ControlledCharacter->ItemDrop();
-}
 
 void AACMainPlayerController::HandleAttack(const FInputActionValue& Value)
 {
@@ -479,17 +331,6 @@ void AACMainPlayerController::HandleAttack(const FInputActionValue& Value)
 		AC_LOG(LogHY, Error, TEXT("빵야빵야"));
 		ControlledCharacter->FireHitscan();
 	}
-}
-
-void AACMainPlayerController::HandleSettingsClose(const FInputActionValue& Value)
-{
-	AACCharacter* ControlledCharacter = GetPawn<AACCharacter>();
-	if (ControlledCharacter == nullptr)
-	{
-		return;
-	}
-
-	ControlledCharacter->SettingsClose();
 }
 
 void AACMainPlayerController::HandleSpectatorChange(const FInputActionValue& Value)
@@ -527,38 +368,6 @@ void AACMainPlayerController::HandleDash(const FInputActionValue& Value)
 	CharacterPawn->Dash(Value);
 }
 
-void AACMainPlayerController::HandleSprintStart(const struct FInputActionValue& Value)
-{
-	if (CanUseSkill() == false)
-	{
-		AC_LOG(LogHY, Error, TEXT("CanUseSkill is false"));
-		return;
-	}
-
-	AACCharacter* CharacterPawn = GetPawn<AACCharacter>();
-	if (CharacterPawn == nullptr)
-	{
-		AC_LOG(LogHY, Error, TEXT("ControlledCharacter is nullptr"));
-		return;
-	}
-
-	// Player에게 Sprint 요청
-	AC_LOG(LogHY, Error, TEXT("PlayerController-Press Sprint Key"));
-	CharacterPawn->Sprint(Value);
-}
-
-void AACMainPlayerController::HandleSprintEnd(const struct FInputActionValue& Value)
-{
-	AACCharacter* CharacterPawn = GetPawn<AACCharacter>();
-	if (CharacterPawn == nullptr)
-	{
-		AC_LOG(LogHY, Error, TEXT("ControlledCharacter is nullptr"));
-		return;
-	}
-	AC_LOG(LogHY, Error, TEXT("PlayerController-Release Sprint Key"));
-	CharacterPawn->Sprint(Value);
-}
-
 void AACMainPlayerController::HandleEscape(const FInputActionValue& Value)
 {
 	bool InputFlag = Value.Get<bool>();
@@ -567,14 +376,14 @@ void AACMainPlayerController::HandleEscape(const FInputActionValue& Value)
 		AC_LOG(LogHY, Error, TEXT("InputFlag is false"));
 		return;
 	}
-	
+
 	if (CanUseEscapeSkill() == false)
 	{
 		AC_LOG(LogHY, Error, TEXT("CanUseEscapeSkill is false"));
 		return;
 	}
-	
-	
+
+
 	AACMafiaCharacter* MafiaPawn = GetPawn<AACMafiaCharacter>();
 	if (MafiaPawn == nullptr)
 	{
@@ -646,30 +455,6 @@ void AACMainPlayerController::HandlePhone(const FInputActionValue& Value)
 	}
 }
 
-bool AACMainPlayerController::CanUseSkill() const
-{
-	AACCharacter* CharacterPawn = GetPawn<AACCharacter>();
-	if (CharacterPawn == nullptr)
-	{
-		AC_LOG(LogHY, Error, TEXT("CharacterPawn is nullptr"));
-		return false;
-	}
-
-	ECharacterState CharacterState = CharacterPawn->GetCharacterState();
-	// 캐릭터의 상태가 None, Stun, Prison 상태일 경우 불가
-	if (CharacterState == ECharacterState::None ||
-		CharacterState == ECharacterState::Interact ||
-		CharacterState == ECharacterState::OnInteract ||
-		CharacterState == ECharacterState::Stun ||
-		CharacterState == ECharacterState::Prison)
-	{
-		AC_LOG(LogHY, Error, TEXT("CharacterState is %s"), *UEnum::GetValueAsString(CharacterState));
-		return false;
-	}
-
-	return true;
-}
-
 bool AACMainPlayerController::CanUseEscapeSkill() const
 {
 	AACMafiaCharacter* MafiaPawn = GetPawn<AACMafiaCharacter>();
@@ -678,7 +463,7 @@ bool AACMainPlayerController::CanUseEscapeSkill() const
 		AC_LOG(LogHY, Error, TEXT("CharacterPawn is nullptr"));
 		return false;
 	}
-	
+
 	ECharacterState CharacterState = MafiaPawn->GetCharacterState();
 	// 캐릭터의 상태가 None, Stun, Prison 상태일 경우 불가
 	if (CharacterState != ECharacterState::OnInteract)
@@ -725,13 +510,12 @@ void AACMainPlayerController::ChangeInputMode(EInputMode NewMode)
 
 void AACMainPlayerController::ClientOnEscapeSuccess_Implementation()
 {
-	//UI 변경
-	EscapeScreen = CreateWidget<UUserWidget>(this, EscapeScreenClass);
-	if (EscapeScreen == nullptr)
+	if (ACHUDWidget == nullptr)
 	{
 		return;
 	}
-	EscapeScreen->AddToViewport();
+	ACHUDWidget->RemoveFromParent();
+	ShowNotification(FText::FromString(TEXT("탈출")));
 
 	// IMC 변경
 	ChangeInputMode(EInputMode::Spectator);
@@ -999,21 +783,21 @@ void AACMainPlayerController::ZoomIn()
 		AC_LOG(LogHY, Log, TEXT("CharacterPawn is nullptr"));
 		return;
 	}
-	
+
 	if (CharacterPawn->IsHoldingGun() == false)
 	{
 		AC_LOG(LogHY, Log, TEXT("No Gun In Hand"));
 		return;
 	}
-	
+
 	if (CharacterPawn->CanZoomIn() == false)
 	{
-	AC_LOG(LogHY, Log, TEXT("줌이 안된데"));
-	return;
+		AC_LOG(LogHY, Log, TEXT("줌이 안된데"));
+		return;
 	}
 	Server_Zoom(true);
 	AC_LOG(LogHY, Error, TEXT("ZoomIn %d"), bZoomFlag);
-	
+
 	UCameraComponent* FollowCamera = CharacterPawn->GetFollowCamera();
 	if (FollowCamera == nullptr)
 	{
@@ -1055,9 +839,9 @@ void AACMainPlayerController::ZoomIn()
 				StaticMeshComp->SetHiddenInGame(true);
 			}
 		}
-		
+
 	}
-	
+
 	ACHUDWidget->ZoomInState();
 }
 
@@ -1071,21 +855,21 @@ void AACMainPlayerController::ZoomOut()
 		AC_LOG(LogHY, Log, TEXT("CharacterPawn is nullptr"));
 		return;
 	}
-	
+
 	UCameraComponent* FollowCamera = CharacterPawn->GetFollowCamera();
 	if (FollowCamera == nullptr)
 	{
 		AC_LOG(LogHY, Log, TEXT("FollowCamera is nullptr"));
 		return;
 	}
-	
+
 	UCameraComponent* GunCamera = CharacterPawn->GetGunCamera();
 	if (GunCamera == nullptr)
 	{
 		AC_LOG(LogHY, Log, TEXT("GunCamera is nullptr"));
 		return;
 	}
-	
+
 	Server_Zoom(false);
 
 	FollowCamera->Activate();
@@ -1101,7 +885,7 @@ void AACMainPlayerController::ZoomOut()
 		CharacterPawn->GetFaceAccMesh()->SetHiddenInGame(false);
 		CharacterPawn->GetShoesMesh()->SetHiddenInGame(false);
 		Mesh->SetHiddenInGame(false);
-		
+
 		TArray<USceneComponent*> Childrens;
 		Mesh->GetChildrenComponents(true, Childrens);
 
@@ -1117,7 +901,7 @@ void AACMainPlayerController::ZoomOut()
 			}
 		}
 	}
-	
+
 	ACHUDWidget->ZoomOutState();
 }
 
@@ -1135,7 +919,7 @@ void AACMainPlayerController::OnRep_Zoom()
 		AC_LOG(LogHY, Log, TEXT("CharacterPawn is nullptr"));
 		return;
 	}
-	
+
 	// Zoom In 상태
 	if (bZoomFlag == true)
 	{
@@ -1226,6 +1010,15 @@ void AACMainPlayerController::ServerSwitchToNextSpectateTarget_Implementation()
 		{
 			// ViewTarget 설정
 			SetViewTargetWithBlend(NextPawn, 0.0f);
+
+			// 클라이언트에 UI 업데이트 알림
+			AACPlayerState* TargetPS = NextPawn->GetPlayerState<AACPlayerState>();
+			if (TargetPS == nullptr)
+			{
+				return;
+			}
+			ClientOnSpectateTargetChanged(TargetPS);
+
 			return;
 		}
 
@@ -1253,7 +1046,7 @@ void AACMainPlayerController::ServerStartSpectateOtherPlayer_Implementation()
 	MyPawn->SetActorEnableCollision(false);
 
 	//관전 대상 선택
-	ServerSwitchToNextSpectateTarget();
+	//ServerSwitchToNextSpectateTarget();
 
 	//게임종료 조건 체크
 	AACMainGameMode* GM = GetWorld()->GetAuthGameMode<AACMainGameMode>();
@@ -1380,6 +1173,23 @@ void AACMainPlayerController::ClosePhone()
 void AACMainPlayerController::UpdateAmmoUI(int32 Ammo)
 {
 	ACHUDWidget->HandleAmmoChanged(Ammo);
+}
+
+void AACMainPlayerController::ClientOnSpectateTargetChanged_Implementation(AACPlayerState* NewTargetPS)
+{
+	//만약 SpectatorScreen 이 없다면 생성
+	if (SpectatorScreen == nullptr)
+	{
+		SpectatorScreen = CreateWidget<UACSpectatorScreen>(this, SpectatorScreenClass);
+		if (SpectatorScreen == nullptr)
+		{
+			return;
+		}
+		SpectatorScreen->AddToViewport();
+		SpectatorScreen->BindGameState();
+	}
+	//UI 수정
+	SpectatorScreen->SetFriend(NewTargetPS);
 }
 
 void AACMainPlayerController::ShowNotification(const FText& Text)

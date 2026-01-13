@@ -10,6 +10,7 @@
 #include "ACMainPlayerController.h"
 #include "EscapeQuest/ACEscapeArea.h"
 #include "Game/ACMainPlayerController.h"
+#include "UI/ACHUDWidget.h"
 #include "AnimalCrime.h"
 
 #pragma region 생성자
@@ -38,7 +39,7 @@ void AACMainGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AACMainGameState, TeamScore);
-	DOREPLIFETIME(AACMainGameState, EscapeState);
+	DOREPLIFETIME(AACMainGameState, EscapedCount);
 	DOREPLIFETIME(AACMainGameState, SpectatablePawns);
 }
 
@@ -155,6 +156,15 @@ AActor* AACMainGameState::GetDestinationActor() const
 	int32 RandIndex = FMath::RandRange(0, DestinationObjects.Num() - 1);
 	return DestinationObjects[RandIndex];
 }
+void AACMainGameState::OnRep_EscapedCount()
+{
+	OnEscapeCountChanged.Broadcast(EscapedCount);
+}
+void AACMainGameState::AddEscapedCount()
+{
+	++EscapedCount;
+	OnRep_EscapedCount();
+}
 #pragma endregion
 
 void AACMainGameState::Multicast_GlobalShowNotification_Implementation(const FText& Message, EPlayerRole TargetRole)
@@ -224,28 +234,32 @@ TArray<class AACPlayerState*> AACMainGameState::GetPlayersByRoleAndLocation(EPla
 
 void AACMainGameState::ServerChangeEscapeState_Implementation(EEscapeState NewEscapeState)
 {
-	EscapeState = NewEscapeState;
-
-	switch (EscapeState)
+	// 마피아 플레이어들의 EscapeState 변경 (OnRep으로 클라이언트 UI 자동 업데이트)
+	for (AACMafiaCharacter* Mafia : MafiaPlayers)
 	{
-	case EEscapeState::GameStart:
-		break;
-	case EEscapeState::DeliverBomb:
-		break;
-	case EEscapeState::Escape:
-
-		//마피아들의 폭탄설치가능구역 Visible 끄기
-		for (AACMafiaCharacter* Mafia : MafiaPlayers)
+		if (Mafia == nullptr)
 		{
-			if (Mafia == nullptr)
-			{
-				continue;
-			}
-			Mafia->ClientSetBombAreaVisible(false);
-			Mafia->ClientSetEscapeAreaVisible(true);
+			continue;
 		}
 
-		//서버에서만 콜리전 충돌 true로 설정
+		AACPlayerState* PS = Mafia->GetPlayerState<AACPlayerState>();
+		if (PS != nullptr)
+		{
+			PS->EscapeState = NewEscapeState;
+			PS->OnRep_EscapeState();
+		}
+
+		// Escape 상태일 때 추가 처리
+		if (NewEscapeState == EEscapeState::Escape)
+		{
+			Mafia->ClientSetBombHeld(false);
+			Mafia->ClientSetEscapeAreaVisible(true);
+		}
+	}
+
+	// Escape 상태일 때 서버에서만 콜리전 충돌 true로 설정
+	if (NewEscapeState == EEscapeState::Escape)
+	{
 		for (AACEscapeArea* Area : EscapeAreas)
 		{
 			if (Area == nullptr)
@@ -254,9 +268,5 @@ void AACMainGameState::ServerChangeEscapeState_Implementation(EEscapeState NewEs
 			}
 			Area->SetActorEnableCollision(true);
 		}
-
-		break;
-	default:
-		break;
 	}
 }

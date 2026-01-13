@@ -10,6 +10,9 @@
 #include "Game/ACGameRuleManager.h"
 #include "Game/ACMainGameMode.h"
 #include "Item/ACItemData.h"
+#include "Character/ACCharacter.h"  
+#include "Components/PrimitiveComponent.h"
+#include "Components/PostProcessComponent.h"
 
 
 AACDestroyableObject::AACDestroyableObject()
@@ -26,6 +29,17 @@ void AACDestroyableObject::BeginPlay()
 {
 	AC_LOG(LogHY, Log, TEXT("Begin"));
 	Super::BeginPlay();
+
+	// CustomDepth 활성화 타이머
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(
+		TimerHandle,
+		this,
+		&AACDestroyableObject::EnableCustomDepthForMafia,
+		0.5f,
+		false
+	);
+
 	AC_LOG(LogHY, Log, TEXT("End"));
 }
 
@@ -119,3 +133,52 @@ void AACDestroyableObject::HandleDestroyed(AController* InstigatorController)
 	ACGameMode->UpdateGameScoreFromMafia(EMafiaAction::DestroyObject, EarnScore);
 }
 
+void AACDestroyableObject::EnableCustomDepthForMafia()
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC == nullptr)
+	{
+		UE_LOG(LogHG, Error, TEXT("PC is nullptr"));
+		return;
+	}
+
+	AACCharacter* LocalChar = Cast<AACCharacter>(PC->GetPawn());
+	if (LocalChar == nullptr)
+	{
+		UE_LOG(LogHG, Error, TEXT("LocalChar is nullptr"));
+		return;
+	}
+
+	// 마피아만 Custom Depth 활성화
+	if (LocalChar->GetCharacterType() == EACCharacterType::Mafia)
+	{
+		UE_LOG(LogHG, Warning, TEXT("DestroyableObject (%s): Enabling CustomDepth with Stencil=1"), *GetName());
+
+		// 모든 Mesh Component에 Custom Depth 활성화
+		TArray<UMeshComponent*> MeshComponents;
+		GetComponents<UMeshComponent>(MeshComponents);
+
+		for (UMeshComponent* MeshComp : MeshComponents)
+		{
+			if (MeshComp != nullptr)
+			{
+				//MeshComp->SetRenderCustomDepth(true);
+				//MeshComp->SetCustomDepthStencilValue(1);  // Stencil = 1 (DestroyableObject용)
+
+				// CustomDepth 렌더링 강제 활성화
+				MeshComp->SetRenderCustomDepth(true);
+				MeshComp->SetCustomDepthStencilValue(1);
+
+				// CustomDepth가 depth buffer에 제대로 쓰이도록 설정
+				MeshComp->bRenderCustomDepth = true;
+
+				// Mesh가 depth에 제대로 렌더링되도록 설정
+				MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogHG, Warning, TEXT("DestroyableObject (%s): Not Mafia, skipping CustomDepth"), *GetName());
+	}
+}

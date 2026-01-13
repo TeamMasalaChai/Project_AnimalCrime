@@ -1,6 +1,8 @@
-﻿
+
 #include "ACPlayerState.h"
 #include "ACMainGameState.h"
+#include "ACMainPlayerController.h"
+#include "UI/ACHUDWidget.h"
 #include "Net/UnrealNetwork.h"
 #include "AnimalCrime.h"
 
@@ -10,6 +12,18 @@ void AACPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 	DOREPLIFETIME(AACPlayerState, PlayerRole);
 	DOREPLIFETIME(AACPlayerState, CharacterLocation);
+	DOREPLIFETIME(AACPlayerState, EscapeState);
+}
+
+void AACPlayerState::OnRep_EscapeState()
+{
+	AACMainPlayerController* PC = GetOwner<AACMainPlayerController>();
+	if (PC == nullptr || PC->ACHUDWidget == nullptr)
+	{
+		return;
+	}
+
+	PC->ACHUDWidget->UpdateQuestTracker(EscapeState);
 }
 
 void AACPlayerState::EnterSpectatorState()
