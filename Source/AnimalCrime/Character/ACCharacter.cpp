@@ -43,7 +43,7 @@
 #include "Game/ACPlayerState.h"
 #include "Game/ACAdvancedFriendsGameInstance.h"
 #include "Skill/ACSkillData.h"
-
+#include "Voice/ACVOIPTalker.h"
 #include "Sound/SoundBase.h"
 #include "UI/ACHUDWidget.h"
 #include "Materials/MaterialInterface.h"
@@ -257,7 +257,7 @@ AACCharacter::AACCharacter()
 	
 
 	// VOIPTalker 생성
-	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
+	VOIPTalker = CreateDefaultSubobject<UACVOIPTalker>(TEXT("VOIPTalker"));
 
 	static ConstructorHelpers::FObjectFinder<USoundAttenuation> AttenuationRef(TEXT("/Game/Project/Sound/SA_VOIP.SA_VOIP"));
 	if (AttenuationRef.Succeeded())
