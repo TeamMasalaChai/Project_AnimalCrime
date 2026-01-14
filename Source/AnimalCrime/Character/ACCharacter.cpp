@@ -1937,6 +1937,7 @@ void AACCharacter::ServerFreezeCharacter_Implementation(AActor* Target)
 	AC_LOG(LogSW, Error, TEXT("2222222"));
 	//bOnInteract = true;
 	SetCharacterState(ECharacterState::Interact);
+	GetCharacterMovement()->StopMovementImmediately();
 
 	if (Target == nullptr)
 	{
@@ -1981,6 +1982,7 @@ void AACCharacter::ServerFreezeCharacter_Implementation(AActor* Target)
 		}
 
 		ACChar->SetCharacterState(ECharacterState::OnInteract);
+		ACChar->GetCharacterMovement()->StopMovementImmediately();
 		AC_LOG(LogSW, Error, TEXT("44444444"));
 	}
 }

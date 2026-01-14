@@ -23,6 +23,8 @@
 #include "UI/ACHUDWidget.h"
 
 #include "EscapeQuest/ACDestructibleBuilding.h"
+#include "Component/ACInteractableComponent.h"
+
 AACMafiaCharacter::AACMafiaCharacter()
 {
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("MafiaCollision"));
@@ -30,6 +32,8 @@ AACMafiaCharacter::AACMafiaCharacter()
 	Stat = CreateDefaultSubobject<UACDestroyableStatComponent>(TEXT("StatComponent"));
 
 	VoiceGroup = EVoiceGroup::None;
+
+	InteractBoxComponent->SetMargin(FVector(100.f));
 }
 
 void AACMafiaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
