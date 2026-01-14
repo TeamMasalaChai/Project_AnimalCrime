@@ -191,39 +191,57 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh", meta = (AllowPrivateAccess = true))
 	TObjectPtr<class USkeletalMeshComponent> FaceAccMesh;
 
-	UPROPERTY(ReplicatedUsing = OnRep_HeadMesh)
-	TObjectPtr<class USkeletalMesh> HeadMeshReal;
+	// UPROPERTY(ReplicatedUsing = OnRep_HeadMesh)
+	// TObjectPtr<class USkeletalMesh> HeadMeshReal;
+	//
+	// UPROPERTY(ReplicatedUsing = OnRep_FaceMesh)
+	// TObjectPtr<class USkeletalMesh> FaceMeshReal;
+	//
+	// UPROPERTY(ReplicatedUsing = OnRep_TopMesh)
+	// TObjectPtr<class USkeletalMesh> TopMeshReal;
+	//
+	// UPROPERTY(ReplicatedUsing = OnRep_BottomMesh)
+	// TObjectPtr<class USkeletalMesh> BottomMeshReal;
+	//
+	// UPROPERTY(ReplicatedUsing = OnRep_ShoesMesh)
+	// TObjectPtr<class USkeletalMesh> ShoesMeshReal;
+	//
+	// UPROPERTY(ReplicatedUsing = OnRep_FaceAccMesh)
+	// TObjectPtr<class USkeletalMesh> FaceAccMeshReal;
+	
+	UPROPERTY(ReplicatedUsing=OnRep_HeadMesh)
+	TSoftObjectPtr<class USkeletalMesh> HeadMeshReal;
 
-	UPROPERTY(ReplicatedUsing = OnRep_FaceMesh)
-	TObjectPtr<class USkeletalMesh> FaceMeshReal;
+	UPROPERTY(ReplicatedUsing=OnRep_FaceMesh)
+	TSoftObjectPtr<class USkeletalMesh> FaceMeshReal;
 
-	UPROPERTY(ReplicatedUsing = OnRep_TopMesh)
-	TObjectPtr<class USkeletalMesh> TopMeshReal;
+	UPROPERTY(ReplicatedUsing=OnRep_TopMesh)
+	TSoftObjectPtr<class USkeletalMesh> TopMeshReal;
 
-	UPROPERTY(ReplicatedUsing = OnRep_BottomMesh)
-	TObjectPtr<class USkeletalMesh> BottomMeshReal;
+	UPROPERTY(ReplicatedUsing=OnRep_BottomMesh)
+	TSoftObjectPtr<class USkeletalMesh> BottomMeshReal;
 
-	UPROPERTY(ReplicatedUsing = OnRep_ShoesMesh)
-	TObjectPtr<class USkeletalMesh> ShoesMeshReal;
+	UPROPERTY(ReplicatedUsing=OnRep_ShoesMesh)
+	TSoftObjectPtr<class USkeletalMesh> ShoesMeshReal;
 
-	UPROPERTY(ReplicatedUsing = OnRep_FaceAccMesh)
-	TObjectPtr<class USkeletalMesh> FaceAccMeshReal;
+	UPROPERTY(ReplicatedUsing=OnRep_FaceAccMesh)
+	TSoftObjectPtr<class USkeletalMesh> FaceAccMeshReal;
 
 #pragma region 매시 Get/Set
 public:
-	FORCEINLINE USkeletalMesh* GetHeadMeshT()		const { return HeadMeshReal; }
-	FORCEINLINE USkeletalMesh* GetFaceMeshT()		const { return FaceMeshReal; }
-	FORCEINLINE USkeletalMesh* GetTopMeshT()			const { return TopMeshReal; }
-	FORCEINLINE USkeletalMesh* GetBottomMeshT()		const { return BottomMeshReal; }
-	FORCEINLINE USkeletalMesh* GetShoesMeshT()		const { return ShoesMeshReal; }
-	FORCEINLINE USkeletalMesh* GetFaceAccMeshT()		const { return FaceAccMeshReal; }
+	FORCEINLINE USkeletalMesh* GetHeadMeshT()		const { return HeadMeshReal.Get(); }
+	FORCEINLINE USkeletalMesh* GetFaceMeshT()		const { return FaceMeshReal.Get(); }
+	FORCEINLINE USkeletalMesh* GetTopMeshT()			const { return TopMeshReal.Get(); }
+	FORCEINLINE USkeletalMesh* GetBottomMeshT()		const { return BottomMeshReal.Get(); }
+	FORCEINLINE USkeletalMesh* GetShoesMeshT()		const { return ShoesMeshReal.Get(); }
+	FORCEINLINE USkeletalMesh* GetFaceAccMeshT()		const { return FaceAccMeshReal.Get(); }
 
-	FORCEINLINE void UpdateHeadMesh()		const { HeadMesh->SetSkeletalMesh(HeadMeshReal); }
-	FORCEINLINE void UpdateFaceMesh()		const { FaceMesh->SetSkeletalMesh(FaceMeshReal); }
-	FORCEINLINE void UpdateTopMesh()		const { TopMesh->SetSkeletalMesh(TopMeshReal); }
-	FORCEINLINE void UpdateBottomMesh()		const { BottomMesh->SetSkeletalMesh(BottomMeshReal); }
-	FORCEINLINE void UpdateShoesMesh()		const { ShoesMesh->SetSkeletalMesh(ShoesMeshReal); }
-	FORCEINLINE void UpdateFaceAccMesh()	const { FaceAccMesh->SetSkeletalMesh(FaceAccMeshReal); }
+	FORCEINLINE void UpdateHeadMesh()		const { HeadMesh->SetSkeletalMesh(HeadMeshReal.Get()); }
+	FORCEINLINE void UpdateFaceMesh()		const { FaceMesh->SetSkeletalMesh(FaceMeshReal.Get()); }
+	FORCEINLINE void UpdateTopMesh()		const { TopMesh->SetSkeletalMesh(TopMeshReal.Get()); }
+	FORCEINLINE void UpdateBottomMesh()		const { BottomMesh->SetSkeletalMesh(BottomMeshReal.Get()); }
+	FORCEINLINE void UpdateShoesMesh()		const { ShoesMesh->SetSkeletalMesh(ShoesMeshReal.Get()); }
+	FORCEINLINE void UpdateFaceAccMesh()	const { FaceAccMesh->SetSkeletalMesh(FaceAccMeshReal.Get()); }
 
 	FORCEINLINE void SetHeadMesh(USkeletalMesh* InMesh) { HeadMeshReal = InMesh; }
 	FORCEINLINE void SetFaceMesh(USkeletalMesh* InMesh) { FaceMeshReal = InMesh; }
@@ -234,22 +252,30 @@ public:
 #pragma endregion
 public:
 	UFUNCTION()
-	void OnRep_HeadMesh() const;
+	void OnRep_HeadMesh();
 
 	UFUNCTION()
-	void OnRep_FaceMesh() const;
+	void OnRep_FaceMesh();
 
 	UFUNCTION()
-	void OnRep_TopMesh() const;
+	void OnRep_TopMesh();
 
 	UFUNCTION()
-	void OnRep_BottomMesh() const;
+	void OnRep_BottomMesh();
 
 	UFUNCTION()
-	void OnRep_ShoesMesh() const;
+	void OnRep_ShoesMesh();
 
 	UFUNCTION()
-	void OnRep_FaceAccMesh() const;
+	void OnRep_FaceAccMesh();
+	
+	
+	void ApplyHeadMesh();
+	void ApplyFaceMesh();
+	void ApplyTopMesh();
+	void ApplyBottomMesh();
+	void ApplyShoesMesh();
+	void ApplyFaceAccMesh();
 
 public:
 	UCameraComponent* GetFollowCamera() const { return FollowCamera; }
