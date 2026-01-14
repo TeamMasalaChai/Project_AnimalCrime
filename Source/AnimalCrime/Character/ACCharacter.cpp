@@ -453,6 +453,7 @@ void AACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	// 캐릭터 상태
 	DOREPLIFETIME(AACCharacter, CharacterState);
+	DOREPLIFETIME(AACCharacter, PrevCharacterState);
 
 	// Skeletal Mesh
 	DOREPLIFETIME(AACCharacter, HeadMeshReal);
@@ -470,6 +471,7 @@ void AACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AACCharacter, bStun);
 	DOREPLIFETIME(AACCharacter, bOnDamage);
 	DOREPLIFETIME(AACCharacter, bInteract);
+
 }
 
 void AACCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -1046,8 +1048,10 @@ void AACCharacter::MulticastPlayZoomMontage_Implementation()
 
 void AACCharacter::MulticastPlayShootMontage_Implementation()
 {
+	// 몽타주 재생.
 	if (ShootMontage && GetMesh() && GetMesh()->GetAnimInstance())
 	{
+		// Notify 이용중임.
 		GetMesh()->GetAnimInstance()->Montage_Play(ShootMontage, 1.0f);
 	}
 
@@ -1064,6 +1068,7 @@ void AACCharacter::MulticastPlayShootMontage_Implementation()
 	}
 }
 
+// AnimNotify에서 실행하는 함수.
 void AACCharacter::FireHitscan()
 {
 	if (IsHoldingGun() == false)
@@ -1082,6 +1087,12 @@ void AACCharacter::FireHitscan()
 		AC_LOG(LogSY, Log, TEXT("Cannot interact while carrying"));
 		return;
 	}
+	
+	// if (GetMesh()->GetAnimInstance()->Montage_IsActive(ShootMontage) == true)
+	// {
+	// 	AC_LOG(LogHY, Log, TEXT("몽타주가 재생 중 입니다."));
+	// 	return;
+	// }
 
 	ServerShoot();
 }
@@ -1469,6 +1480,11 @@ ECharacterState AACCharacter::GetCharacterState() const
 	return CharacterState;
 }
 
+ECharacterState AACCharacter::GetPrevCharacterState() const
+{
+	return PrevCharacterState;
+}
+
 void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 {
 	// Case: 상태각 같은 경우
@@ -1579,7 +1595,7 @@ void AACCharacter::SetCharacterState(ECharacterState InCharacterState)
 
 	AC_LOG(LogHY, Warning, TEXT("Success !!! Now: %s Input: %s name:%s"), *UEnum::GetValueAsString(CharacterState), *UEnum::GetValueAsString(InCharacterState), *GetName());
 
-	//PrevCharacterState = CharacterState;
+	PrevCharacterState = CharacterState;
 	CharacterState = InCharacterState;
 
 	if (HasAuthority())
@@ -2197,8 +2213,8 @@ void AACCharacter::ServerShoot_Implementation()
 
 	FVector TraceEnd = CameraLoc + (CameraRot.Vector() * MaxDistance);
 
-	AC_LOG(LogHY, Error, TEXT("Shoot Test"));
-	MulticastPlayShootMontage();
+	//AC_LOG(LogHY, Error, TEXT("Shoot Test"));
+	// MulticastPlayShootMontage();
 	// 총구 위치
 	// 방안 [소켓으로부터 출발] [SkeletalMesh의 경우 거기서]
 	//FVector MuzzleLoc = GetMesh()->GetSocketLocation("RightHandSocket");
@@ -2416,6 +2432,36 @@ void AACCharacter::RemoveStunOverlay()
 	}
 
 	AC_LOG(LogHG, Log, TEXT("Stun overlay removed"));
+}
+
+// PlayerController가 실행하는 함수.
+void AACCharacter::ServerPlayShootMontage_Implementation()
+{
+	if (IsHoldingGun() == false)
+	{
+		return;
+	}
+
+	if (GetBulletCount() <= 0)
+	{
+		AC_LOG(LogTemp, Log, TEXT("총알 갯수 %d"), GetBulletCount());
+		return;
+	}
+
+	if (bIsCarry == true)
+	{
+		AC_LOG(LogSY, Log, TEXT("Cannot interact while carrying"));
+		return;
+	}
+	
+	// 실행 중인지 확인.
+	if (GetMesh()->GetAnimInstance()->Montage_IsActive(ShootMontage) == true)
+	{
+		AC_LOG(LogHY, Log, TEXT("몽타주가 재생 중 입니다."));
+		return;
+	}
+	
+	MulticastPlayShootMontage();
 }
 
 int32 AACCharacter::GetBulletCount() const

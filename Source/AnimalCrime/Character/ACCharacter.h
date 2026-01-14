@@ -494,6 +494,7 @@ protected:
 	void OnRep_CharacterState();
 public:
 	ECharacterState GetCharacterState() const;
+	ECharacterState GetPrevCharacterState() const;
 	void SetCharacterState(ECharacterState InCharacterState);
 protected:
 	ESettingMode SettingMode = ESettingMode::None;
@@ -504,8 +505,8 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_CharacterState, EditAnywhere, BlueprintReadWrite, Category = "State")
 	ECharacterState CharacterState;
 
-	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "State")
-	//ECharacterState PrevCharacterState;
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "State")
+	ECharacterState PrevCharacterState;
 public:
 	void SetFreeState();
 	void SetOnDamageState();
@@ -606,6 +607,10 @@ private:
 public:
 	UFUNCTION(Server, Reliable)
 	void ServerShoot();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerPlayShootMontage();
+	
 public:
 	int32 GetBulletCount() const;
 	void AddBullets(int32 InBulletCount);

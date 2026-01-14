@@ -330,7 +330,8 @@ void AACMainPlayerController::HandleAttack(const FInputActionValue& Value)
 	else
 	{
 		AC_LOG(LogHY, Error, TEXT("빵야빵야"));
-		ControlledCharacter->FireHitscan();
+		ControlledCharacter->ServerPlayShootMontage();
+		//ControlledCharacter->FireHitscan();
 	}
 }
 
@@ -473,9 +474,10 @@ bool AACMainPlayerController::CanUseEscapeSkill() const
 		return false;
 	}
 
-	if (CharacterState == ECharacterState::Stun)
+	ECharacterState PrevCharacterState = MafiaPawn->GetPrevCharacterState();
+	if (PrevCharacterState == ECharacterState::Stun)
 	{
-		AC_LOG(LogHY, Error, TEXT("CharacterState is %s"), *UEnum::GetValueAsString(CharacterState));
+		AC_LOG(LogHY, Error, TEXT("PrevCharacterState was %s"), *UEnum::GetValueAsString(PrevCharacterState));
 		return false;
 	}
 	
