@@ -78,10 +78,11 @@ void AACBlackMarketDealer::UpdateHighlightForLocalPlayer()
         // 2. Custom Depth 활성화 (PPM_Highlight용, 건물 뒤 노란색)
         for (USkeletalMeshComponent* MeshComp : MeshComponents)
         {
-            if (MeshComp)
+            if (MeshComp != nullptr)
             {
                 MeshComp->SetRenderCustomDepth(true);
-                MeshComp->SetCustomDepthStencilValue(2);  // Stencil = 2 (BlackMarketDealer용)
+                // GetMesh()만 한 이유는 여러 옷들도 같이 customstencil에 의해 customdepth에 포함되면 겹쳐서 캐릭터가 매우 밝아져보임
+                GetMesh()->SetCustomDepthStencilValue(2);  // Stencil = 2 (BlackMarketDealer용)
 
                 // CustomDepth가 depth buffer에 제대로 쓰이도록 설정
                 MeshComp->bRenderCustomDepth = true;
