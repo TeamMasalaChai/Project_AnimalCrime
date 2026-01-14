@@ -50,7 +50,6 @@ void UACMoneyComponent::InitMoneyComponent(EMoneyType MoneyType)
 	
 	
 	EMoneyType CurrentMoneyData = MoneyType;
-	UE_LOG(LogTemp, Error, TEXT("여긴 오니? %d"), CurrentMoneyData);
 	switch (CurrentMoneyData)
 	{
 	case EMoneyType::MoneyMafiaType:

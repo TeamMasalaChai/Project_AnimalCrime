@@ -1715,7 +1715,7 @@ float AACCharacter::CalculateMoveSpeed() const
 {
 	float Speed = 600.0f;
 
-	AC_LOG(LogHY, Error, TEXT("Type: %s"), *StaticEnum<EACCharacterType>()->GetNameStringByValue(static_cast<int64>(GetCharacterType())));
+	// AC_LOG(LogHY, Error, TEXT("Type: %s"), *StaticEnum<EACCharacterType>()->GetNameStringByValue(static_cast<int64>(GetCharacterType())));
 	// Free 상태일 때
 	if (GetCharacterType() == EACCharacterType::Police)
 	{
