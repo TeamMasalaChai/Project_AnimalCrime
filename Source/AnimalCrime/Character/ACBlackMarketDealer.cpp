@@ -78,10 +78,11 @@ void AACBlackMarketDealer::UpdateHighlightForLocalPlayer()
         // 2. Custom Depth 활성화 (PPM_Highlight용, 건물 뒤 노란색)
         for (USkeletalMeshComponent* MeshComp : MeshComponents)
         {
-            if (MeshComp)
+            if (MeshComp != nullptr)
             {
                 MeshComp->SetRenderCustomDepth(true);
-                MeshComp->SetCustomDepthStencilValue(2);  // Stencil = 2 (BlackMarketDealer용)
+                // GetMesh()만 한 이유는 여러 옷들도 같이 customstencil에 의해 customdepth에 포함되면 겹쳐서 캐릭터가 매우 밝아져보임
+                GetMesh()->SetCustomDepthStencilValue(2);  // Stencil = 2 (BlackMarketDealer용)
 
                 // CustomDepth가 depth buffer에 제대로 쓰이도록 설정
                 MeshComp->bRenderCustomDepth = true;
@@ -117,10 +118,10 @@ void AACBlackMarketDealer::OnInteract(AACCharacter* ACPlayer, EInteractionKey In
 	// ===== 수정: Character에서 직접 체크 =====
 	if (MafiaChar->GetContraband() <= 0)
 	{
-		PC->Client_ShowNotification(FText::FromString(TEXT("거래할 밀수품이 없습니다.")));
+		PC->Client_ShowNotification(FText::FromString(TEXT("거래할 밀수품이 없습니다.")), ENotificationType::None);
 		return;
 	}
-	PC->Client_ShowNotification(FText::FromString(TEXT("폭탄을 획득했습니다.\n 은행에 폭탄을 설치하세요.")));
+	PC->Client_ShowNotification(FText::FromString(TEXT("폭탄을 획득했습니다.\n 은행에 폭탄을 설치하세요.")), ENotificationType::None);
 
 	// 밀수품 개수 차감
 	MafiaChar->SubtractContraband();
