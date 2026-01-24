@@ -13,12 +13,18 @@
   <table>
      <tr>
       <td align="center"> <img width="1550" height="847" alt="image" src="" /> </td>
-      <td align="center"> <img width="745" height="700" alt="image" src="5" /> </td>
+      <td align="center"> <img width="1550" height="847" alt="image" src="" /> </td>
     </tr>
      <tr>
       <th> ▲ 로비 </th>
       <th> ▲ 상점 </th>
     </tr>
+  </table>
+</div>
+<br>
+
+<div align="center">
+  <table>
      <tr>
       <td align="center"> <img width="1567" height="1117" alt="image" src="" /> </td>
       <td align="center"> <img width="1567" height="1117" alt="image" src="" /> </td>
