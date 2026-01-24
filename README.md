@@ -1,4 +1,4 @@
-<img width="1200" height="200" alt="Image" src="https://github.com/user-attachments/assets/fbb6bd1a-58d5-4d60-bcd8-943422fbbf5c" /> <br>
+<img width="1200" height="200" alt="Image" src="https://github.com/user-attachments/assets/cd9f94aa-3cfd-44bd-960a-761fd14b5c4c" /> <br>
 
 ## 📌 프로젝트 개요
 
@@ -66,7 +66,7 @@
 
 ## 🎮 게임 소개
 
-이미지
+<img width="1414" height="2000" alt="Image" src="https://github.com/user-attachments/assets/e0be6d55-033d-4bfc-a54c-3c24c2bc5dec" />
 
 ---
 
