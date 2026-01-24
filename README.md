@@ -12,20 +12,22 @@
 <div align="center">
   <table>
      <tr>
-      <td align="center"> <img width="1550" height="847" alt="image" src="https://github.com/user-attachments/assets/3d858034-db40-4bf1-8d21-c72b84dc5531" /> </td>
-      <td align="center"> <img width="745" height="700" alt="image" src="https://github.com/user-attachments/assets/b2d484cd-1846-40ca-8729-7dc21b071f55" /> </td>
+      <td align="center"> <img width="1550" height="847" alt="image" src="" /> </td>
+      <td align="center"> <img width="745" height="700" alt="image" src="5" /> </td>
     </tr>
      <tr>
-      <th> ▲ 보스 </th>
-      <th> ▲ 인벤토리 </th>
+      <th> ▲ 로비 </th>
+      <th> ▲ 상점 </th>
     </tr>
      <tr>
-      <td align="center"> <img width="1567" height="1117" alt="image" src="https://github.com/user-attachments/assets/711069c9-aebf-400d-8f66-09279b2f7c19" /> </td>
-      <td align="center"> <img width="1567" height="1117" alt="image" src="https://github.com/user-attachments/assets/8d24b529-b78f-4fec-a4dc-a4ad09364194" /> </td>
+      <td align="center"> <img width="1567" height="1117" alt="image" src="" /> </td>
+      <td align="center"> <img width="1567" height="1117" alt="image" src="" /> </td>
+      <td align="center"> <img width="1567" height="1117" alt="image" src="" /> </td>
     </tr>
     <tr>
-      <th> ▲ 캐릭터 스킬 </th>
-      <th> ▲ 퀘스트 </th>
+      <th> ▲ 감옥 </th>
+      <th> ▲ 마피아 임무 </th>
+      <th> ▲ 탈출 </th>
     </tr>  
   </table>
 </div>
