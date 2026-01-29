@@ -13,7 +13,7 @@
   <table>
      <tr>
       <td align="center"> <img src="https://github.com/user-attachments/assets/00ca9a83-30d9-4fa5-85db-6a99e34a1953" width="500" /> </td>
-      <td align="center"> <img width="1550" height="847" alt="image" src="" /> </td>
+      <td align="center"> <img width="300" alt="image" src="https://github.com/user-attachments/assets/5c5fbd11-96dc-4931-822c-c0d61f62714b" /> </td>
     </tr>
      <tr>
       <th> ▲ 로비 </th>
@@ -26,9 +26,9 @@
 <div align="center">
   <table>
      <tr>
-      <td align="center"> <img width="1567" height="1117" alt="image" src="" /> </td>
-      <td align="center"> <img width="1567" height="1117" alt="image" src="" /> </td>
-      <td align="center"> <img width="1567" height="1117" alt="image" src="" /> </td>
+      <td align="center"> <img width="300" alt="image" src="https://github.com/user-attachments/assets/9ab41f77-7c19-4c43-a0eb-68bbf050c496" /> </td>
+      <td align="center"> <img width="300" alt="image" src="https://github.com/user-attachments/assets/9ab41f77-7c19-4c43-a0eb-68bbf050c496" /> </td>
+      <td align="center"> <img width="300" alt="image" src="https://github.com/user-attachments/assets/5c5fbd11-96dc-4931-822c-c0d61f62714b" /> </td>
     </tr>
     <tr>
       <th> ▲ 감옥 </th>
