@@ -49,10 +49,10 @@
       <th> 시연 영상 </th>
     </tr>  
     <tr>
-      <td align="center"> <code> Windows </code> </td>
-      <td align="center"> <code> 액션RPG </code> </td>
+      <td align="center"> <code> Windows </code> <code> Steam </code> </td>
+      <td align="center"> <code> 캐주얼 숨바꼭질 </code> </td>
       <td align="center"> <code> Unreal </code> <code> C++ </code> </td>
-      <td align="center"> <a href="https://youtu.be/ByCoExA-XPc"> <code> YouTube </code> </a> </td>
+      <td align="center"> <a href=""> <code> YouTube </code> </a> </td>
     </tr>
   </table>
 </div>
@@ -64,8 +64,8 @@
       <th> 개발 기간 </th>
     </tr>  
     <tr>
-      <td align="center"> <code> 프로그래머 4 </code> </td>
-      <td align="center"> <code> 2025.11 ~ 개발중 </code> </td>
+      <td align="center"> <code> 프로그래머 4인 </code> </td>
+      <td align="center"> <code> 2025.12 ~ 개발중 </code> </td>
     </tr>
   </table>
 </div>
